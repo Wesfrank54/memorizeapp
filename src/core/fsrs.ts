@@ -2,7 +2,10 @@ import { createEmptyCard, fsrs, generatorParameters, Rating } from 'ts-fsrs'
 import type { Card as FsrsCard, Grade } from 'ts-fsrs'
 import type { ReviewEvent } from './types.ts'
 
-const REQUEST_RETENTION = 0.9
+/** The retention target the scheduler is built with — due date = the moment
+ * retrievability drops to this. Exported so consumers (e.g. Study now) judge
+ * "fading" by the same threshold the scheduler actually uses. */
+export const REQUEST_RETENTION = 0.9
 
 /**
  * Build a scheduler. `enable_fuzz: false` keeps replay a pure function of the

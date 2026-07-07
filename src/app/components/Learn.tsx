@@ -16,6 +16,7 @@ import { PASSAGE_PASS_SCORE, passageWantsFullRecall } from '../../core/passage.t
 import {
   answerLearn,
   answerUnitSynthesis,
+  buildStudyNow,
   buildUnits,
   cardSeen,
   currentLearn,
@@ -87,6 +88,13 @@ export function Learn({ state, onGoToReview }: { state: AppState; onGoToReview?:
   )
   // Weak-area targeting (adaptive tab): concepts you keep missing, weakest first.
   const weakTargets = useMemo(() => weakUnitCandidates(state, deckCardIds), [state, deckCardIds])
+  const studySize = state.settings.studyNowCards ?? 15
+  // Only planned while idle on the start screen — the O(cards × events) scan
+  // must not rerun on every answer during an active session.
+  const studyPlan = useMemo(
+    () => (session ? null : buildStudyNow(state, { maxCards: studySize })),
+    [state, studySize, session],
+  )
 
   useEffect(() => {
     setSelectedKeys(new Set())
@@ -177,6 +185,23 @@ export function Learn({ state, onGoToReview }: { state: AppState; onGoToReview?:
       startLearnFromUnits(state, chosenUnits, {
         tabMode: 'adaptive',
         familiarity,
+      }),
+    )
+  }
+
+  // One-click session across the whole collection: fading memories first, then
+  // weak cards, then a few new ones. No deck/unit picking, no familiarity step
+  // ('new' gives unseen cards the try-before-teach pretest; seen cards start
+  // from their own data regardless).
+  function startStudyNow() {
+    if (!studyPlan || studyPlan.total === 0) return
+    dropOfferedResume()
+    setSetupStep('units')
+    setSession(
+      startLearnFromUnits(state, studyPlan.units, {
+        tabMode: 'adaptive',
+        familiarity: 'new',
+        focus: 'study',
       }),
     )
   }
@@ -338,6 +363,30 @@ export function Learn({ state, onGoToReview }: { state: AppState; onGoToReview?:
           Brand-new cards use a one-time familiarity answer, and blank coverage adapts as you perform. Mastery
           graduates cards into your FSRS schedule.
         </p>
+        {studyPlan ? (
+          <div className="panel inset study-now">
+            <div className="row spread">
+              <div className="stat-label">Study now</div>
+              <select
+                value={studySize}
+                onChange={(e) => updateSettings({ studyNowCards: Number(e.target.value) })}
+                aria-label="session size"
+              >
+                <option value={8}>Short · 8 cards</option>
+                <option value={15}>Standard · 15 cards</option>
+                <option value={25}>Long · 25 cards</option>
+              </select>
+            </div>
+            <p className="muted small">
+              {studyPlan.total > 0
+                ? <>One click, whole collection: <strong>{studyPlan.due}</strong> to refresh · <strong>{studyPlan.weak}</strong> weak · <strong>{studyPlan.fresh}</strong> new</>
+                : 'All caught up — nothing fading, no weak spots, no new cards waiting.'}
+            </p>
+            <button type="button" className="primary" disabled={studyPlan.total === 0} onClick={startStudyNow}>
+              Study now{studyPlan.total > 0 ? ` · ${studyPlan.total} cards` : ''}
+            </button>
+          </div>
+        ) : null}
         {(
           <div className="panel inset weak-targets">
             <div className="row spread">
@@ -587,7 +636,9 @@ export function Learn({ state, onGoToReview }: { state: AppState; onGoToReview?:
       <div className="learn-head">
         <span className="muted small">
           {phaseLabel(s)} · learned {s.masteredCount}/{s.totalToMaster}
-          <span className="deferred-badge"> · {FAMILIARITY_LABELS[s.familiarity]}</span>
+          {s.focus !== 'study' ? (
+            <span className="deferred-badge"> · {FAMILIARITY_LABELS[s.familiarity]}</span>
+          ) : null}
           {s.difficultyBias > 0 ? (
             <span className="deferred-badge"> · difficulty +{Math.round(s.difficultyBias * 100)}%</span>
           ) : null}

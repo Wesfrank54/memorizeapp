@@ -6,7 +6,7 @@ import type { ConceptStat } from './concepts.ts'
 import { renderContent } from './schedule.ts'
 import { cardState } from './schedule.ts'
 import { clozeFullText } from './cloze.ts'
-import { retrievability } from './fsrs.ts'
+import { REQUEST_RETENTION, retrievability } from './fsrs.ts'
 import type { SynthesisPartResult } from './unit-synthesis.ts'
 
 // Learn mode — mastery learning in concept units with cumulative review.
@@ -466,6 +466,72 @@ export function weakUnitCandidates(
   return out
 }
 
+export interface StudyNowPlan {
+  /** Ordered units: Refresh (fading memories) → Weak areas → New material. */
+  units: Unit[]
+  due: number
+  weak: number
+  fresh: number
+  total: number
+}
+
+/** New-material slots always kept open so a review backlog can't stall learning. */
+const STUDY_NOW_NEW_RESERVE = 3
+const STUDY_NOW_DEFAULT_CARDS = 15
+const STUDY_NOW_WEAK_ACCURACY = 0.85
+
+/**
+ * One-click session plan across the whole collection — no deck or unit picking.
+ * Priority: cards whose FSRS recall probability fell below the retention target
+ * (weakest memories first), then seen-but-shaky cards, then unseen cards capped
+ * at maxNew with a few slots reserved whenever new material exists.
+ */
+export function buildStudyNow(
+  state: AppState,
+  opts?: { maxCards?: number; maxNew?: number; at?: Date },
+): StudyNowPlan {
+  const at = opts?.at ?? new Date()
+  const cap = Math.max(1, opts?.maxCards ?? state.settings.studyNowCards ?? STUDY_NOW_DEFAULT_CARDS)
+  // New material may fill whatever capacity fading/weak cards leave, bounded by
+  // the existing new-cards-per-day concept — so a brand-new collection still
+  // honors the session-size choice instead of stalling at a tiny fixed cap.
+  const maxNew = Math.max(0, opts?.maxNew ?? Math.min(cap, state.settings.newPerDay ?? 20))
+  // Same threshold the scheduler derives due dates from (NOT settings.desiredRetention,
+  // which is not wired into the scheduler) — keeps Refresh aligned with Review.
+  const desired = REQUEST_RETENTION
+
+  const due: { id: string; r: number }[] = []
+  const freshIds: string[] = []
+  const seenIds = new Set<string>()
+  for (const c of state.cards) {
+    const k = cardKnowledge(state, c.id, at)
+    if (!k.seen) {
+      freshIds.push(c.id)
+      continue
+    }
+    seenIds.add(c.id)
+    if (k.retrievability != null && k.retrievability < desired) due.push({ id: c.id, r: k.retrievability })
+  }
+  due.sort((a, b) => a.r - b.r)
+
+  const dueSet = new Set(due.map((d) => d.id))
+  const weakRanked = weakCards(state).filter(
+    (w) => seenIds.has(w.cardId) && !dueSet.has(w.cardId) && w.accuracy < STUDY_NOW_WEAK_ACCURACY,
+  )
+
+  const reserveNew = Math.min(STUDY_NOW_NEW_RESERVE, maxNew, freshIds.length)
+  const dueTake = Math.min(due.length, Math.max(0, cap - reserveNew))
+  const weakTake = Math.min(weakRanked.length, Math.max(0, cap - dueTake - reserveNew))
+  const newTake = Math.min(freshIds.length, maxNew, Math.max(0, cap - dueTake - weakTake))
+
+  const units: Unit[] = []
+  if (dueTake > 0) units.push({ key: 'study-due', label: 'Refresh', cardIds: due.slice(0, dueTake).map((d) => d.id) })
+  if (weakTake > 0)
+    units.push({ key: 'study-weak', label: 'Weak areas', cardIds: weakRanked.slice(0, weakTake).map((w) => w.cardId) })
+  if (newTake > 0) units.push({ key: 'study-new', label: 'New material', cardIds: freshIds.slice(0, newTake) })
+  return { units, due: dueTake, weak: weakTake, fresh: newTake, total: dueTake + weakTake + newTake }
+}
+
 export type Phase =
   | { kind: 'learn'; unit: number }
   | { kind: 'synthesis'; unit: number }
@@ -475,7 +541,7 @@ export type Phase =
  * learn → synthesis (multi-card units) → … cumulative review after each new unit past the first.
  * Weak-area drills use a single interleaved learn phase (no per-topic synthesis).
  */
-export function buildPhases(units: Unit[], enableSynthesis = true, focus?: 'weak'): Phase[] {
+export function buildPhases(units: Unit[], enableSynthesis = true, focus?: 'weak' | 'study'): Phase[] {
   if (focus === 'weak' && units.length > 0) {
     return [{ kind: 'learn', unit: 0 }]
   }
@@ -535,8 +601,9 @@ export interface LearnSession {
   synthesisRemediate?: { unit: number; cardIds: string[] }
   /** How many times the full-unit test has been attempted (for retry label). */
   synthesisAttempt?: number
-  /** Session built by weak-area targeting (labels + summary copy). */
-  focus?: 'weak'
+  /** Session origin: weak-area drill (labels/summary/single-phase) or one-click
+   * Study now (priority-bucket units — no synthesis test, no familiarity badge). */
+  focus?: 'weak' | 'study'
   /**
    * Passage twins collapsed at session start: representative cardId → sibling
    * cardIds whose exercise is the same full-text reconstruction (cloze siblings
@@ -764,7 +831,7 @@ function requeue(session: LearnSession, item: LearnItem, failed: boolean, queueA
 export function startLearnFromUnits(
   state: AppState,
   units: Unit[],
-  opts?: Partial<LearnOptions> & { tabMode?: LearnTabMode; focus?: 'weak' },
+  opts?: Partial<LearnOptions> & { tabMode?: LearnTabMode; focus?: 'weak' | 'study' },
 ): LearnSession {
   const cardsById = new Map(state.cards.map((c) => [c.id, c]))
   const notesById = new Map(state.notes.map((n) => [n.id, n]))
@@ -822,7 +889,10 @@ export function startLearnFromUnits(
   const learnOpts = learnOptionsFromSettings(state.settings, learnOptRest)
   const tabMode = tabModeOpt ?? 'manual'
   const familiarity = tabMode === 'adaptive' ? (familiarityOpt ?? 'some') : 'some'
-  const enableSynthesis = focus === 'weak' ? false : state.settings.learnUnitSynthesis !== false
+  // No full-unit synthesis test for weak drills or Study now: their units are
+  // priority buckets (Refresh / Weak / New), not coherent topics worth a
+  // whole-unit recall gate.
+  const enableSynthesis = focus === 'weak' || focus === 'study' ? false : state.settings.learnUnitSynthesis !== false
   const session: LearnSession = {
     units,
     phases: buildPhases(units, enableSynthesis, focus),

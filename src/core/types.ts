@@ -160,6 +160,8 @@ export interface Settings {
   learnGraduateFsrs?: boolean
   /** Learn: full-topic recall test after each multi-card unit, with remediation. Default true. */
   learnUnitSynthesis?: boolean
+  /** Study now: total cards per one-click session. Default 15. */
+  studyNowCards?: number
 }
 
 /** Self-reported familiarity for adaptive learn sessions (per session, not synced). */

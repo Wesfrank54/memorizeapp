@@ -11,6 +11,42 @@ build, tests).
 
 ---
 
+## 2026-07-07 — Study now: one-click session composition (plan item B)
+
+- New core planner `buildStudyNow(state, {maxCards, maxNew, at})` (src/core/learn.ts): composes a
+  session across the WHOLE collection, no deck/unit picking. Priority buckets → ordered units:
+  **Refresh** (cards with FSRS events whose retrievability < desiredRetention, weakest memory
+  first), **Weak areas** (seen cards, accuracy < 0.85 via weakCards, excluding already-due), **New
+  material** (unseen via cardSeen, capped at maxNew=5). Up to 3 slots are RESERVED for new material
+  whenever any exists, so a review backlog can't stall learning. Cap = settings.studyNowCards
+  (new Settings key, default 15, added to LEARN_SETTING_KEYS cross-device sync).
+- Learn.tsx: "Study now" hero panel above the weak-areas panel — session-size select (Short 8 /
+  Standard 15 / Long 25, persisted), live count line ("2 to refresh · 1 weak · 3 new"), one-click
+  start via startLearnFromUnits(tabMode adaptive, familiarity 'new' → unseen cards get pretest;
+  seen cards start from their own data). Empty state: "All caught up".
+- **Grok cross-review (3rd attempt after two xAI service timeouts) — 4 findings fixed:**
+  (1) studyPlan memo depended on full state → O(cards × events) planner reran on EVERY answer
+  mid-session; now computed only while idle on the start screen (session → null). (2) hardcoded
+  maxNew=5 ignored the session-size selector on new-only collections; default is now
+  min(cap, settings.newPerDay ?? 20) — new material fills leftover capacity. (3) Refresh threshold
+  used settings.desiredRetention, but the scheduler hardcodes REQUEST_RETENTION=0.9 (desiredRetention
+  is NOT wired into it) → latent divergence from Review; fsrs.ts now exports REQUEST_RETENTION and
+  buildStudyNow uses it. (4) plain startLearnFromUnits added synthesis gates + "Brand new" badge to
+  grab-bag bucket units; new focus:'study' disables synthesis (buckets aren't topics — cumulative
+  reviews kept) and hides the familiarity badge.
+- Accepted (documented, not fixed): learn-only cards with ≥85% accuracy and no FSRS events don't
+  surface (correct: they're not a priority; they enter Refresh once graduated + fading); card count
+  can slightly overstate after passage-twin collapse; O(cards×events) plan cost itself fine at MVP
+  scale — index if collections reach thousands.
+- Validation: typecheck clean, 127/127 tests (test/learn-studynow.test.ts ×7: bucket order +
+  weakest-first, cap + new-reserve under backlog, due/weak dedupe, maxNew cap, empty plan,
+  new-only honors size selector bounded by newPerDay, focus:'study' skips synthesis keeps reviews).
+  Browser e2e: seeded mix → "2 to refresh · 1 weak · 4 new"; click → "Unit 1 of 3: Refresh",
+  focus 'study', phases learn/learn/review/learn/review (no synthesis), no Brand-new badge.
+
+Files: src/core/learn.ts, src/core/types.ts, src/core/fsrs-params.ts,
+src/app/components/Learn.tsx, test/learn-studynow.test.ts, CHANGELOG.md
+
 ## 2026-07-07 — One Learn tab: Adaptive is now THE Learn experience (plan item D)
 
 - Removed the Learn/Adaptive tab split (nav 10 → 9 tabs). The unified **Learn** tab is the former

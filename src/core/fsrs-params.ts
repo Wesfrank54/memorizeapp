@@ -11,6 +11,7 @@ export const LEARN_SETTING_KEYS = [
   'learnGraduateFsrs',
   'learnUnitSynthesis',
   'blankCoverage',
+  'studyNowCards',
 ] as const satisfies readonly (keyof Settings)[]
 
 export type LearnSettingKey = (typeof LEARN_SETTING_KEYS)[number]
