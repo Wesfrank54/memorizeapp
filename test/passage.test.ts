@@ -74,10 +74,10 @@ test('selectBlanks returns positions in reading order (leftmost first), even whe
   }
 })
 
-test('selectBlanks skips function words (a/of/to/the...) — blanks land on content words', () => {
+test('selectBlanks includes function words (is/to/my/be...) — nothing is free scaffolding', () => {
   const words = 'The powerhouse of the cell is the mitochondria'.split(' ')
-  const blanked = [...selectBlanks(words, 1)].map((i) => words[i].toLowerCase())
-  assert.ok(!blanked.includes('the') && !blanked.includes('of') && !blanked.includes('is'))
+  const blanked = [...selectBlanks(words, 1)].map((i) => words[i].toLowerCase().replace(/[^a-z]/g, ''))
+  assert.ok(blanked.includes('the') && blanked.includes('of') && blanked.includes('is'))
   assert.ok(blanked.includes('powerhouse') && blanked.includes('cell') && blanked.includes('mitochondria'))
 })
 

@@ -4,6 +4,7 @@ import { buildUnitSynthesis, gradeUnitSynthesis } from '../../core/unit-synthesi
 import type { SynthesisPartResult, UnitSynthesisPart } from '../../core/unit-synthesis.ts'
 import type { AppState } from '../../core/types.ts'
 import type { Unit } from '../../core/learn.ts'
+import { LiveTypingMarks } from './LiveTypingMarks.tsx'
 import { PassageRecall } from './PassageRecall.tsx'
 import { VerdictBanner } from './VerdictBanner.tsx'
 
@@ -95,6 +96,17 @@ export function UnitSynthesis({
                 )
               ) : (
                 <>
+                  {!result ? (
+                    <p className="muted small typing-live-hint">
+                      Words turn <span className="w-ok">green</span> when right and{' '}
+                      <span className="w-no">red</span> when off.
+                    </p>
+                  ) : null}
+                  <LiveTypingMarks
+                    expected={part.text}
+                    given={responses[part.cardId] ?? ''}
+                    graded={!!result}
+                  />
                   <textarea
                     className="synthesis-input"
                     rows={3}

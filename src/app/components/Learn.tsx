@@ -17,6 +17,7 @@ import {
   answerLearn,
   answerUnitSynthesis,
   buildUnits,
+  cardSeen,
   currentLearn,
   decayLearnSession,
   deferredLearnCount,
@@ -135,8 +136,20 @@ export function Learn({
     if (s.graduatedCardIds.length > 0) addLearnHighlight(s.graduatedCardIds)
   }
 
+  // Cards with no graded attempts or review events — the only ones the
+  // familiarity self-report still describes (studied cards start from data).
+  const unseenChosenCount = useMemo(
+    () => chosenUnits.flatMap((u) => u.cardIds).filter((id) => !cardSeen(state, id)).length,
+    [chosenUnits, state],
+  )
+
   function beginFamiliarityStep() {
     if (chosenUnits.length === 0) return
+    // Every chosen card has data → nothing for the familiarity answer to do.
+    if (unseenChosenCount === 0) {
+      start()
+      return
+    }
     setSetupStep('familiarity')
   }
 
@@ -260,11 +273,13 @@ export function Learn({
       <div className="panel form">
         <h2 className="opt-title">How familiar is this material?</h2>
         <p className="muted small">
-          We&apos;ll tailor where each card starts on the <strong>choices → fill-blank → type</strong> ladder. As you
-          master cards, new ones get harder automatically.
+          This applies to the <strong>{unseenChosenCount}</strong> card{unseenChosenCount === 1 ? '' : 's'} you
+          haven&apos;t studied here yet — it sets where they start on the{' '}
+          <strong>choices → fill-blank → type</strong> ladder. Cards you&apos;ve already answered start from their own
+          track record and memory state.
         </p>
         <p className="muted small">
-          {chosenUnits.length} units · {previewCards} cards
+          {chosenUnits.length} units · {previewCards} cards · {unseenChosenCount} brand new
         </p>
         <div className="familiarity-picker">
           {FAMILIARITY_OPTIONS.map((opt) => (
@@ -304,7 +319,7 @@ export function Learn({
         <h2 className="opt-title">{isAdaptive ? 'Adaptive learn' : 'Learn'}</h2>
         <p className="muted small">
           {isAdaptive
-            ? 'Tell us how familiar you are, then we tailor starting difficulty and adjust blank coverage as you perform. Mastery graduates cards into FSRS.'
+            ? 'Each card starts at a difficulty set by your own track record — recent answers and memory state. Brand-new cards use a one-time familiarity answer, and blank coverage adapts as you perform. Mastery graduates cards into FSRS.'
             : 'Master one concept unit at a time, then cumulative review. You control spacing, coverage, and ladder options. Mastery graduates cards into your FSRS schedule.'}
         </p>
         {isAdaptive ? (
@@ -501,7 +516,7 @@ export function Learn({
           onClick={isAdaptive ? beginFamiliarityStep : start}
           disabled={chosenUnits.length === 0}
         >
-          {isAdaptive ? 'Continue' : 'Start learning'}
+          {isAdaptive && unseenChosenCount > 0 ? 'Continue' : 'Start learning'}
         </button>
       </div>
     )

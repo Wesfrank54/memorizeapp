@@ -3,12 +3,11 @@ import {
   buildPassagePracticeRounds,
   firstLetterCue,
   gradePassageChunk,
-  livePassageMarks,
   PASSAGE_PASS_SCORE,
   selectBlanks,
   splitPassage,
-  type WordMark,
 } from '../../core/passage.ts'
+import { LiveTypingMarks } from './LiveTypingMarks.tsx'
 import { VerdictBanner } from './VerdictBanner.tsx'
 
 const normWord = (w: string) => w.toLowerCase().replace(/[^a-z0-9]/g, '')
@@ -47,10 +46,7 @@ export function PassageRecall({
   const [checked, setChecked] = useState(false)
   const [fullInput, setFullInput] = useState('')
   const [fullChecked, setFullChecked] = useState(false)
-  const [fullMarks, setFullMarks] = useState<WordMark[] | null>(null)
   const [finishScore, setFinishScore] = useState<number | null>(null)
-  const liveMarks = useMemo(() => livePassageMarks(text, fullInput), [text, fullInput])
-
   const currentRound = rounds[roundIdx]
   const isCumulative = currentRound?.kind === 'cumulative'
 
@@ -171,9 +167,8 @@ export function PassageRecall({
   nextRef.current = nextStep
 
   function checkFull() {
-    const { total, correct, marks } = gradePassageChunk(text, fullInput)
+    const { total, correct } = gradePassageChunk(text, fullInput)
     const score = total ? correct / total : 1
-    setFullMarks(marks)
     setFinishScore(score)
     setFullChecked(true)
   }
@@ -219,15 +214,7 @@ export function PassageRecall({
         </p>
         {!fullChecked ? (
           <>
-            {liveMarks.length > 0 ? (
-              <div className="passage-diff passage-live-diff" aria-live="polite">
-                {liveMarks.map((m, i) => (
-                  <span key={i} className={m.ok ? 'w-ok' : 'w-no'}>
-                    {m.text}{' '}
-                  </span>
-                ))}
-              </div>
-            ) : null}
+            <LiveTypingMarks expected={text} given={fullInput} />
             <textarea
               className="passage-full-input"
               rows={Math.min(14, Math.max(4, chunks.length + 2))}
@@ -248,13 +235,7 @@ export function PassageRecall({
           </>
         ) : (
           <>
-            <div className="passage-diff">
-              {fullMarks!.map((m, i) => (
-                <span key={i} className={m.ok ? 'w-ok' : 'w-no'}>
-                  {m.text}{' '}
-                </span>
-              ))}
-            </div>
+            <LiveTypingMarks expected={text} given={fullInput} graded />
             <VerdictBanner
               correct={passed}
               detail={`${Math.round((finishScore ?? 0) * 100)}% of words correct`}
@@ -269,7 +250,6 @@ export function PassageRecall({
                 className="primary reveal"
                 onClick={() => {
                   setFullChecked(false)
-                  setFullMarks(null)
                   setFinishScore(null)
                 }}
               >

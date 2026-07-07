@@ -32,28 +32,18 @@ export function firstLetterCue(chunk: string): string {
   return chunk.replace(/([A-Za-z0-9])[A-Za-z0-9'’-]*/g, '$1')
 }
 
-// Function words that stay visible as scaffolding — blanks land on content words.
-const STOPWORDS = new Set([
-  'a', 'an', 'the', 'and', 'or', 'but', 'of', 'to', 'in', 'on', 'at', 'for', 'from', 'by', 'with', 'as',
-  'is', 'are', 'was', 'were', 'be', 'been', 'am', 'it', 'its', 'this', 'that', 'these', 'those',
-  'my', 'our', 'your', 'his', 'her', 'their',
-])
-
 const bareWord = (w: string) => w.toLowerCase().replace(/[^a-z0-9]/g, '')
 
 /**
- * Which word positions to blank for a given coverage (0..1), chosen only from
- * *content* words (function words like a/of/to/the stay visible) and spread
- * evenly so blanks don't clump. `variant` rotates the selection so repeated
- * views of the same prompt blank different words (over a few passes, all content
- * words get tested). Deterministic given the same variant. coverage 1 → all.
+ * Which word positions to blank for a given coverage (0..1), spread evenly so
+ * blanks don't clump. Every word (including is/to/my/be and other function
+ * words) is eligible — skipping them left gaps that show up on full recall.
+ * `variant` rotates the selection so repeated views blank different words.
+ * Deterministic given the same variant. coverage 1 → all.
  */
 export function selectBlanks(words: string[], coverage: number, variant = 0): Set<number> {
   const c = Math.max(0, Math.min(1, coverage))
-  const eligible = words.map((_, i) => i).filter((i) => {
-    const w = bareWord(words[i])
-    return w.length > 0 && !STOPWORDS.has(w)
-  })
+  const eligible = words.map((_, i) => i).filter((i) => bareWord(words[i]).length > 0)
   const m = eligible.length
   const n = Math.round(m * c)
   const set = new Set<number>()

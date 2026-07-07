@@ -771,11 +771,16 @@ body {
 .passage-full-prompt {
   margin: 0 0 0.75rem;
 }
+.typing-live-hint {
+  margin: 0 0 0.35rem;
+}
+.typing-live-hint .w-ok,
 .passage-live-hint .w-ok,
 .passage-live-diff .w-ok {
   color: var(--good);
   font-weight: 600;
 }
+.typing-live-hint .w-no,
 .passage-live-hint .w-no,
 .passage-live-diff .w-no {
   color: var(--again);

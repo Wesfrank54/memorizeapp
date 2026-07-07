@@ -281,7 +281,10 @@ test('adaptiveStartRung: know familiarity starts higher than new', () => {
   assert.equal(rungKnow, 2)
 })
 
-test('adaptiveStartRung: brand new ignores prior attempt history', () => {
+test('adaptiveStartRung: card data beats the familiarity answer (stale-perfect history → middle rung)', () => {
+  // Per-card data-driven starts: the familiarity self-report only describes
+  // unseen cards. A card with real (if stale) history starts from that data —
+  // perfect answers from weeks ago are discounted to the middle rung.
   const s = emptyState()
   const id = addCard(s, 'd', 'x', 'q', 'Alpha')
   s.attempts.push({
@@ -304,7 +307,7 @@ test('adaptiveStartRung: brand new ignores prior attempt history', () => {
   const sess = startLearnFromUnits(s, units, { ...adaptiveOpts, familiarity: 'new' })
   const ladder = ['mcq', 'blank', 'typed'] as const
   const phase = { kind: 'learn' as const, unit: 0 }
-  assert.equal(adaptiveStartRung(s, id, [...ladder], phase, sess), 0)
+  assert.equal(adaptiveStartRung(s, id, [...ladder], phase, sess), 1)
 })
 
 test('brand new adaptive session pre-tests cards with no prior attempts', () => {
@@ -317,9 +320,10 @@ test('brand new adaptive session pre-tests cards with no prior attempts', () => 
   assert.equal(cur?.mode, 'typed')
 })
 
-test('adaptiveStartRung: seen before can skip rungs from history', () => {
+test('adaptiveStartRung: history skips rungs, discounted by staleness', () => {
   const s = emptyState()
   const id = addCard(s, 'd', 'x', 'q', 'Alpha')
+  // Stale perfect history (weeks old): skips mcq but not blank.
   for (let i = 0; i < 2; i++) {
     s.attempts.push({
       id: `a${i}`,
@@ -334,7 +338,24 @@ test('adaptiveStartRung: seen before can skip rungs from history', () => {
   const sess = startLearnFromUnits(s, units, { ...adaptiveOpts, familiarity: 'some' })
   const ladder = ['mcq', 'blank', 'typed'] as const
   const phase = { kind: 'learn' as const, unit: 0 }
-  assert.equal(adaptiveStartRung(s, id, [...ladder], phase, sess), 2)
+  assert.equal(adaptiveStartRung(s, id, [...ladder], phase, sess), 1)
+
+  // Fresh perfect history: straight to free recall.
+  const s2 = emptyState()
+  const id2 = addCard(s2, 'd', 'x', 'q', 'Alpha')
+  for (let i = 0; i < 2; i++) {
+    s2.attempts.push({
+      id: `b${i}`,
+      cardId: id2,
+      mode: 'typed',
+      correct: true,
+      answeredAt: new Date(Date.now() - (i + 1) * 86_400_000).toISOString(),
+      source: 'quiz',
+    })
+  }
+  const units2 = buildUnits(s2, [id2])
+  const sess2 = startLearnFromUnits(s2, units2, { ...adaptiveOpts, familiarity: 'some' })
+  assert.equal(adaptiveStartRung(s2, id2, [...ladder], phase, sess2), 2)
 })
 
 test('difficultyBias rises after mastering a card', () => {

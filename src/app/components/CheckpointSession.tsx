@@ -3,6 +3,7 @@ import type { AppState, Card, Note } from '../../core/types.ts'
 import { CHECKPOINT_SIZE, gradeAnswer, sampleCheckpointCards } from '../../core/accountability.ts'
 import { renderContent } from '../../core/schedule.ts'
 import { recordCheckpoint } from '../../core/store.ts'
+import { LiveTypingMarks } from './LiveTypingMarks.tsx'
 
 /**
  * A proctored recall test: the user must type each answer from memory; the
@@ -94,6 +95,10 @@ export function CheckpointSession({
 
       {!graded ? (
         <>
+          <p className="muted small typing-live-hint">
+            Words turn <span className="w-ok">green</span> when right and <span className="w-no">red</span> when off.
+          </p>
+          <LiveTypingMarks expected={cur.expected} given={input} />
           <input
             className="cp-input"
             autoFocus
@@ -108,6 +113,7 @@ export function CheckpointSession({
         </>
       ) : (
         <>
+          <LiveTypingMarks expected={cur.expected} given={input} graded />
           <div className={`cp-verdict ${lastOk ? 'ok' : 'no'}`}>
             {lastOk ? 'Correct ✓' : 'Incorrect'}
             {!lastOk && <span className="muted"> — answer: {cur.expected}</span>}

@@ -238,6 +238,71 @@ export function startRungFromHistory(state: AppState, cardId: string, ladder: An
   return 0
 }
 
+/** Recency half-life for graded-attempt evidence: last week's answers outweigh last month's. */
+const KNOWLEDGE_HALF_LIFE_DAYS = 14
+/** Minimum recency-weighted attempt count before accuracy is trusted on its own. */
+const KNOWLEDGE_MIN_EVIDENCE = 0.75
+
+export interface CardKnowledge {
+  /** Any graded attempt or review event exists for this card. */
+  seen: boolean
+  /** Recency-weighted graded-attempt count (an attempt today weighs 1, fading with age). */
+  evidence: number
+  /** Recency-weighted graded accuracy (0 when no attempts). */
+  accuracy: number
+  /** FSRS recall probability right now, when the card has review events. */
+  retrievability: number | null
+}
+
+/**
+ * What the data says this card's owner knows — recency-weighted graded attempts
+ * blended with the FSRS memory model. This is the per-card ground truth that
+ * adaptive sessions start from (self-reported familiarity only covers cards
+ * with no data at all).
+ */
+export function cardKnowledge(state: AppState, cardId: string, at = new Date()): CardKnowledge {
+  let evidence = 0
+  let weightedCorrect = 0
+  for (const a of state.attempts) {
+    if (a.cardId !== cardId) continue
+    const days = Math.max(0, (at.getTime() - Date.parse(a.answeredAt)) / MS_PER_DAY)
+    const w = Math.pow(0.5, days / KNOWLEDGE_HALF_LIFE_DAYS)
+    evidence += w
+    if (a.correct) weightedCorrect += w
+  }
+  const hasEvents = state.events.some((e) => e.cardId === cardId)
+  const r = hasEvents ? retrievability(cardState(state, cardId), at) : null
+  return {
+    seen: evidence > 0 || hasEvents,
+    evidence,
+    accuracy: evidence > 0 ? weightedCorrect / evidence : 0,
+    retrievability: r,
+  }
+}
+
+/**
+ * Starting rung from per-card data, or null when the card is unseen (caller
+ * falls back to self-reported familiarity). Strong knowledge starts at free
+ * recall; middling at fill-blank; weak/stale at the easiest rung.
+ */
+export function knowledgeStartRung(k: CardKnowledge, ladder: AnswerMode[]): number | null {
+  const top = Math.max(0, ladder.length - 1)
+  if (!k.seen) return null
+  if (top === 0) return 0
+  // Stale/thin attempt evidence keeps its accuracy signal but is discounted —
+  // perfect answers from weeks ago earn a middle start, not free recall.
+  const acc =
+    k.evidence > 0 ? (k.evidence >= KNOWLEDGE_MIN_EVIDENCE ? k.accuracy : k.accuracy * 0.75) : null
+  const r = k.retrievability
+  const score = acc != null && r != null ? 0.5 * acc + 0.5 * r : (acc ?? r ?? 0)
+  if (score >= 0.85) return top
+  if (score >= 0.6) {
+    const blank = ladder.indexOf('blank')
+    return blank >= 0 ? blank : Math.max(0, top - 1)
+  }
+  return 0
+}
+
 /** Cumulative-review starting rung from FSRS retrievability. */
 export function reviewRungFromFsrs(state: AppState, cardId: string, ladder: AnswerMode[], at = new Date()): number {
   const top = Math.max(0, ladder.length - 1)
@@ -273,23 +338,26 @@ export function adaptiveStartRung(
     return 0
   }
 
-  let rung = familiarityStartRung(session.familiarity, ladder)
+  // Per-card data first: a card's own attempt history + FSRS state beats the
+  // session-wide familiarity answer (which now only describes unseen cards).
+  const dataRung = knowledgeStartRung(cardKnowledge(state, cardId), ladder)
+  if (dataRung != null) return dataRung
 
-  // As you master cards this session, later phases start slightly higher.
+  // Unseen card: start from self-reported familiarity, lifted by the session
+  // mastery ramp (as you master cards, later NEW cards start slightly higher).
+  let rung = familiarityStartRung(session.familiarity, ladder)
   const ramp = Math.round(session.difficultyBias * 0.55 * top)
   rung = Math.min(top, rung + ramp)
-
-  // "Brand new" always starts at the easiest rung — prior quiz/review history must not skip ahead.
-  if (session.familiarity !== 'new' && session.opts.adaptiveLadder) {
-    const fromHistory = startRungFromHistory(state, cardId, ladder)
-    rung = Math.min(top, Math.max(rung, fromHistory))
-  }
-
   return rung
 }
 
 function hasPriorAttempts(state: AppState, cardId: string): boolean {
   return state.attempts.some((a) => a.cardId === cardId)
+}
+
+/** True when any graded attempt or review event exists for this card. */
+export function cardSeen(state: AppState, cardId: string): boolean {
+  return hasPriorAttempts(state, cardId) || state.events.some((e) => e.cardId === cardId)
 }
 
 function seededShuffle<T>(arr: T[], seed: number): T[] {
@@ -609,7 +677,7 @@ function buildLearnItem(state: AppState, session: LearnSession, cardId: string, 
     phase.kind === 'learn' &&
     wantsPretest &&
     !skipPretest &&
-    !hasPriorAttempts(state, cardId) &&
+    !cardSeen(state, cardId) &&
     ladder.includes('typed') &&
     rung === 0
   return { cardId, rung, pretest: pretest || undefined }

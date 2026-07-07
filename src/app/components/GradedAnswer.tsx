@@ -4,6 +4,7 @@ import { cardAnswer } from '../../core/accountability.ts'
 import { blankIsWorthwhile, resolveGradedMode, type GradedMode } from '../../core/answer-modes.ts'
 import { gradeChoice, gradeText, makeChoices, normalize } from '../../core/grading.ts'
 import type { GradeResult } from '../../core/grading.ts'
+import { LiveTypingMarks } from './LiveTypingMarks.tsx'
 import { VerdictBanner } from './VerdictBanner.tsx'
 
 export type { GradedMode }
@@ -176,6 +177,10 @@ export function GradedAnswer({
               {blankCoverage !== undefined ? progressiveHint(expected, blankCoverage) : firstLetterHint(expected)}
             </div>
           )}
+          <p className="muted small typing-live-hint">
+            Words turn <span className="w-ok">green</span> when right and <span className="w-no">red</span> when off.
+          </p>
+          <LiveTypingMarks expected={expected} given={input} />
           <input
             className="cp-input"
             autoFocus
@@ -189,7 +194,10 @@ export function GradedAnswer({
           </button>
         </>
       ) : (
-        feedback
+        <>
+          <LiveTypingMarks expected={expected} given={input} graded />
+          {feedback}
+        </>
       )}
     </div>
   )
