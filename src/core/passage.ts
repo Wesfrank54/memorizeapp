@@ -86,6 +86,8 @@ export interface PassagePracticeRound {
   /** For cumulative rounds: how many lines from the start to practice together. */
   lineCount?: number
   title: string
+  /** When set, anchors blank rotation for this round (variants still shift per line). */
+  blankVariant?: number
 }
 
 /** Passages at least this many words long earn a full typed-recall capstone in Learn. */
@@ -101,39 +103,90 @@ export function passageWantsFullRecall(text: string): boolean {
 }
 
 /**
- * Graduated practice before full passage recite — several line-by-line passes with
- * rising blank coverage, then cumulative multi-line blanks when there are enough chunks.
+ * How many partial-coverage passes (with rotating blank sets) are needed so every
+ * word in a line is blanked at least once before coverage hits 1 (no scaffolding).
+ */
+export function rotationPassesForFullCoverage(wordCount: number, coverage: number): number {
+  if (wordCount <= 0 || coverage >= 1) return 0
+  const stub = Array.from({ length: wordCount }, (_, i) => `w${i}`)
+  const union = new Set<number>()
+  let v = 0
+  while (union.size < wordCount && v < 24) {
+    for (const i of selectBlanks(stub, coverage, v)) union.add(i)
+    v++
+  }
+  return v
+}
+
+function pushRotationRounds(
+  rounds: PassagePracticeRound[],
+  coverage: number,
+  wordCount: number,
+  kind: PassagePracticeKind,
+  lineCount?: number,
+) {
+  const passes = rotationPassesForFullCoverage(wordCount, coverage)
+  if (passes <= 0) return
+  for (let v = 0; v < passes; v++) {
+    rounds.push({
+      kind,
+      coverage,
+      lineCount,
+      blankVariant: v,
+      title: passes === 1 ? 'Cover every word' : `Rotation ${v + 1} of ${passes}`,
+    })
+  }
+}
+
+/**
+ * Graduated practice before full passage recite — line-by-line passes with rising
+ * coverage, rotating blank sets so each word is tested before scaffolding drops,
+ * then cumulative multi-line blanks when there are enough chunks.
  */
 export function buildPassagePracticeRounds(
   baseCoverage: number,
-  chunkCount: number,
+  chunkWordCounts: number[],
   wantsFullRecall: boolean,
 ): PassagePracticeRound[] {
   const bc = Math.max(0.3, Math.min(1, baseCoverage))
+  const chunkCount = chunkWordCounts.length
+  const maxWords = chunkWordCounts.length ? Math.max(...chunkWordCounts) : 0
 
   if (!wantsFullRecall) {
     return [{ kind: 'lines', coverage: bc, title: 'Recall' }]
   }
 
   if (chunkCount <= 1) {
-    return [
-      { kind: 'lines', coverage: Math.min(0.55, bc * 0.75), title: 'Warm-up' },
-      { kind: 'lines', coverage: 1, title: 'Full line' },
-    ]
+    const warm = Math.min(0.55, bc * 0.75)
+    const rounds: PassagePracticeRound[] = [{ kind: 'lines', coverage: warm, title: 'Warm-up' }]
+    pushRotationRounds(rounds, warm, maxWords, 'lines')
+    rounds.push({ kind: 'lines', coverage: 1, title: 'Full line' })
+    return rounds
   }
 
+  const warm = Math.min(0.5, bc * 0.7)
+  const build = Math.min(0.75, bc * 0.9)
   const rounds: PassagePracticeRound[] = [
-    { kind: 'lines', coverage: Math.min(0.5, bc * 0.7), title: 'Warm-up' },
-    { kind: 'lines', coverage: Math.min(0.75, bc * 0.9), title: 'Build' },
-    { kind: 'lines', coverage: 1, title: 'Each line' },
+    { kind: 'lines', coverage: warm, title: 'Warm-up' },
+    { kind: 'lines', coverage: build, title: 'Build' },
   ]
+  pushRotationRounds(rounds, build, maxWords, 'lines')
+  rounds.push({ kind: 'lines', coverage: 1, title: 'Each line' })
 
   if (chunkCount >= 4) {
     const mid = Math.ceil(chunkCount / 2)
-    rounds.push({ kind: 'cumulative', coverage: 0.7, lineCount: mid, title: `Lines 1–${mid}` })
+    const midWords = chunkWordCounts.slice(0, mid).reduce((a, b) => a + b, 0)
+    const allWords = chunkWordCounts.reduce((a, b) => a + b, 0)
+    const cumCov = 0.7
+    rounds.push({ kind: 'cumulative', coverage: cumCov, lineCount: mid, title: `Lines 1–${mid}` })
+    pushRotationRounds(rounds, cumCov, midWords, 'cumulative', mid)
     rounds.push({ kind: 'cumulative', coverage: 0.85, lineCount: chunkCount, title: 'All lines' })
+    pushRotationRounds(rounds, 0.85, allWords, 'cumulative', chunkCount)
   } else {
-    rounds.push({ kind: 'cumulative', coverage: 0.8, lineCount: chunkCount, title: 'All lines together' })
+    const allWords = chunkWordCounts.reduce((a, b) => a + b, 0)
+    const cumCov = 0.8
+    rounds.push({ kind: 'cumulative', coverage: cumCov, lineCount: chunkCount, title: 'All lines together' })
+    pushRotationRounds(rounds, cumCov, allWords, 'cumulative', chunkCount)
   }
 
   return rounds

@@ -34,9 +34,13 @@ export function PassageRecall({
 }) {
   const chunks = useMemo(() => splitPassage(text), [text])
   const wantsFullRecall = fullRecall ?? chunks.length > 1
+  const chunkWordCounts = useMemo(
+    () => chunks.map((c) => c.split(/\s+/).filter(Boolean).length),
+    [chunks],
+  )
   const rounds = useMemo(
-    () => buildPassagePracticeRounds(coverage, chunks.length, wantsFullRecall),
-    [coverage, chunks.length, wantsFullRecall],
+    () => buildPassagePracticeRounds(coverage, chunkWordCounts, wantsFullRecall),
+    [coverage, chunkWordCounts, wantsFullRecall],
   )
 
   const [phase, setPhase] = useState<Phase>('study')
@@ -68,7 +72,8 @@ export function PassageRecall({
 
   const words = isCumulative ? cumulativeWords : lineWords
   const activeCoverage = currentRound?.coverage ?? coverage
-  const blankVariant = variant + roundIdx * 17 + (isCumulative ? 0 : idx)
+  const blankBase = currentRound?.blankVariant ?? variant + roundIdx * 17
+  const blankVariant = blankBase + (isCumulative ? 0 : idx)
   const blanks = useMemo(
     () => selectBlanks(words, activeCoverage, blankVariant),
     [words, activeCoverage, blankVariant],

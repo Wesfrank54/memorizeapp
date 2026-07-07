@@ -6,6 +6,7 @@ import {
   gradePassageChunk,
   livePassageMarks,
   passageWantsFullRecall,
+  rotationPassesForFullCoverage,
   selectBlanks,
   splitPassage,
 } from '../src/core/passage.ts'
@@ -17,10 +18,12 @@ test('passageWantsFullRecall: substantial passages get the typed capstone, short
   assert.equal(passageWantsFullRecall('The capital of France is Paris.'), false)
 })
 
-test('single-chunk passage with full recall gets warm-up + full-line rounds before the capstone', () => {
-  const rounds = buildPassagePracticeRounds(0.6, 1, true)
-  assert.deepEqual(rounds.map((r) => r.title), ['Warm-up', 'Full line'])
-  assert.equal(rounds[1].coverage, 1)
+test('single-chunk passage gets warm-up, blank rotations, then full-line before capstone', () => {
+  const rounds = buildPassagePracticeRounds(0.6, [12], true)
+  assert.equal(rounds[0].title, 'Warm-up')
+  assert.ok(rounds.some((r) => r.title.startsWith('Rotation') || r.title === 'Cover every word'))
+  assert.equal(rounds.at(-1)?.title, 'Full line')
+  assert.equal(rounds.at(-1)?.coverage, 1)
 })
 
 test('splitPassage breaks on sentence/line boundaries', () => {
@@ -81,22 +84,36 @@ test('selectBlanks includes function words (is/to/my/be...) — nothing is free 
   assert.ok(blanked.includes('powerhouse') && blanked.includes('cell') && blanked.includes('mitochondria'))
 })
 
-test('buildPassagePracticeRounds adds graduated buildup before full recall', () => {
-  const single = buildPassagePracticeRounds(0.8, 1, true)
-  assert.equal(single.length, 2)
-  assert.ok(single[0].coverage < single[1].coverage)
+test('rotationPassesForFullCoverage counts passes until every word is blanked once', () => {
+  assert.equal(rotationPassesForFullCoverage(10, 0.5), 2)
+  assert.equal(rotationPassesForFullCoverage(10, 1), 0)
+  const words = 'alpha bravo charlie delta echo foxtrot golf hotel india juliet'.split(' ')
+  const passes = rotationPassesForFullCoverage(words.length, 0.5)
+  const union = new Set<number>()
+  for (let v = 0; v < passes; v++) for (const i of selectBlanks(words, 0.5, v)) union.add(i)
+  assert.equal(union.size, words.length)
+})
 
-  const multi = buildPassagePracticeRounds(0.8, 3, true)
-  assert.ok(multi.length >= 4)
+test('buildPassagePracticeRounds adds rotations before full-coverage rounds', () => {
+  const single = buildPassagePracticeRounds(0.8, [14], true)
+  const fullLineIdx = single.findIndex((r) => r.title === 'Full line')
+  assert.ok(fullLineIdx > 0)
+  assert.ok(single.slice(0, fullLineIdx).some((r) => r.blankVariant !== undefined))
+  assert.ok(single[0].coverage < single[fullLineIdx].coverage)
+
+  const multi = buildPassagePracticeRounds(0.8, [10, 10, 10], true)
+  assert.ok(multi.length >= 5)
   assert.equal(multi[0].kind, 'lines')
-  assert.equal(multi[multi.length - 1].kind, 'cumulative')
-  assert.ok(multi[0].coverage < multi[1].coverage)
-  assert.ok(multi[1].coverage < multi[2].coverage)
+  const eachLine = multi.findIndex((r) => r.title === 'Each line')
+  assert.ok(multi.slice(0, eachLine).some((r) => r.blankVariant !== undefined))
 
-  const long = buildPassagePracticeRounds(0.8, 6, true)
-  assert.equal(long.filter((r) => r.kind === 'cumulative').length, 2)
+  const long = buildPassagePracticeRounds(0.8, [8, 8, 8, 8, 8, 8], true)
+  const cum = long.filter((r) => r.kind === 'cumulative')
+  assert.ok(cum.length >= 4)
+  const allLinesIdx = long.findIndex((r) => r.title === 'All lines')
+  assert.ok(long.slice(0, allLinesIdx).some((r) => r.blankVariant !== undefined))
 
-  const noFull = buildPassagePracticeRounds(0.6, 5, false)
+  const noFull = buildPassagePracticeRounds(0.6, [5, 5, 5, 5, 5], false)
   assert.deepEqual(noFull, [{ kind: 'lines', coverage: 0.6, title: 'Recall' }])
 })
 
