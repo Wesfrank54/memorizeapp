@@ -5,6 +5,7 @@ import { computeConcepts, weakCards } from './concepts.ts'
 import type { ConceptStat } from './concepts.ts'
 import { renderContent } from './schedule.ts'
 import { cardState } from './schedule.ts'
+import { clozeFullText } from './cloze.ts'
 import { retrievability } from './fsrs.ts'
 import type { SynthesisPartResult } from './unit-synthesis.ts'
 
@@ -152,6 +153,17 @@ export function learnOptionsFromSettings(settings: Settings, overrides?: Partial
     seed: overrides?.seed ?? Date.now(),
     ...overrides,
   }
+}
+
+/** Source text of a card's passage-recall exercise (cloze: full text, markers stripped). */
+export function passageSourceText(note: Note, card: Card): string {
+  if (note.type === 'cloze') return clozeFullText(note.fields.text ?? '')
+  return renderContent(note, card).answer
+}
+
+/** Case/whitespace-insensitive identity of a passage exercise. */
+export function passageKey(text: string): string {
+  return text.replace(/\s+/g, ' ').trim().toLowerCase()
 }
 
 /** The rungs a specific card climbs, adapting to its answer. */
@@ -457,6 +469,13 @@ export interface LearnSession {
   synthesisAttempt?: number
   /** Session built by weak-area targeting (labels + summary copy). */
   focus?: 'weak'
+  /**
+   * Passage twins collapsed at session start: representative cardId → sibling
+   * cardIds whose exercise is the same full-text reconstruction (cloze siblings
+   * of one note, plus recite cards with the same answer). Peers never enter the
+   * queue; mastering the representative credits them all.
+   */
+  passagePeers?: Record<string, string[]>
 }
 
 export interface PersistedLearn {
@@ -572,6 +591,8 @@ export interface LearnMastery {
   cardId: string
   mode: AnswerMode
   phase: 'learn' | 'review' | 'catchup' | 'remediate'
+  /** Collapsed passage twins that this mastery also graduates. */
+  peerCardIds?: string[]
 }
 
 export interface LearnAnswerResult {
@@ -687,6 +708,48 @@ export function startLearnFromUnits(
       ladders[id] = card && note ? cardLadder(state, card, note) : ['self']
     }
   }
+
+  // Collapse passage twins: cards whose only rung is the same full-text
+  // reconstruction (a multi-deletion cloze note's siblings + a "Recite …" card
+  // with the identical answer) are one exercise — repeating it N times per
+  // session adds time, not challenge. One representative stays in the units;
+  // mastering it credits every peer.
+  const passagePeers: Record<string, string[]> = {}
+  const repByKey = new Map<string, string>()
+  const dropped = new Set<string>()
+  for (const u of units) {
+    for (const id of u.cardIds) {
+      const ladder = ladders[id]
+      if (!ladder || ladder.length !== 1 || ladder[0] !== 'passage') continue
+      const card = cardsById.get(id)
+      const note = card ? notesById.get(card.noteId) : undefined
+      if (!card || !note) continue
+      const key = passageKey(passageSourceText(note, card))
+      if (!key) continue
+      const rep = repByKey.get(key)
+      if (rep === undefined) {
+        repByKey.set(key, id)
+        continue
+      }
+      const repNote = notesById.get(cardsById.get(rep)!.noteId)
+      if (repNote?.type === 'cloze' && note.type !== 'cloze') {
+        // A non-cloze rep presents better (its question is a real prompt, not a
+        // cloze stem with [...]) — promote this card and demote the old rep.
+        repByKey.set(key, id)
+        dropped.add(rep)
+        passagePeers[id] = [...(passagePeers[rep] ?? []), rep]
+        delete passagePeers[rep]
+      } else {
+        dropped.add(id)
+        passagePeers[rep] = [...(passagePeers[rep] ?? []), id]
+      }
+    }
+  }
+  if (dropped.size > 0) {
+    units = units
+      .map((u) => ({ ...u, cardIds: u.cardIds.filter((id) => !dropped.has(id)) }))
+      .filter((u) => u.cardIds.length > 0)
+  }
   const { tabMode: tabModeOpt, familiarity: familiarityOpt, focus, ...learnOptRest } = opts ?? {}
   const learnOpts = learnOptionsFromSettings(state.settings, learnOptRest)
   const tabMode = tabModeOpt ?? 'manual'
@@ -715,6 +778,7 @@ export function startLearnFromUnits(
     difficultyBias: 0,
     coverageBias: 0.5,
     focus,
+    passagePeers: dropped.size > 0 ? passagePeers : undefined,
   }
   session.queue = phaseQueue(state, session, 0)
   return session
@@ -989,7 +1053,13 @@ export function answerLearn(state: AppState, session: LearnSession, passed: bool
       }
       queue = rest
       masteredNow = true
-      mastery = { cardId: cur.cardId, mode, phase: phase === 'synthesis' ? 'learn' : phase }
+      const peers = s.passagePeers?.[cur.cardId]
+      mastery = {
+        cardId: cur.cardId,
+        mode,
+        phase: phase === 'synthesis' ? 'learn' : phase,
+        peerCardIds: peers && peers.length > 0 ? peers : undefined,
+      }
     } else {
       const item: LearnItem = { cardId: cur.cardId, rung: nextRung }
       const mid = {
@@ -1026,7 +1096,7 @@ export function answerLearn(state: AppState, session: LearnSession, passed: bool
     correct: s.correct + (graded && passed ? 1 : 0),
     masteredCount: s.masteredCount + (countsMastery ? 1 : 0),
     graduatedCardIds: countsGraduate
-      ? [...new Set([...s.graduatedCardIds, cur.cardId])]
+      ? [...new Set([...s.graduatedCardIds, cur.cardId, ...(s.passagePeers?.[cur.cardId] ?? [])])]
       : s.graduatedCardIds,
     difficultyBias: countsMastery ? nextDifficultyBias(s, MASTERY_RAMP) : s.difficultyBias,
     coverageBias: nextCoverageBias(s, true, countsMastery),

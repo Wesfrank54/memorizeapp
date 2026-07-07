@@ -98,6 +98,18 @@ export interface PassagePracticeRound {
   title: string
 }
 
+/** Passages at least this many words long earn a full typed-recall capstone in Learn. */
+export const FULL_RECALL_MIN_WORDS = 10
+
+/**
+ * Whether a Learn passage exercise should end with typing the full passage from
+ * memory (live green/red word marks). Short cloze sentences stay blanks-only —
+ * a typed capstone there costs time without adding real recall challenge.
+ */
+export function passageWantsFullRecall(text: string): boolean {
+  return text.trim().split(/\s+/).filter(Boolean).length >= FULL_RECALL_MIN_WORDS
+}
+
 /**
  * Graduated practice before full passage recite — several line-by-line passes with
  * rising blank coverage, then cumulative multi-line blanks when there are enough chunks.

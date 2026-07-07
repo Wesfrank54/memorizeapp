@@ -12,7 +12,7 @@ import {
 } from '../../core/store.ts'
 import { computeConcepts } from '../../core/concepts.ts'
 import { clozeFullText } from '../../core/cloze.ts'
-import { PASSAGE_PASS_SCORE } from '../../core/passage.ts'
+import { PASSAGE_PASS_SCORE, passageWantsFullRecall } from '../../core/passage.ts'
 import {
   answerLearn,
   answerUnitSynthesis,
@@ -214,6 +214,11 @@ export function Learn({
     const { session: next, mastery } = answerLearn(state, s, passed)
     if (mastery && (mastery.phase === 'learn' || mastery.phase === 'catchup')) {
       graduateLearnMastery(mastery.cardId, mastery.mode, mastery.phase)
+      // Collapsed passage twins: reconstructing the full text proves recall of
+      // every sibling's blank, so they graduate together.
+      for (const peer of mastery.peerCardIds ?? []) {
+        graduateLearnMastery(peer, mastery.mode, mastery.phase)
+      }
     }
     if (next.done) finishSession(next)
     else persistIfActive(next)
@@ -655,6 +660,7 @@ export function Learn({
             text={passageText}
             coverage={coverage}
             variant={passageVariant}
+            fullRecall={passageWantsFullRecall(passageText)}
             onDone={(score) => {
               recordLearnAttempt(card.id, 'passage', score >= PASSAGE_PASS_SCORE)
               applyAnswer(score >= PASSAGE_PASS_SCORE)

@@ -48,6 +48,10 @@ export default defineConfig({
     // Ensure TS extensions are considered for dynamic imports of .ts sources
     extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json'],
   },
+  server: {
+    // Preview tooling assigns a port via PORT; the desktop launcher stays on 5173.
+    port: Number(process.env.PORT) || 5173,
+  },
   // Fix for @powersync/web worker bundling under Vite 6 (IIFE not allowed in code-splitting builds).
   // This was surfaced after the dynamic import resolution fix allowed deeper PS module processing.
   // See similar reports for powersync + vite; 'es' format for workers avoids the iife error.

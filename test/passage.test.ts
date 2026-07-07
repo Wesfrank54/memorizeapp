@@ -5,9 +5,23 @@ import {
   firstLetterCue,
   gradePassageChunk,
   livePassageMarks,
+  passageWantsFullRecall,
   selectBlanks,
   splitPassage,
 } from '../src/core/passage.ts'
+
+test('passageWantsFullRecall: substantial passages get the typed capstone, short clozes stay blanks-only', () => {
+  const mission =
+    'The mission of the Navy is to recruit, train, equip, and organize to deliver combat ready Naval forces to win conflicts and wars while maintaining security and deterrence through sustained forward presence.'
+  assert.equal(passageWantsFullRecall(mission), true)
+  assert.equal(passageWantsFullRecall('The capital of France is Paris.'), false)
+})
+
+test('single-chunk passage with full recall gets warm-up + full-line rounds before the capstone', () => {
+  const rounds = buildPassagePracticeRounds(0.6, 1, true)
+  assert.deepEqual(rounds.map((r) => r.title), ['Warm-up', 'Full line'])
+  assert.equal(rounds[1].coverage, 1)
+})
 
 test('splitPassage breaks on sentence/line boundaries', () => {
   const creed = 'I am a United States Sailor. I proudly serve with honor, courage and commitment.'

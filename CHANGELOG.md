@@ -11,6 +11,57 @@ build, tests).
 
 ---
 
+## 2026-07-07 — Collapse duplicate passage exercises (cloze siblings + recite twins)
+
+- Problem (user report): a multi-deletion cloze note (e.g. Navy mission, {{c1}}..{{c5}}) expands
+  to N sibling cards, and since all cloze cards route to full-passage recall in Learn, one
+  session asked for the *identical* full-text reconstruction N times — plus once more for the
+  "Recite …" basic card carrying the same answer. Repetition with zero added challenge.
+- Fix: `startLearnFromUnits` (src/core/learn.ts) now collapses "passage twins" — cards whose only
+  ladder rung is 'passage' and whose exercise text (new `passageSourceText` + `passageKey` helpers,
+  case/whitespace-insensitive) is identical — into one representative session item. Non-cloze reps
+  preferred (real prompt beats a cloze stem with [...]). Peers recorded in
+  `LearnSession.passagePeers` (rep → siblings); they never enter queues.
+- Credit: mastering the rep graduates every peer. `answerLearn` adds peers to `graduatedCardIds`
+  and returns them on `LearnMastery.peerCardIds`; Learn.tsx calls `graduateLearnMastery` per peer
+  (outside setSession — StrictMode-safe, verified). Only ONE GradedAttempt is recorded (the rep's),
+  so weak-concept accuracy isn't inflated N×.
+- Knock-on wins: totalToMaster counts distinct exercises; a unit that collapses to 1 card no longer
+  gets a synthesis phase (it would be the same passage again). `buildUnitSynthesis`
+  (src/core/unit-synthesis.ts) also dedupes parts by text as belt-and-braces for resumed legacy
+  sessions (label prefers the non-cloze question).
+- Dev tooling: vite.config.ts now honors PORT env for the dev server (preview tooling can auto-port
+  next to a running 5173); .claude/launch.json (here + repo root) sets autoPort.
+- Validation: typecheck clean; 112/112 tests (new test/learn-dedupe.test.ts ×5: shared key,
+  collapse + rep preference + totalToMaster, peer graduation, distinct passages stay separate,
+  synthesis dedupe); vite build clean. Browser e2e on a fresh origin (5 cards: 4 cloze siblings +
+  recite): session showed "learned 0/1", one Recite exercise with the basic card's prompt, 7/7
+  blanks → finish → summary "5 cards graduated into your FSRS schedule", exactly 5 events
+  (cc0-cc3 + cr, Good/passage — no StrictMode duplicates), highlight = all 5, attempts = 1.
+
+Files: src/core/learn.ts, src/core/unit-synthesis.ts, src/app/components/Learn.tsx,
+vite.config.ts, .claude/launch.json, test/learn-dedupe.test.ts, CHANGELOG.md
+
+## 2026-07-07 — Full-recite capstone (live green/red) for substantial Learn passages
+
+- User asked to confirm the full-recite stage highlights words green/red. It does (live
+  `livePassageMarks` while typing + word diff after Check) — but Learn never passed `fullRecall`
+  to PassageRecall, so it defaulted to multi-line passages only. Single-sentence passages like
+  the Navy mission (no commas in its 2nd half → one splitPassage chunk, "line 1/1") ended after
+  one blanks round and never reached the typed capstone.
+- Fix: new `passageWantsFullRecall(text)` + `FULL_RECALL_MIN_WORDS = 10` (src/core/passage.ts);
+  Learn.tsx passes `fullRecall={passageWantsFullRecall(passageText)}`. Substantial passages now
+  run Warm-up blanks → Full-line blanks → type-the-whole-passage with live green/red; short cloze
+  sentences (<10 words) stay quick blanks-only.
+- Validation: typecheck clean; 114/114 tests (2 new in test/passage.test.ts). Browser e2e with the
+  REAL 31-word mission text: study hint "2 practice rounds, then full passage"; Warm-up 10/10 →
+  Full line 22/22 → capstone: typing "Da mission of" marked Da w-no/red + rest w-ok/green live;
+  full text with "ships" for "forces" → diff 31 green + "forces" red, "97% of words correct"
+  (≥90% pass → Continue; below → Try again); computed colors rgb(47,158,68)/rgb(229,83,75);
+  mastery through the capstone still graduated all 5 collapsed cards (exactly 5 events).
+
+Files: src/core/passage.ts, src/app/components/Learn.tsx, test/passage.test.ts, CHANGELOG.md
+
 ## 2026-06-29 — Make Review unlimited (no daily hard stop for extra practice)
 
 - Modified dueQueue (src/core/schedule.ts) to append all previously-seen (non-new, non-due) cards as extra practice items after the normal due + daily-new-limited cards. New brand-new cards still respect settings.newPerDay. Previously-seen cards now appear for unlimited extra reviews/practice.

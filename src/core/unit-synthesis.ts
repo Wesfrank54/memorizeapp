@@ -27,6 +27,10 @@ export function buildUnitSynthesis(state: AppState, unit: Unit): UnitSynthesisPa
   const notesById = new Map(state.notes.map((n) => [n.id, n]))
   const parts: UnitSynthesisPart[] = []
 
+  // A multi-deletion cloze note (+ a recite card with the same answer) expands
+  // to several cards with the identical text — one recall test covers them all.
+  const seenText = new Map<string, { index: number; clozeLabel: boolean }>()
+
   for (let i = 0; i < unit.cardIds.length; i++) {
     const id = unit.cardIds[i]
     const card = cardsById.get(id)
@@ -39,6 +43,18 @@ export function buildUnitSynthesis(state: AppState, unit: Unit): UnitSynthesisPa
         : (answer || question).trim()
     if (!text) continue
     const label = question.trim() || `Part ${i + 1}`
+    const key = text.replace(/\s+/g, ' ').toLowerCase()
+    const seen = seenText.get(key)
+    if (seen) {
+      // Duplicate passage: keep one part, but prefer a non-cloze label — a real
+      // prompt reads better than a cloze stem with [...] in it.
+      if (seen.clozeLabel && note.type !== 'cloze') {
+        parts[seen.index] = { ...parts[seen.index], label }
+        seen.clozeLabel = false
+      }
+      continue
+    }
+    seenText.set(key, { index: parts.length, clozeLabel: note.type === 'cloze' })
     const style = passageStyle(card, note, text)
     parts.push({ cardId: id, label, text, style })
   }
