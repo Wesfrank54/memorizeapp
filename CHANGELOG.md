@@ -11,6 +11,37 @@ build, tests).
 
 ---
 
+## 2026-07-07 — Adaptive: per-card data-driven starting difficulty
+
+- First step of the Adaptive refinement plan (chosen by Wes from A-D options; B "Study now"
+  auto-plan, C per-concept tuning, D tab merge remain candidates). Previously Adaptive applied ONE
+  self-reported familiarity answer to every card and used raw all-time per-mode accuracy as a
+  history floor.
+- New in src/core/learn.ts: `cardKnowledge(state, cardId, at)` — recency-weighted graded-attempt
+  accuracy (14-day half-life, KNOWLEDGE_HALF_LIFE_DAYS) + FSRS retrievability when the card has
+  review events; `knowledgeStartRung(k, ladder)` — score ≥0.85 → top rung, ≥0.6 → blank, else
+  bottom; stale/thin evidence (weighted count < 0.75) keeps its accuracy signal discounted ×0.75
+  (stale-perfect → middle rung, not free recall and not restart); unseen → null.
+  `cardSeen(state, cardId)` exported (attempts OR events).
+- `adaptiveStartRung`: per-card data now wins for seen cards — INCLUDING when familiarity says
+  'new' (reverses grok's "brand new ignores history" rule; the familiarity answer now only
+  describes unseen cards, per UI copy). The difficultyBias session ramp applies only to unseen
+  cards. Pretest gate uses cardSeen (self-rated-only cards no longer pretested).
+- Learn.tsx: familiarity step is SKIPPED when every chosen card has data (button reads "Start
+  learning" instead of "Continue"); when shown, copy states it applies to the N brand-new cards
+  and shows the count; adaptive tab description rewritten.
+- Tests: 2 old tests updated to new semantics (stale-perfect → rung 1; fresh-perfect → rung 2
+  added), new test/learn-knowledge.test.ts ×5 (recency weighting, rung bands, cardSeen via events,
+  data-beats-familiarity, pretest gating). 119/119 pass, typecheck clean.
+- Browser e2e (fresh origin, Adaptive tab): proven card (2 recent correct typed) queued at rung 2
+  no-pretest with familiarity 'new'; self-rated-only card rung 2 via retrievability; 3 unseen at
+  rung 0 with pretest; familiarity screen said "applies to the 3 cards you haven't studied" ·
+  "5 cards · 3 brand new"; with all cards seen the step was skipped entirely (straight into
+  session, saved queue all data-driven).
+
+Files: src/core/learn.ts, src/app/components/Learn.tsx, test/learn.test.ts,
+test/learn-knowledge.test.ts, CHANGELOG.md
+
 ## 2026-07-07 — Collapse duplicate passage exercises (cloze siblings + recite twins)
 
 - Problem (user report): a multi-deletion cloze note (e.g. Navy mission, {{c1}}..{{c5}}) expands
