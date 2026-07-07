@@ -11,6 +11,34 @@ build, tests).
 
 ---
 
+## 2026-07-07 — One Learn tab: Adaptive is now THE Learn experience (plan item D)
+
+- Removed the Learn/Adaptive tab split (nav 10 → 9 tabs). The unified **Learn** tab is the former
+  adaptive experience: per-card data-driven starts, weak-areas panel + drill, familiarity step only
+  for unseen cards. Learn.tsx no longer takes a `variant` prop; new sessions always start
+  tabMode 'adaptive'. Core keeps 'manual' tabMode support so old saved sessions finish under their
+  original semantics.
+- Manual knobs consolidated: a collapsed **Customize** <details> holds a blank-coverage BASE slider
+  (settings.blankCoverage ?? 0.55, still rung/performance-ramped) and the unit-synthesis toggle.
+  Removed from UI (settings keys still honored by core + fsrs-params sync): spacing gap, interleave,
+  adaptive-ladder, FSRS-review-rungs, graduate-FSRS, pretest toggles.
+- Resume migration: the tab offers the first RESUMABLE save from either old storage key
+  (adaptive first, then manual/legacy) and tracks its source key.
+- **Grok cross-review (grok-review skill) caught a real dual-save bug** in my first cut: start/
+  finish/discard cleared BOTH storage keys, silently deleting a hidden second save; and a stale
+  adaptive payload could block a valid manual resume. Fixed per its suggestion: only the acted-on
+  save's key is cleared (dropOfferedResume), the other save surfaces afterwards;
+  firstResumableSaved() skips non-resumable payloads. Accepted-not-fixed (low): legacy resumed
+  manual sessions with unset blankCoverage now default 0.55 vs 0.6.
+- Also committed: AGENTS.md + CLAUDE.md (shared Claude/Grok agent instructions, added by Wes's
+  parallel session).
+- Validation: typecheck clean, 120/120 tests, Grok run confirmed read-only (porcelain clean).
+  Browser e2e: 9 tabs, no Adaptive; Learn = weak panel + collapsed Customize; manual-key session
+  resumed into unified tab and ran; dual-save scenario: discard #1 cleared only the adaptive key
+  and the manual save surfaced, discard #2 cleared it.
+
+Files: src/app/App.tsx, src/app/components/Nav.tsx, src/app/components/Learn.tsx, CHANGELOG.md
+
 ## 2026-07-07 — Adaptive: per-card data-driven starting difficulty
 
 - First step of the Adaptive refinement plan (chosen by Wes from A-D options; B "Study now"

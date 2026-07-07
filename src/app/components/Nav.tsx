@@ -6,7 +6,6 @@ import { dueQueue } from '../../core/schedule.ts'
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'learn', label: 'Learn' },
-  { id: 'learn-adaptive', label: 'Adaptive' },
   { id: 'review', label: 'Review' },
   { id: 'add', label: 'Add' },
   { id: 'decks', label: 'Decks' },

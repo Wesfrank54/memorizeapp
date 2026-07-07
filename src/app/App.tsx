@@ -14,7 +14,6 @@ import { Learn } from './components/Learn.tsx'
 
 export type Tab =
   | 'learn'
-  | 'learn-adaptive'
   | 'review'
   | 'add'
   | 'decks'
@@ -38,10 +37,7 @@ export function App() {
       </header>
       <SyncBar />
       <main className="content">
-        {tab === 'learn' && <Learn state={state} variant="manual" onGoToReview={() => setTab('review')} />}
-        {tab === 'learn-adaptive' && (
-          <Learn state={state} variant="adaptive" onGoToReview={() => setTab('review')} />
-        )}
+        {tab === 'learn' && <Learn state={state} onGoToReview={() => setTab('review')} />}
         {tab === 'review' && <ReviewSession state={state} />}
         {tab === 'add' && <AddCard state={state} />}
         {tab === 'decks' && <DeckList state={state} />}

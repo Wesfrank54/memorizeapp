@@ -43,22 +43,34 @@ import { GradedAnswer, type GradedMode } from './GradedAnswer.tsx'
 import { PassageRecall } from './PassageRecall.tsx'
 import { VerdictBanner } from './VerdictBanner.tsx'
 
-export function Learn({
-  state,
-  variant,
-  onGoToReview,
-}: {
-  state: AppState
-  variant: LearnTabMode
-  onGoToReview?: () => void
-}) {
-  const isAdaptive = variant === 'adaptive'
+interface ResumeSource {
+  p: PersistedLearn
+  key: LearnTabMode
+}
+
+/** First saved session (either former tab) that can actually be resumed. */
+function firstResumableSaved(): ResumeSource | null {
+  for (const key of ['adaptive', 'manual'] as const) {
+    const p = loadLearnResume(key)
+    if (p && isLearnResumable(p)) return { p, key }
+  }
+  return null
+}
+
+export function Learn({ state, onGoToReview }: { state: AppState; onGoToReview?: () => void }) {
+  // The unified Learn tab IS the (formerly separate) adaptive experience: each
+  // card starts from its own data, familiarity covers only unseen cards.
+  const variant: LearnTabMode = 'adaptive'
   const [deckId, setDeckId] = useState('')
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set())
   const [session, setSession] = useState<LearnSession | null>(null)
   const [revealed, setRevealed] = useState(false)
   const [selfVerdict, setSelfVerdict] = useState<boolean | null>(null)
-  const [savedResume, setSavedResume] = useState<PersistedLearn | null>(() => loadLearnResume(variant))
+  // Adopt a saved session from either former tab (manual sessions finish under
+  // their original semantics; new saves always land on the adaptive key). The
+  // source key travels with the payload so only the save the user acted on is
+  // ever cleared — a second save on the other key surfaces afterwards.
+  const [savedResume, setSavedResume] = useState<ResumeSource | null>(firstResumableSaved)
   const [setupStep, setSetupStep] = useState<'units' | 'familiarity'>('units')
   const [familiarity, setFamiliarity] = useState<FamiliarityLevel>('some')
 
@@ -74,10 +86,7 @@ export function Learn({
     [allUnits, selectedKeys],
   )
   // Weak-area targeting (adaptive tab): concepts you keep missing, weakest first.
-  const weakTargets = useMemo(
-    () => (isAdaptive ? weakUnitCandidates(state, deckCardIds) : []),
-    [state, deckCardIds, isAdaptive],
-  )
+  const weakTargets = useMemo(() => weakUnitCandidates(state, deckCardIds), [state, deckCardIds])
 
   useEffect(() => {
     setSelectedKeys(new Set())
@@ -118,6 +127,13 @@ export function Learn({
     })
   }
 
+  // Discard only the save the user acted on; if the other former tab still
+  // holds a resumable session, surface it instead of silently deleting it.
+  function dropOfferedResume() {
+    if (savedResume) clearLearnResume(savedResume.key)
+    setSavedResume(firstResumableSaved())
+  }
+
   function persistIfActive(s: LearnSession) {
     if (s.done) return
     const payload: PersistedLearn = {
@@ -127,12 +143,12 @@ export function Learn({
       unitKeys: [...selectedKeys],
     }
     saveLearnResume(payload, variant)
-    setSavedResume(payload)
+    setSavedResume({ p: payload, key: variant })
   }
 
   function finishSession(s: LearnSession) {
     clearLearnResume(variant)
-    setSavedResume(null)
+    setSavedResume(firstResumableSaved())
     if (s.graduatedCardIds.length > 0) addLearnHighlight(s.graduatedCardIds)
   }
 
@@ -155,13 +171,12 @@ export function Learn({
 
   function start() {
     if (chosenUnits.length === 0) return
-    clearLearnResume(variant)
-    setSavedResume(null)
+    dropOfferedResume()
     setSetupStep('units')
     setSession(
       startLearnFromUnits(state, chosenUnits, {
-        tabMode: variant,
-        familiarity: isAdaptive ? familiarity : undefined,
+        tabMode: 'adaptive',
+        familiarity,
       }),
     )
   }
@@ -171,8 +186,7 @@ export function Learn({
   // rung twice — spaced apart — so the material is actually drilled in.
   function startWeakDrill() {
     if (weakTargets.length === 0) return
-    clearLearnResume(variant)
-    setSavedResume(null)
+    dropOfferedResume()
     setSetupStep('units')
     setSession(
       startLearnFromUnits(state, weakTargets.map((t) => t.unit), {
@@ -186,8 +200,12 @@ export function Learn({
   }
 
   function resumeSaved() {
-    const p = loadLearnResume(variant)
-    if (!p || !isLearnResumable(p)) return
+    if (!savedResume) return
+    const { p, key } = savedResume
+    // The session is live from here and persists under the adaptive key —
+    // clear its source so a stale copy can't resurface later.
+    clearLearnResume(key)
+    setSavedResume(null)
     setDeckId(p.deckId)
     setSelectedKeys(new Set(p.unitKeys))
     if (p.session.familiarity) setFamiliarity(p.session.familiarity)
@@ -195,8 +213,7 @@ export function Learn({
   }
 
   function discardResume() {
-    clearLearnResume(variant)
-    setSavedResume(null)
+    dropOfferedResume()
   }
 
   function saveAndExit() {
@@ -267,7 +284,7 @@ export function Learn({
   const s = sessionTicked ?? session
 
   // ---- adaptive: familiarity step ----
-  if (!session && isAdaptive && setupStep === 'familiarity') {
+  if (!session && setupStep === 'familiarity') {
     const previewCards = chosenUnits.reduce((a, u) => a + u.cardIds.length, 0)
     return (
       <div className="panel form">
@@ -313,16 +330,15 @@ export function Learn({
   // ---- start screen ----
   if (!session) {
     const previewCards = chosenUnits.reduce((a, u) => a + u.cardIds.length, 0)
-    const gap = state.settings.learnSpacingGap ?? 2
     return (
       <div className="panel form">
-        <h2 className="opt-title">{isAdaptive ? 'Adaptive learn' : 'Learn'}</h2>
+        <h2 className="opt-title">Learn</h2>
         <p className="muted small">
-          {isAdaptive
-            ? 'Each card starts at a difficulty set by your own track record — recent answers and memory state. Brand-new cards use a one-time familiarity answer, and blank coverage adapts as you perform. Mastery graduates cards into FSRS.'
-            : 'Master one concept unit at a time, then cumulative review. You control spacing, coverage, and ladder options. Mastery graduates cards into your FSRS schedule.'}
+          Each card starts at a difficulty set by your own track record — recent answers and memory state.
+          Brand-new cards use a one-time familiarity answer, and blank coverage adapts as you perform. Mastery
+          graduates cards into your FSRS schedule.
         </p>
-        {isAdaptive ? (
+        {(
           <div className="panel inset weak-targets">
             <div className="row spread">
               <div className="stat-label">Weak areas</div>
@@ -358,7 +374,7 @@ export function Learn({
               </p>
             )}
           </div>
-        ) : null}
+        )}
         <div className="field">
           <label>Deck</label>
           <select value={deckId} onChange={(e) => setDeckId(e.target.value)}>
@@ -402,98 +418,46 @@ export function Learn({
             <p className="muted small">No cards in this deck.</p>
           )}
         </div>
-        {isAdaptive ? (
-          <div className="panel inset learn-adaptive-note">
-            <div className="stat-label">Auto-adjusted during session</div>
-            <p className="muted small">
-              Starting ladder rung from your familiarity · blank coverage ramps up when you answer well and eases off
-              when you miss · difficulty increases as you master cards
-            </p>
+        <div className="panel inset learn-adaptive-note">
+          <div className="stat-label">Auto-adjusted during session</div>
+          <p className="muted small">
+            Starting ladder rung from each card&apos;s track record · blank coverage ramps up when you answer well and
+            eases off when you miss · difficulty increases as you master cards
+          </p>
+        </div>
+        <details className="learn-customize">
+          <summary className="muted small">Customize</summary>
+          <div className="field">
+            <label>
+              Blank coverage (base){' '}
+              <span className="muted small">
+                {Math.round((state.settings.blankCoverage ?? ADAPTIVE_BASE_COVERAGE) * 100)}%
+              </span>
+            </label>
+            <input
+              type="range"
+              min={30}
+              max={100}
+              step={5}
+              value={Math.round((state.settings.blankCoverage ?? ADAPTIVE_BASE_COVERAGE) * 100)}
+              onChange={(e) => updateSettings({ blankCoverage: Number(e.target.value) / 100 })}
+            />
+            <div className="muted small">
+              starting point for fill-in-the-blank / recite density — still ramps with rung and performance
+            </div>
           </div>
-        ) : (
-          <>
-            <div className="field">
-              <label>
-                Spacing gap <span className="muted small">{gap} cards</span>
-              </label>
+          <div className="field learn-toggles">
+            <label className="unit-chip selectable">
               <input
-                type="range"
-                min={0}
-                max={5}
-                step={1}
-                value={gap}
-                onChange={(e) => updateSettings({ learnSpacingGap: Number(e.target.value) })}
+                type="checkbox"
+                checked={state.settings.learnUnitSynthesis !== false}
+                onChange={(e) => updateSettings({ learnUnitSynthesis: e.target.checked })}
               />
-              <div className="muted small">other cards shown before a missed card returns</div>
-            </div>
-            <div className="field">
-              <label>
-                Blank coverage{' '}
-                <span className="muted small">{Math.round((state.settings.blankCoverage ?? 0.6) * 100)}%</span>
-              </label>
-              <input
-                type="range"
-                min={30}
-                max={100}
-                step={10}
-                value={Math.round((state.settings.blankCoverage ?? 0.6) * 100)}
-                onChange={(e) => updateSettings({ blankCoverage: Number(e.target.value) / 100 })}
-              />
-              <div className="muted small">how much of each fill-in-the-blank / recite prompt is blanked</div>
-            </div>
-            <div className="field learn-toggles">
-              <label className="unit-chip selectable">
-                <input
-                  type="checkbox"
-                  checked={state.settings.learnInterleave !== false}
-                  onChange={(e) => updateSettings({ learnInterleave: e.target.checked })}
-                />
-                <span>Interleave cumulative review</span>
-              </label>
-              <label className="unit-chip selectable">
-                <input
-                  type="checkbox"
-                  checked={state.settings.learnAdaptiveLadder !== false}
-                  onChange={(e) => updateSettings({ learnAdaptiveLadder: e.target.checked })}
-                />
-                <span>Skip easy rungs from history</span>
-              </label>
-              <label className="unit-chip selectable">
-                <input
-                  type="checkbox"
-                  checked={state.settings.learnFsrsReviewRungs !== false}
-                  onChange={(e) => updateSettings({ learnFsrsReviewRungs: e.target.checked })}
-                />
-                <span>FSRS-informed review difficulty</span>
-              </label>
-              <label className="unit-chip selectable">
-                <input
-                  type="checkbox"
-                  checked={state.settings.learnGraduateFsrs !== false}
-                  onChange={(e) => updateSettings({ learnGraduateFsrs: e.target.checked })}
-                />
-                <span>Graduate mastered cards into FSRS</span>
-              </label>
-              <label className="unit-chip selectable">
-                <input
-                  type="checkbox"
-                  checked={!!state.settings.learnPretest}
-                  onChange={(e) => updateSettings({ learnPretest: e.target.checked })}
-                />
-                <span>Pre-test new cards (try before teach)</span>
-              </label>
-              <label className="unit-chip selectable">
-                <input
-                  type="checkbox"
-                  checked={state.settings.learnUnitSynthesis !== false}
-                  onChange={(e) => updateSettings({ learnUnitSynthesis: e.target.checked })}
-                />
-                <span>Full topic review after each multi-card unit</span>
-              </label>
-            </div>
-          </>
-        )}
-        {isLearnResumable(savedResume) ? (
+              <span>Full topic review after each multi-card unit</span>
+            </label>
+          </div>
+        </details>
+        {savedResume ? (
           <div className="learn-resume panel inset">
             <div className="row spread">
               <div className="stat-label">Resume saved session</div>
@@ -502,21 +466,17 @@ export function Learn({
               </button>
             </div>
             <p className="muted small">
-              {savedResume!.session.units.length} units · {savedResume!.session.masteredCount}/
-              {savedResume!.session.totalToMaster} mastered · saved{' '}
-              {new Date(savedResume!.savedAt).toLocaleString()}
+              {savedResume.p.session.units.length} units · {savedResume.p.session.masteredCount}/
+              {savedResume.p.session.totalToMaster} mastered · saved{' '}
+              {new Date(savedResume.p.savedAt).toLocaleString()}
             </p>
             <button type="button" className="primary" onClick={resumeSaved}>
               Resume
             </button>
           </div>
         ) : null}
-        <button
-          className="primary"
-          onClick={isAdaptive ? beginFamiliarityStep : start}
-          disabled={chosenUnits.length === 0}
-        >
-          {isAdaptive && unseenChosenCount > 0 ? 'Continue' : 'Start learning'}
+        <button className="primary" onClick={beginFamiliarityStep} disabled={chosenUnits.length === 0}>
+          {unseenChosenCount > 0 ? 'Continue' : 'Start learning'}
         </button>
       </div>
     )
@@ -570,11 +530,11 @@ export function Learn({
   }
 
   // ---- running ----
-  const baseCoverage = isAdaptive ? ADAPTIVE_BASE_COVERAGE : (state.settings.blankCoverage ?? 0.6)
+  const baseCoverage = state.settings.blankCoverage ?? ADAPTIVE_BASE_COVERAGE
 
   if (cur.unitSynthesis) {
     const unit = s.units[cur.unitSynthesis.unitIndex]
-    const synthCoverage = isAdaptive ? learnBlankCoverage(s, 0, ['blank'], baseCoverage) : baseCoverage
+    const synthCoverage = learnBlankCoverage(s, 0, ['blank'], baseCoverage)
     return (
       <div>
         <div className="learn-head">
@@ -627,13 +587,11 @@ export function Learn({
       <div className="learn-head">
         <span className="muted small">
           {phaseLabel(s)} · learned {s.masteredCount}/{s.totalToMaster}
-          {isAdaptive ? (
-            <span className="deferred-badge"> · {FAMILIARITY_LABELS[s.familiarity]}</span>
-          ) : null}
-          {isAdaptive && s.difficultyBias > 0 ? (
+          <span className="deferred-badge"> · {FAMILIARITY_LABELS[s.familiarity]}</span>
+          {s.difficultyBias > 0 ? (
             <span className="deferred-badge"> · difficulty +{Math.round(s.difficultyBias * 100)}%</span>
           ) : null}
-          {isAdaptive && Math.abs((s.coverageBias ?? 0.5) - 0.5) > 0.02 ? (
+          {Math.abs((s.coverageBias ?? 0.5) - 0.5) > 0.02 ? (
             <span className="deferred-badge">
               {' '}
               · coverage {s.coverageBias! > 0.5 ? '+' : ''}
