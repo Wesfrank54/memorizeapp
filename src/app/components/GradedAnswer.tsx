@@ -1,0 +1,196 @@
+import { useEffect, useMemo, useRef, useState } from 'react'
+import type { AppState, Card, Note } from '../../core/types.ts'
+import { cardAnswer } from '../../core/accountability.ts'
+import { blankIsWorthwhile, resolveGradedMode, type GradedMode } from '../../core/answer-modes.ts'
+import { gradeChoice, gradeText, makeChoices, normalize } from '../../core/grading.ts'
+import type { GradeResult } from '../../core/grading.ts'
+import { VerdictBanner } from './VerdictBanner.tsx'
+
+export type { GradedMode }
+
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
+
+/** First-letter cue for fill-blank mode, e.g. "Davy Jones" -> "D___ J____". */
+function firstLetterHint(answer: string): string {
+  return answer
+    .trim()
+    .split(/\s+/)
+    .map((w) => (w[0] ? w[0] + '_'.repeat(Math.max(0, w.length - 1)) : ''))
+    .join(' ')
+}
+
+/** Progressive hint: coverage 0 = first letters only; 1 = fully blanked words. */
+function progressiveHint(answer: string, coverage: number): string {
+  const c = Math.max(0, Math.min(1, coverage))
+  if (c <= 0.35) return firstLetterHint(answer)
+  return answer
+    .trim()
+    .split(/\s+/)
+    .map((w) => {
+      if (!w[0]) return ''
+      const reveal = Math.max(1, Math.round(w.length * (1 - c)))
+      return w.slice(0, reveal) + '_'.repeat(Math.max(0, w.length - reveal))
+    })
+    .join(' ')
+}
+
+export interface GradedAnswerContext {
+  mode: GradedMode
+  requested: GradedMode
+  fallbackReason?: string
+}
+
+/**
+ * Renders the answer interaction for one card in a graded mode and reports the
+ * result. Shared by the Review tab (drives SRS) and the Quiz tab (scoring only):
+ *   - typed / blank → free-text input, graded with near-miss tolerance
+ *   - mcq           → multiple choice from auto-generated distractors
+ * MCQ/blank requests downgrade to typed when quality gates fail (same rules as Learn).
+ */
+export function GradedAnswer({
+  state,
+  card,
+  note,
+  mode,
+  blankCoverage,
+  onGraded,
+}: {
+  state: AppState
+  card: Card
+  note: Note
+  mode: GradedMode
+  /** When set, blank mode uses progressive reveal (learn-mode rung scaling). */
+  blankCoverage?: number
+  onGraded: (r: GradeResult, ctx: GradedAnswerContext) => void
+}) {
+  const expected = cardAnswer(note, card)
+  const resolved = useMemo(
+    () => resolveGradedMode(state, card, note, mode),
+    [state, card, note, mode],
+  )
+  const activeMode = resolved.mode
+
+  const options = useMemo(
+    () => (activeMode === 'mcq' ? shuffle(makeChoices(state, card, note, 4)) : []),
+    [state, card, note, activeMode],
+  )
+
+  const [input, setInput] = useState('')
+  const [picked, setPicked] = useState<string | null>(null)
+  const [result, setResult] = useState<GradeResult | null>(null)
+  const advancedRef = useRef(false)
+
+  useEffect(() => {
+    setInput('')
+    setPicked(null)
+    setResult(null)
+  }, [card.id, activeMode])
+
+  function advance() {
+    if (!result || advancedRef.current) return
+    advancedRef.current = true
+    onGraded(result, {
+      mode: activeMode,
+      requested: resolved.requested,
+      fallbackReason: resolved.fallbackReason,
+    })
+  }
+
+  useEffect(() => {
+    if (!result) return
+    const graded = result
+    const ctx: GradedAnswerContext = {
+      mode: activeMode,
+      requested: resolved.requested,
+      fallbackReason: resolved.fallbackReason,
+    }
+    advancedRef.current = false
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== 'Enter') return
+      e.preventDefault()
+      if (advancedRef.current) return
+      advancedRef.current = true
+      onGraded(graded, ctx)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [result, onGraded, activeMode, resolved.requested, resolved.fallbackReason])
+
+  function submitText() {
+    if (!result) setResult(gradeText(expected, input))
+  }
+  function pick(opt: string) {
+    if (result) return
+    setPicked(opt)
+    setResult(gradeChoice(expected, opt))
+  }
+
+  const feedback = result && (
+    <div className="graded-feedback">
+      <VerdictBanner correct={result.correct} near={result.near} expected={expected} />
+      <button className="primary reveal" autoFocus onClick={advance}>
+        Next <span className="hint">enter</span>
+      </button>
+    </div>
+  )
+
+  const fallbackNote =
+    resolved.fallbackReason && (
+      <p className="muted small mode-fallback-note">{resolved.fallbackReason}</p>
+    )
+
+  if (activeMode === 'mcq') {
+    return (
+      <div className="graded">
+        {fallbackNote}
+        <div className="mcq-options">
+          {options.map((opt) => {
+            const isCorrect = normalize(opt) === normalize(expected)
+            const cls = result ? (isCorrect ? 'mcq-correct' : opt === picked ? 'mcq-wrong' : '') : ''
+            return (
+              <button key={opt} className={`mcq-option ${cls}`} disabled={!!result} onClick={() => pick(opt)}>
+                {opt}
+              </button>
+            )
+          })}
+        </div>
+        {feedback}
+      </div>
+    )
+  }
+
+  return (
+    <div className="graded">
+      {fallbackNote}
+      {!result ? (
+        <>
+          {activeMode === 'blank' && blankIsWorthwhile(expected) && (
+            <div className="blank-hint">
+              {blankCoverage !== undefined ? progressiveHint(expected, blankCoverage) : firstLetterHint(expected)}
+            </div>
+          )}
+          <input
+            className="cp-input"
+            autoFocus
+            value={input}
+            placeholder={activeMode === 'blank' ? 'fill in the blank…' : 'type the answer from memory…'}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && submitText()}
+          />
+          <button className="primary reveal" onClick={submitText}>
+            Submit
+          </button>
+        </>
+      ) : (
+        feedback
+      )}
+    </div>
+  )
+}

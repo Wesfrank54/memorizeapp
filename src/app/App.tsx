@@ -1,0 +1,56 @@
+import { useState } from 'react'
+import { useStore } from './useStore.ts'
+import { Nav } from './components/Nav.tsx'
+import { ReviewSession } from './components/ReviewSession.tsx'
+import { AddCard } from './components/AddCard.tsx'
+import { DeckList } from './components/DeckList.tsx'
+import { ImportCsv } from './components/ImportCsv.tsx'
+import { Stats } from './components/Stats.tsx'
+import { Optimize } from './components/Optimize.tsx'
+import { SyncBar } from './components/SyncBar.tsx'
+import { Commitments } from './components/Commitments.tsx'
+import { Quiz } from './components/Quiz.tsx'
+import { Learn } from './components/Learn.tsx'
+
+export type Tab =
+  | 'learn'
+  | 'learn-adaptive'
+  | 'review'
+  | 'add'
+  | 'decks'
+  | 'import'
+  | 'stats'
+  | 'quiz'
+  | 'tune'
+  | 'commitments'
+
+export function App() {
+  const state = useStore()
+  const [tab, setTab] = useState<Tab>('learn')
+
+  return (
+    <div className="app">
+      <header className="topbar">
+        <div className="brand">
+          memorize <span className="tag">MVP</span>
+        </div>
+        <Nav tab={tab} setTab={setTab} state={state} />
+      </header>
+      <SyncBar />
+      <main className="content">
+        {tab === 'learn' && <Learn state={state} variant="manual" onGoToReview={() => setTab('review')} />}
+        {tab === 'learn-adaptive' && (
+          <Learn state={state} variant="adaptive" onGoToReview={() => setTab('review')} />
+        )}
+        {tab === 'review' && <ReviewSession state={state} />}
+        {tab === 'add' && <AddCard state={state} />}
+        {tab === 'decks' && <DeckList state={state} />}
+        {tab === 'import' && <ImportCsv />}
+        {tab === 'stats' && <Stats state={state} />}
+        {tab === 'quiz' && <Quiz state={state} />}
+        {tab === 'tune' && <Optimize state={state} />}
+        {tab === 'commitments' && <Commitments state={state} />}
+      </main>
+    </div>
+  )
+}

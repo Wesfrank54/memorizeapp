@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "es2022",
+    "lib": ["es2023", "dom", "dom.iterable"],
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "types": ["node"],
+    // Support alias for db/ (schema) location used in dynamic PS imports.
+    // Keeps db/ *outside* "include" (so excluded from typecheck until/if desired),
+    // matching the design reason (db/ mirrors spike, not forced into src/ bundle for typecheck).
+    // Vite alias in vite.config.ts provides the runtime/build mapping.
+    "baseUrl": ".",
+    "paths": {
+      "@db/*": ["db/*"]
+    }
+  },
+  "include": ["src", "test", "server"]
+}

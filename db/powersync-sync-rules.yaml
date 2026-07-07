@@ -1,0 +1,41 @@
+# PowerSync sync rules — what each client pulls into its local SQLite.
+# Ported/extended from ../memorize-spike/db/powersync-sync-rules.yaml for
+# memorize-app Phase 5 subtask 3e (full AppState client schema) + phase5-4 (grave + updated_at).
+#
+# One bucket per authenticated user. `request.user_id()` is read from the JWT
+# PowerSync validates, so a client can only ever sync its own rows. The
+# append-only review_log is the bulk of the traffic and merges as a pure union;
+# cards/notes/decks are small and last-writer-wins per row.
+#
+# Extended here to cover the full AppState from types.ts:
+# - core tables (as in spike)
+# - fsrs_params (carries Settings: weights + desiredRetention + newPerDay + opts)
+# - commitment + checkpoint (app-specific Phase 4 tables)
+#
+# Decision note (see client-schema.ts and subtask 3e):
+# Sync currently ignores commitments/checkpoints (local-only in store + exportPush).
+# We include them in the bucket so the schema + rules represent *complete*
+# readiness for AppState. Follow-on work will extend:
+#   - sync-protocol.ts (PushBody / PullResponse)
+#   - sync.ts (exportPush / applyRemote)
+#   - server/storage.ts (toy path)
+#   - runtime + store
+# Once done, commitments/checkpoints will sync exactly like graves (LWW or union).
+# For now, if using the powersync backend stub they remain client-local.
+# (Alternatively we could omit them from rules to keep "ignores" behavior.)
+
+bucket_definitions:
+  user_data:
+    # Parameter query: defines the bucket(s) this user belongs to.
+    parameters: SELECT request.user_id() AS user_id
+    # Data queries: the rows that go into the bucket.
+    data:
+      - SELECT * FROM deck       WHERE user_id = bucket.user_id
+      - SELECT * FROM note       WHERE user_id = bucket.user_id
+      - SELECT * FROM card       WHERE user_id = bucket.user_id
+      - SELECT * FROM review_log WHERE user_id = bucket.user_id
+      - SELECT * FROM grave      WHERE user_id = bucket.user_id   # phase5-4: tombstones/grave for delete propagation + prune (target_id)
+      - SELECT * FROM fsrs_params WHERE user_id = bucket.user_id
+      # App extensions (full AppState):
+      - SELECT * FROM commitment  WHERE user_id = bucket.user_id
+      - SELECT * FROM checkpoint  WHERE user_id = bucket.user_id
