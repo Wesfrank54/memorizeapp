@@ -101,7 +101,8 @@ export function OrderPractice() {
       </div>
 
       <p className="order-instructions muted small">
-        Drag rows into order (1 = first). Use ▲▼ if drag is awkward on your device.
+        Drag rows into the correct sequence. The number on the left is the slot you are filling (1st, 2nd, …) — not
+        printed on each card. Use ▲▼ if drag is awkward on your device.
       </p>
 
       <OrderSortList

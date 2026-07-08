@@ -74,7 +74,9 @@ export function OrderSortList({
               onDrop(index)
             }}
           >
-            <span className="order-slot-num">{index + 1}</span>
+            <span className="order-slot-num" title="Your position in the list">
+              {index + 1}
+            </span>
             <div className="order-row-body">
               <div className="order-row-label">{row.label}</div>
               {row.detail ? <div className="order-row-detail">{row.detail}</div> : null}
