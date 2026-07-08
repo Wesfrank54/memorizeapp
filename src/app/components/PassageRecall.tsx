@@ -80,19 +80,42 @@ export function PassageRecall({
   )
 
   const advancedRef = useRef(false)
+  /** After checking with Enter, must release before a second Enter can advance. */
+  const advanceReadyRef = useRef(false)
   const nextRef = useRef<() => void>(() => {})
   const inputRefs = useRef<Record<number, HTMLInputElement | null>>({})
 
   useEffect(() => {
     advancedRef.current = false
-  }, [idx, checked, fullChecked, roundIdx])
+    advanceReadyRef.current = false
+  }, [idx, roundIdx, phase])
+
+  useEffect(() => {
+    function onKeyUp(e: KeyboardEvent) {
+      if (e.key === 'Enter') advanceReadyRef.current = true
+    }
+    window.addEventListener('keyup', onKeyUp)
+    return () => window.removeEventListener('keyup', onKeyUp)
+  }, [])
+
+  useEffect(() => {
+    if (phase !== 'practice' || checked) return
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== 'Enter') return
+      e.preventDefault()
+      advanceReadyRef.current = false
+      setChecked(true)
+    }
+    window.addEventListener('keydown', onKey, true)
+    return () => window.removeEventListener('keydown', onKey, true)
+  }, [phase, checked])
 
   useEffect(() => {
     if (phase !== 'practice' || !checked) return
     function onKey(e: KeyboardEvent) {
       if (e.key !== 'Enter') return
       e.preventDefault()
-      if (advancedRef.current) return
+      if (!advanceReadyRef.current || advancedRef.current) return
       if (!linePasses()) return
       advancedRef.current = true
       nextRef.current()
@@ -130,6 +153,7 @@ export function PassageRecall({
     function onKey(e: KeyboardEvent) {
       if (e.key !== 'Enter' || e.shiftKey) return
       e.preventDefault()
+      advanceReadyRef.current = false
       const { total, correct } = gradePassageChunk(text, input)
       const score = total ? correct / total : 1
       setFinishScore(score)
@@ -146,6 +170,8 @@ export function PassageRecall({
     function onKey(e: KeyboardEvent) {
       if (e.key !== 'Enter') return
       e.preventDefault()
+      if (!advanceReadyRef.current || advancedRef.current) return
+      advancedRef.current = true
       onDone(score)
     }
     window.addEventListener('keydown', onKey)
@@ -199,11 +225,12 @@ export function PassageRecall({
   }
   nextRef.current = nextStep
 
-  function checkFull() {
+  function checkFull(readyToAdvance = true) {
     const { total, correct } = gradePassageChunk(text, fullInput)
     const score = total ? correct / total : 1
     setFinishScore(score)
     setFullChecked(true)
+    advanceReadyRef.current = readyToAdvance
   }
 
   if (chunks.length === 0) {
@@ -247,7 +274,10 @@ export function PassageRecall({
                 Words turn <span className="w-ok">green</span> when right and <span className="w-no">red</span> when
                 off.
               </span>
-              <span className="passage-live-hint"> Press Enter to check (Shift+Enter for a new line).</span>
+              <span className="passage-live-hint">
+                {' '}
+                Enter to check, then Enter again to continue (Shift+Enter for a new line).
+              </span>
             </>
           )}
         </p>
@@ -262,7 +292,12 @@ export function PassageRecall({
               autoFocus
               onChange={(e) => setFullInput(e.target.value)}
             />
-            <button type="button" className="primary reveal" disabled={!fullInput.trim()} onClick={checkFull}>
+            <button
+              type="button"
+              className="primary reveal"
+              disabled={!fullInput.trim()}
+              onClick={() => checkFull()}
+            >
               Check full passage <span className="hint">enter</span>
             </button>
           </>
@@ -284,6 +319,8 @@ export function PassageRecall({
                 onClick={() => {
                   setFullChecked(false)
                   setFinishScore(null)
+                  advancedRef.current = false
+                  advanceReadyRef.current = false
                 }}
               >
                 Try again
@@ -317,8 +354,10 @@ export function PassageRecall({
     const isRight = (j: number) => normWord(vals[j] ?? '') === normWord(words[j])
     const order = [...blanks]
     const target = order.find((j) => j > afterI && !isRight(j)) ?? order.find((j) => j < afterI && !isRight(j))
-    if (target === undefined) setChecked(true)
-    else inputRefs.current[target]?.focus()
+    if (target === undefined) {
+      setChecked(true)
+      advanceReadyRef.current = true
+    } else inputRefs.current[target]?.focus()
   }
 
   const isLastStep =
@@ -374,6 +413,7 @@ export function PassageRecall({
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               e.preventDefault()
+              advanceReadyRef.current = false
               setChecked(true)
             }
           }}
@@ -413,8 +453,14 @@ export function PassageRecall({
       </div>
 
       {!checked ? (
-        <button className="primary reveal" onClick={() => setChecked(true)}>
-          {isCumulative ? 'Check section' : 'Check line'}
+        <button
+          className="primary reveal"
+          onClick={() => {
+            advanceReadyRef.current = true
+            setChecked(true)
+          }}
+        >
+          {isCumulative ? 'Check section' : 'Check line'} <span className="hint">enter</span>
         </button>
       ) : (
         <>
@@ -441,6 +487,7 @@ export function PassageRecall({
               onClick={() => {
                 setChecked(false)
                 advancedRef.current = false
+                advanceReadyRef.current = false
               }}
             >
               {isCumulative ? 'Try this section again' : 'Try this line again'}
