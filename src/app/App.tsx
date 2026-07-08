@@ -12,6 +12,7 @@ import { Commitments } from './components/Commitments.tsx'
 import { Quiz } from './components/Quiz.tsx'
 import { Learn } from './components/Learn.tsx'
 import { ImageTestingBeta } from './components/ImageTestingBeta.tsx'
+import { OrderPractice } from './components/OrderPractice.tsx'
 
 export type Tab =
   | 'learn'
@@ -21,6 +22,7 @@ export type Tab =
   | 'import'
   | 'stats'
   | 'quiz'
+  | 'order'
   | 'tune'
   | 'commitments'
   | 'image-beta'
@@ -46,6 +48,7 @@ export function App() {
         {tab === 'import' && <ImportCsv />}
         {tab === 'stats' && <Stats state={state} />}
         {tab === 'quiz' && <Quiz state={state} />}
+        {tab === 'order' && <OrderPractice />}
         {tab === 'tune' && <Optimize state={state} />}
         {tab === 'commitments' && <Commitments state={state} />}
         {tab === 'image-beta' && <ImageTestingBeta state={state} />}

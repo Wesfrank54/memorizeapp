@@ -12,6 +12,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'import', label: 'Import' },
   { id: 'stats', label: 'Stats' },
   { id: 'quiz', label: 'Quiz' },
+  { id: 'order', label: 'Order' },
   { id: 'tune', label: 'Tune' },
   { id: 'commitments', label: 'Commitments' },
   { id: 'image-beta', label: 'Image Testing beta' },
