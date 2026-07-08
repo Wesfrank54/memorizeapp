@@ -3,6 +3,7 @@ import {
   buildPassagePracticeRounds,
   firstLetterCue,
   gradePassageChunk,
+  passageWantsFullRecall,
   PASSAGE_PASS_SCORE,
   selectBlanks,
   splitPassage,
@@ -33,14 +34,14 @@ export function PassageRecall({
   onDone: (score: number) => void
 }) {
   const chunks = useMemo(() => splitPassage(text), [text])
-  const wantsFullRecall = fullRecall ?? chunks.length > 1
+  const wantsFullRecall = fullRecall ?? passageWantsFullRecall(text)
   const chunkWordCounts = useMemo(
     () => chunks.map((c) => c.split(/\s+/).filter(Boolean).length),
     [chunks],
   )
   const rounds = useMemo(
-    () => buildPassagePracticeRounds(coverage, chunkWordCounts, wantsFullRecall),
-    [coverage, chunkWordCounts, wantsFullRecall],
+    () => buildPassagePracticeRounds(coverage, chunkWordCounts),
+    [coverage, chunkWordCounts],
   )
 
   const [phase, setPhase] = useState<Phase>('study')
@@ -189,10 +190,10 @@ export function PassageRecall({
     return g.total === 0 || g.correct / g.total >= PASSAGE_PASS_SCORE
   }
 
-  function finishPractice() {
+  function finishPractice(practiceScore?: number) {
     if (wantsFullRecall) setPhase('full')
     else {
-      setFinishScore(1)
+      setFinishScore(practiceScore ?? 1)
       setPhase('finish')
     }
   }
@@ -204,12 +205,18 @@ export function PassageRecall({
     setChecked(false)
   }
 
+  function practiceScore(): number {
+    const g = gradeLine()
+    return g.total ? g.correct / g.total : 1
+  }
+
   function nextStep() {
     if (!linePasses()) return
+    const score = practiceScore()
 
     if (isCumulative) {
       if (roundIdx + 1 < rounds.length) startNextRound()
-      else finishPractice()
+      else finishPractice(score)
       return
     }
 
@@ -221,7 +228,7 @@ export function PassageRecall({
     }
 
     if (roundIdx + 1 < rounds.length) startNextRound()
-    else finishPractice()
+    else finishPractice(score)
   }
   nextRef.current = nextStep
 
@@ -337,7 +344,7 @@ export function PassageRecall({
     const passed = finishScore >= PASSAGE_PASS_SCORE
     return (
       <div className="graded passage-recall">
-        <VerdictBanner correct={passed} detail={`${pct}% of the full passage correct`} />
+        <VerdictBanner correct={passed} detail={`${pct}% of blanks correct`} />
         <button className="primary reveal" autoFocus onClick={() => onDone(finishScore)}>
           Continue <span className="hint">enter</span>
         </button>

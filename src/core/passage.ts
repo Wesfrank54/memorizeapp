@@ -90,8 +90,8 @@ export interface PassagePracticeRound {
   blankVariant?: number
 }
 
-/** Passages at least this many words long earn a full typed-recall capstone in Learn. */
-export const FULL_RECALL_MIN_WORDS = 10
+/** Passages at least this many words long earn a typed full-passage capstone after blank practice. */
+export const FULL_RECALL_MIN_WORDS = 7
 
 /**
  * Whether a Learn passage exercise should end with typing the full passage from
@@ -146,15 +146,10 @@ function pushRotationRounds(
 export function buildPassagePracticeRounds(
   baseCoverage: number,
   chunkWordCounts: number[],
-  wantsFullRecall: boolean,
 ): PassagePracticeRound[] {
   const bc = Math.max(0.3, Math.min(1, baseCoverage))
   const chunkCount = chunkWordCounts.length
   const maxWords = chunkWordCounts.length ? Math.max(...chunkWordCounts) : 0
-
-  if (!wantsFullRecall) {
-    return [{ kind: 'lines', coverage: bc, title: 'Recall' }]
-  }
 
   if (chunkCount <= 1) {
     const warm = Math.min(0.55, bc * 0.75)

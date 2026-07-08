@@ -11,15 +11,16 @@ import {
   splitPassage,
 } from '../src/core/passage.ts'
 
-test('passageWantsFullRecall: substantial passages get the typed capstone, short clozes stay blanks-only', () => {
+test('passageWantsFullRecall: recitations get the typed capstone, very short clozes stay blanks-only', () => {
   const mission =
     'The mission of the Navy is to recruit, train, equip, and organize to deliver combat ready Naval forces to win conflicts and wars while maintaining security and deterrence through sustained forward presence.'
   assert.equal(passageWantsFullRecall(mission), true)
+  assert.equal(passageWantsFullRecall('Give the alarm in case of fire or disorder.'), true)
   assert.equal(passageWantsFullRecall('The capital of France is Paris.'), false)
 })
 
 test('single-chunk passage gets warm-up, blank rotations, then full-line before capstone', () => {
-  const rounds = buildPassagePracticeRounds(0.6, [12], true)
+  const rounds = buildPassagePracticeRounds(0.6, [12])
   assert.equal(rounds[0].title, 'Warm-up')
   assert.ok(rounds.some((r) => r.title.startsWith('Rotation') || r.title === 'Cover every word'))
   assert.equal(rounds.at(-1)?.title, 'Full line')
@@ -95,26 +96,28 @@ test('rotationPassesForFullCoverage counts passes until every word is blanked on
 })
 
 test('buildPassagePracticeRounds adds rotations before full-coverage rounds', () => {
-  const single = buildPassagePracticeRounds(0.8, [14], true)
+  const single = buildPassagePracticeRounds(0.8, [14])
   const fullLineIdx = single.findIndex((r) => r.title === 'Full line')
   assert.ok(fullLineIdx > 0)
   assert.ok(single.slice(0, fullLineIdx).some((r) => r.blankVariant !== undefined))
   assert.ok(single[0].coverage < single[fullLineIdx].coverage)
 
-  const multi = buildPassagePracticeRounds(0.8, [10, 10, 10], true)
+  const multi = buildPassagePracticeRounds(0.8, [10, 10, 10])
   assert.ok(multi.length >= 5)
   assert.equal(multi[0].kind, 'lines')
   const eachLine = multi.findIndex((r) => r.title === 'Each line')
   assert.ok(multi.slice(0, eachLine).some((r) => r.blankVariant !== undefined))
 
-  const long = buildPassagePracticeRounds(0.8, [8, 8, 8, 8, 8, 8], true)
+  const long = buildPassagePracticeRounds(0.8, [8, 8, 8, 8, 8, 8])
   const cum = long.filter((r) => r.kind === 'cumulative')
   assert.ok(cum.length >= 4)
   const allLinesIdx = long.findIndex((r) => r.title === 'All lines')
   assert.ok(long.slice(0, allLinesIdx).some((r) => r.blankVariant !== undefined))
 
-  const noFull = buildPassagePracticeRounds(0.6, [5, 5, 5, 5, 5], false)
-  assert.deepEqual(noFull, [{ kind: 'lines', coverage: 0.6, title: 'Recall' }])
+  const go8 = buildPassagePracticeRounds(0.6, [9])
+  assert.ok(go8.length >= 3, 'short recitations still get warm-up, rotations, and full line')
+  assert.equal(go8.at(-1)?.title, 'Full line')
+  assert.equal(go8.at(-1)?.coverage, 1)
 })
 
 test('livePassageMarks colors complete words and the word in progress', () => {
