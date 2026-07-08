@@ -1,6 +1,13 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { answerShape, mcqAnswerGroup, sameMcqGroup, sameShape, synthesizeDistractors } from '../src/core/distractors.ts'
+import {
+  answerShape,
+  canonicalMcqGroup,
+  mcqAnswerGroup,
+  sameMcqGroup,
+  sameShape,
+  synthesizeDistractors,
+} from '../src/core/distractors.ts'
 import { makeChoices } from '../src/core/grading.ts'
 import { mcqIsWorthwhile } from '../src/core/answer-modes.ts'
 import { cardLadder } from '../src/core/learn.ts'
@@ -124,6 +131,34 @@ test('mcqIsWorthwhile: date and bare-count facts now qualify; article labels sti
   assert.equal(mcqIsWorthwhile(s, bday.card, bday.note, "When is the Navy's birthday?", '13 October 1775'), true)
   assert.equal(mcqIsWorthwhile(s, count.card, count.note, 'How many general orders are there?', '11'), true)
   assert.equal(mcqIsWorthwhile(s, art.card, art.note, 'Which article covers escape?', 'Article 3'), false)
+})
+
+test('canonicalMcqGroup unifies ranks-marine-enlisted and marine-enlisted-rank', () => {
+  assert.equal(canonicalMcqGroup('ranks-marine-enlisted'), 'marine-enlisted-rank')
+  assert.equal(canonicalMcqGroup('marine-enlisted-rank'), 'marine-enlisted-rank')
+  assert.equal(sameMcqGroup('ranks-marine-enlisted', 'marine-enlisted-rank'), true)
+})
+
+test('makeChoices: duplicate rank imports from both decks still get distractors', () => {
+  const s = emptyState()
+  addBasic(s, 'ranks', 'marine-enlisted-rank', 'Marine enlisted rank — E-2?', 'Private First Class (PFC)')
+  addBasic(s, 'ranks', 'marine-enlisted-rank', 'Marine enlisted rank — E-3?', 'Lance Corporal (LCpl)')
+  addBasic(s, 'ranks', 'marine-enlisted-rank', 'Marine enlisted rank — E-4?', 'Corporal (Cpl)')
+  addBasic(s, 'ranks', 'marine-enlisted-rank', 'Marine enlisted rank — E-5?', 'Sergeant (Sgt)')
+  const { card, note } = addBasic(
+    s,
+    'marine',
+    'ranks-marine-enlisted',
+    'Marine enlisted rank — E-1?',
+    'Private (Pvt)',
+  )
+  addBasic(s, 'marine', 'ranks-marine-enlisted', 'Marine enlisted rank — E-2?', 'Private First Class (PFC)')
+  addBasic(s, 'marine', 'ranks-marine-enlisted', 'Marine enlisted rank — E-3?', 'Lance Corporal (LCpl)')
+  addBasic(s, 'marine', 'ranks-marine-enlisted', 'Marine enlisted rank — E-4?', 'Corporal (Cpl)')
+
+  const opts = makeChoices(s, card, note, 4)
+  assert.equal(opts.length, 4, 'mixed-tag duplicate imports should still yield 4 MCQ options')
+  assert.ok(opts.includes('Private (Pvt)'))
 })
 
 test('mcqAnswerGroup: rank tags differ from collar/shoulder tags', () => {

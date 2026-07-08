@@ -81,25 +81,32 @@ export function makeChoices(state: AppState, card: Card, note: Note, n = 4): str
   const myTags = new Set(note.tags)
 
   type Cand = { text: string; sameTag: boolean; sameDeck: boolean; sameGroup: boolean }
-  const seen = new Set<string>([normalize(correct)])
-  const cands: Cand[] = []
+  const candByKey = new Map<string, Cand>()
   for (const c of state.cards) {
     if (c.id === card.id) continue
     const nn = notesById.get(c.noteId)
     if (!nn) continue
     const text = cardAnswer(nn, c)
     const key = normalize(text)
-    if (!key || seen.has(key)) continue
-    seen.add(key)
+    if (!key || key === normalize(correct)) continue
     const candQ = renderContent(nn, c).question
     const candGroup = mcqAnswerGroup(nn.tags, candQ, text)
-    cands.push({
+    const entry: Cand = {
       text,
       sameTag: nn.tags.some((t) => myTags.has(t)),
       sameDeck: c.deckId === card.deckId,
       sameGroup: sameMcqGroup(myGroup, candGroup),
-    })
+    }
+    const prev = candByKey.get(key)
+    if (prev) {
+      // Duplicate imports (e.g. ranks-marine-enlisted vs marine-enlisted-rank):
+      // keep the variant that matches this card's semantic group.
+      if (!prev.sameGroup && entry.sameGroup) candByKey.set(key, entry)
+      continue
+    }
+    candByKey.set(key, entry)
   }
+  const cands = [...candByKey.values()]
   cands.sort(
     (a, b) =>
       Number(b.sameGroup) - Number(a.sameGroup) ||

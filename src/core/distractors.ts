@@ -13,9 +13,11 @@ export type McqAnswerGroup = string | null
 
 /** Tags that pin rank/insignia answer types (navy-officer-rank, marine-officer-collar, …). */
 const MCQ_INSIGNIA_TAG_RE = /-(?:rank|collar|sleeve|shoulder)$/i
+/** Alternate rank tags from ODS_Knowledge_deck (ranks-marine-enlisted, ranks-navy-officer, …). */
+const MCQ_RANKS_PREFIX_TAG_RE = /^ranks-(?:navy|marine|army|airforce|coastguard)-(?:officer|enlisted)$/i
 
 const RANK_TITLE_RE =
-  /\b(?:admiral|lieutenant|captain|ensign|commander|colonel|general|sergeant|corporal|petty officer|seaman|warrant|chief petty|master chief|brigadier|major)\b/i
+  /\b(?:admiral|lieutenant|captain|ensign|commander|colonel|general|sergeant|corporal|private|petty officer|seaman|warrant|chief petty|master chief|brigadier|major)\b/i
 const RANK_ABBR_RE = /\([A-Za-z0-9]{2,6}\)\s*$/
 const INSIGNIA_DESC_RE =
   /^(?:none|one|two|three|four|five)\s+(?:gold|silver|thin|diagonal|single)\b/i
@@ -54,19 +56,29 @@ function mcqGroupFromAnswer(answer: string): McqAnswerGroup {
 
 function pickGroupingTag(tags: string[]): string | null {
   for (const tag of tags) {
-    if (MCQ_INSIGNIA_TAG_RE.test(tag) || tag.toLowerCase() === 'corps-devices') return tag.toLowerCase()
+    const t = tag.toLowerCase()
+    if (MCQ_INSIGNIA_TAG_RE.test(t) || MCQ_RANKS_PREFIX_TAG_RE.test(t) || t === 'corps-devices') return t
   }
   if (tags.length === 1) return tags[0].toLowerCase()
   return null
 }
 
+/** Unify rank tag spellings so duplicate imports still share distractors. */
+export function canonicalMcqGroup(g: McqAnswerGroup): McqAnswerGroup {
+  if (g === null) return null
+  const t = g.toLowerCase()
+  const m = t.match(/^ranks-(navy|marine|army|airforce|coastguard)-(officer|enlisted)$/)
+  if (m) return `${m[1]}-${m[2]}-rank`
+  return t
+}
+
 /** Classify an answer for same-type MCQ grouping (tags preferred, then question/answer cues). */
 export function mcqAnswerGroup(tags: string[], question?: string, answer?: string): McqAnswerGroup {
   const fromTag = pickGroupingTag(tags)
-  if (fromTag) return fromTag
+  if (fromTag) return canonicalMcqGroup(fromTag)
   if (question) {
     const fromQ = mcqGroupFromQuestion(question)
-    if (fromQ) return fromQ
+    if (fromQ) return canonicalMcqGroup(fromQ)
   }
   if (answer) return mcqGroupFromAnswer(answer)
   return null
@@ -85,7 +97,7 @@ function mcqGroupFamily(g: McqAnswerGroup): string | null {
 /** True when two answers may appear together as MCQ foils. */
 export function sameMcqGroup(a: McqAnswerGroup, b: McqAnswerGroup): boolean {
   if (a === null || b === null) return true
-  return mcqGroupFamily(a) === mcqGroupFamily(b)
+  return mcqGroupFamily(canonicalMcqGroup(a)) === mcqGroupFamily(canonicalMcqGroup(b))
 }
 
 export type AnswerShape =
