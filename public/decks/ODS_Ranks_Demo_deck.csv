@@ -1,0 +1,172 @@
+type,deck,front,back,text,image,tags
+basic,ODS Ranks Demo (PDF),Navy officer rank — W-2?,Chief Warrant Officer Two (CWO2),,,navy-officer-rank
+basic,ODS Ranks Demo (PDF),Navy officer rank — W-3?,Chief Warrant Officer Three (CWO3),,,navy-officer-rank
+basic,ODS Ranks Demo (PDF),Navy officer rank — W-4?,Chief Warrant Officer Four (CWO4),,,navy-officer-rank
+basic,ODS Ranks Demo (PDF),Navy officer rank — W-5?,Chief Warrant Officer Five (CWO5),,,navy-officer-rank
+basic,ODS Ranks Demo (PDF),Navy officer rank — O-1?,Ensign (ENS),,,navy-officer-rank
+basic,ODS Ranks Demo (PDF),Navy officer rank — O-2?,Lieutenant Junior Grade (LTJG),,,navy-officer-rank
+basic,ODS Ranks Demo (PDF),Navy officer rank — O-3?,Lieutenant (LT),,,navy-officer-rank
+basic,ODS Ranks Demo (PDF),Navy officer rank — O-4?,Lieutenant Commander (LCDR),,,navy-officer-rank
+basic,ODS Ranks Demo (PDF),Navy officer rank — O-5?,Commander (CDR),,,navy-officer-rank
+basic,ODS Ranks Demo (PDF),Navy officer rank — O-6?,Captain (CAPT),,,navy-officer-rank
+basic,ODS Ranks Demo (PDF),Navy officer rank — O-7?,Rear Admiral Lower Half (RDML),,,navy-officer-rank
+basic,ODS Ranks Demo (PDF),Navy officer rank — O-8?,Rear Admiral (RADM),,,navy-officer-rank
+basic,ODS Ranks Demo (PDF),Navy officer rank — O-9?,Vice Admiral (VADM),,,navy-officer-rank
+basic,ODS Ranks Demo (PDF),Navy officer rank — O-10?,Admiral (ADM),,,navy-officer-rank
+basic,ODS Ranks Demo (PDF),Navy officer rank — O-11?,Fleet Admiral (FADM),,,navy-officer-rank
+basic,ODS Ranks Demo (PDF),Navy officer collar device — W-2 CWO2?,Gold bar with three blue breaks,,,navy-officer-collar
+basic,ODS Ranks Demo (PDF),Navy officer collar device — W-3 CWO3?,Silver bar with two blue breaks,,,navy-officer-collar
+basic,ODS Ranks Demo (PDF),Navy officer collar device — W-4 CWO4?,Silver bar with three blue breaks,,,navy-officer-collar
+basic,ODS Ranks Demo (PDF),Navy officer collar device — W-5 CWO5?,Silver bar with one 1/8-inch horizontal blue line,,,navy-officer-collar
+basic,ODS Ranks Demo (PDF),Navy officer collar device — O-1 ENS?,One gold bar,,,navy-officer-collar
+basic,ODS Ranks Demo (PDF),Navy officer collar device — O-2 LTJG?,One silver bar,,,navy-officer-collar
+basic,ODS Ranks Demo (PDF),Navy officer collar device — O-3 LT?,Two silver bars,,,navy-officer-collar
+basic,ODS Ranks Demo (PDF),Navy officer collar device — O-4 LCDR?,Gold oak leaf,,,navy-officer-collar
+basic,ODS Ranks Demo (PDF),Navy officer collar device — O-5 CDR?,Silver oak leaf,,,navy-officer-collar
+basic,ODS Ranks Demo (PDF),Navy officer collar device — O-6 CAPT?,Silver eagle,,,navy-officer-collar
+basic,ODS Ranks Demo (PDF),Navy officer collar device — O-7 RDML?,One silver five-pointed star,,,navy-officer-collar
+basic,ODS Ranks Demo (PDF),Navy officer collar device — O-8 RADM?,Two silver five-pointed stars,,,navy-officer-collar
+basic,ODS Ranks Demo (PDF),Navy officer collar device — O-9 VADM?,Three silver five-pointed stars,,,navy-officer-collar
+basic,ODS Ranks Demo (PDF),Navy officer collar device — O-10 ADM?,Four silver five-pointed stars,,,navy-officer-collar
+basic,ODS Ranks Demo (PDF),Navy officer collar device — O-11 FADM?,Five silver five-pointed stars,,,navy-officer-collar
+basic,ODS Ranks Demo (PDF),Navy officer shoulder board — W-2 CWO2?,One gold 1/2-inch stripe with three blue breaks outboard a specialty insignia,,,navy-officer-shoulder
+basic,ODS Ranks Demo (PDF),Navy officer shoulder board — W-3 CWO3?,One gold 1/2-inch stripe with two blue breaks outboard a specialty insignia,,,navy-officer-shoulder
+basic,ODS Ranks Demo (PDF),Navy officer shoulder board — W-4 CWO4?,One gold 1/2-inch stripe with one blue break outboard a specialty insignia,,,navy-officer-shoulder
+basic,ODS Ranks Demo (PDF),Navy officer shoulder board — W-5 CWO5?,Two thin gold stripes with one blue break outboard a specialty insignia,,,navy-officer-shoulder
+basic,ODS Ranks Demo (PDF),Navy officer shoulder board — O-1 ENS?,One gold 1/2-inch stripe outboard a gold five-pointed star,,,navy-officer-shoulder
+basic,ODS Ranks Demo (PDF),Navy officer shoulder board — O-2 LTJG?,One gold 1/2-inch stripe outboard one 1/4-inch gold stripe outboard a gold five-pointed star,,,navy-officer-shoulder
+basic,ODS Ranks Demo (PDF),Navy officer shoulder board — O-3 LT?,Two gold 1/2-inch stripes outboard a gold five-pointed star,,,navy-officer-shoulder
+basic,ODS Ranks Demo (PDF),Navy officer shoulder board — O-4 LCDR?,One gold 1/2-inch stripe outboard one gold 1/4-inch stripe outboard one gold 1/2-inch stripe outboard a gold five-pointed star,,,navy-officer-shoulder
+basic,ODS Ranks Demo (PDF),Navy officer shoulder board — O-5 CDR?,Three gold 1/2-inch stripes outboard a gold five-pointed star,,,navy-officer-shoulder
+basic,ODS Ranks Demo (PDF),Navy officer shoulder board — O-6 CAPT?,Four gold 1/2-inch stripes outboard a gold five-pointed star,,,navy-officer-shoulder
+basic,ODS Ranks Demo (PDF),Navy officer shoulder board — O-7 RDML?,Gold shoulder boards with one silver five-pointed star outboard a silver fouled anchor,,,navy-officer-shoulder
+basic,ODS Ranks Demo (PDF),Navy officer shoulder board — O-8 RADM?,Gold shoulder boards with two silver five-pointed stars outboard a silver fouled anchor,,,navy-officer-shoulder
+basic,ODS Ranks Demo (PDF),Navy officer shoulder board — O-9 VADM?,Gold shoulder boards with three silver five-pointed stars outboard a silver fouled anchor,,,navy-officer-shoulder
+basic,ODS Ranks Demo (PDF),Navy officer shoulder board — O-10 ADM?,Gold shoulder boards with four silver five-pointed stars outboard a silver fouled anchor,,,navy-officer-shoulder
+basic,ODS Ranks Demo (PDF),Navy officer shoulder board — O-11 FADM?,Gold shoulder boards with five silver five-pointed stars outboard a silver fouled anchor,,,navy-officer-shoulder
+basic,ODS Ranks Demo (PDF),Navy officer sleeve insignia — W-2 CWO2?,One gold 1/2-inch stripe with three blue breaks below a specialty insignia,,,navy-officer-sleeve
+basic,ODS Ranks Demo (PDF),Navy officer sleeve insignia — W-3 CWO3?,One gold 1/2-inch stripe with two blue breaks below a specialty insignia,,,navy-officer-sleeve
+basic,ODS Ranks Demo (PDF),Navy officer sleeve insignia — W-4 CWO4?,One gold 1/2-inch stripe with one blue break below a specialty insignia,,,navy-officer-sleeve
+basic,ODS Ranks Demo (PDF),Navy officer sleeve insignia — W-5 CWO5?,Two thin gold stripes with one blue break below a specialty insignia,,,navy-officer-sleeve
+basic,ODS Ranks Demo (PDF),Navy officer sleeve insignia — O-1 ENS?,One gold 1/2-inch stripe below a gold five-pointed star,,,navy-officer-sleeve
+basic,ODS Ranks Demo (PDF),Navy officer sleeve insignia — O-2 LTJG?,One gold 1/2-inch stripe below one 1/4-inch stripe below a gold five-pointed star,,,navy-officer-sleeve
+basic,ODS Ranks Demo (PDF),Navy officer sleeve insignia — O-3 LT?,Two gold 1/2-inch stripes below a gold five-pointed star,,,navy-officer-sleeve
+basic,ODS Ranks Demo (PDF),Navy officer sleeve insignia — O-4 LCDR?,One gold 1/2-inch stripe below one gold 1/4-inch stripe below one gold 1/2-inch stripe below a gold five-pointed star,,,navy-officer-sleeve
+basic,ODS Ranks Demo (PDF),Navy officer sleeve insignia — O-5 CDR?,Three gold 1/2-inch stripes below a gold five-pointed star,,,navy-officer-sleeve
+basic,ODS Ranks Demo (PDF),Navy officer sleeve insignia — O-6 CAPT?,Four gold 1/2-inch stripes below a gold five-pointed star,,,navy-officer-sleeve
+basic,ODS Ranks Demo (PDF),Navy officer sleeve insignia — O-7 RDML?,One gold 2-inch stripe below a gold five-pointed star,,,navy-officer-sleeve
+basic,ODS Ranks Demo (PDF),Navy officer sleeve insignia — O-8 RADM?,One gold 2-inch stripe below one gold 1/2-inch stripe below a gold five-pointed star,,,navy-officer-sleeve
+basic,ODS Ranks Demo (PDF),Navy officer sleeve insignia — O-9 VADM?,One gold 2-inch stripe below two gold 1/2-inch stripes below a gold five-pointed star,,,navy-officer-sleeve
+basic,ODS Ranks Demo (PDF),Navy officer sleeve insignia — O-10 ADM?,One gold 2-inch stripe below three gold 1/2-inch stripes below a gold five-pointed star,,,navy-officer-sleeve
+basic,ODS Ranks Demo (PDF),Navy officer sleeve insignia — O-11 FADM?,One gold 2-inch stripe below four gold 1/2-inch stripes below a gold five-pointed star,,,navy-officer-sleeve
+basic,ODS Ranks Demo (PDF),Navy enlisted rank — E-1?,Seaman Recruit (SR),,,navy-enlisted-rank
+basic,ODS Ranks Demo (PDF),Navy enlisted rank — E-2?,Seaman Apprentice (SA),,,navy-enlisted-rank
+basic,ODS Ranks Demo (PDF),Navy enlisted rank — E-3?,Seaman (SN),,,navy-enlisted-rank
+basic,ODS Ranks Demo (PDF),Navy enlisted rank — E-4?,Petty Officer Third Class (PO3),,,navy-enlisted-rank
+basic,ODS Ranks Demo (PDF),Navy enlisted rank — E-5?,Petty Officer Second Class (PO2),,,navy-enlisted-rank
+basic,ODS Ranks Demo (PDF),Navy enlisted rank — E-6?,Petty Officer First Class (PO1),,,navy-enlisted-rank
+basic,ODS Ranks Demo (PDF),Navy enlisted rank — E-7?,Chief Petty Officer (CPO),,,navy-enlisted-rank
+basic,ODS Ranks Demo (PDF),Navy enlisted rank — E-8?,Senior Chief Petty Officer (SCPO),,,navy-enlisted-rank
+basic,ODS Ranks Demo (PDF),Navy enlisted rank — E-9?,Master Chief Petty Officer (MCPO),,,navy-enlisted-rank
+basic,ODS Ranks Demo (PDF),Navy enlisted rank — E-9 (top)?,Master Chief Petty Officer of the Navy (MCPON),,,navy-enlisted-rank
+basic,ODS Ranks Demo (PDF),Navy enlisted collar device — E-1 SR?,None,,,navy-enlisted-collar
+basic,ODS Ranks Demo (PDF),Navy enlisted collar device — E-2 SA?,Two diagonal stripes,,,navy-enlisted-collar
+basic,ODS Ranks Demo (PDF),Navy enlisted collar device — E-3 SN?,Three diagonal stripes,,,navy-enlisted-collar
+basic,ODS Ranks Demo (PDF),Navy enlisted collar device — E-4 PO3?,One eagle above one chevron,,,navy-enlisted-collar
+basic,ODS Ranks Demo (PDF),Navy enlisted collar device — E-5 PO2?,One eagle above two chevrons,,,navy-enlisted-collar
+basic,ODS Ranks Demo (PDF),Navy enlisted collar device — E-6 PO1?,One eagle above three chevrons,,,navy-enlisted-collar
+basic,ODS Ranks Demo (PDF),Navy enlisted collar device — E-7 CPO?,One eagle above one rocker above three chevrons,,,navy-enlisted-collar
+basic,ODS Ranks Demo (PDF),Navy enlisted collar device — E-8 SCPO?,One silver star above one eagle above one rocker above three chevrons,,,navy-enlisted-collar
+basic,ODS Ranks Demo (PDF),Navy enlisted collar device — E-9 MCPO?,Two silver stars above one eagle above one rocker above three chevrons,,,navy-enlisted-collar
+basic,ODS Ranks Demo (PDF),Navy enlisted collar device — E-9 MCPON?,Three gold stars above one eagle above one rocker above three chevrons,,,navy-enlisted-collar
+basic,ODS Ranks Demo (PDF),Navy enlisted sleeve insignia — E-1 SR?,None,,,navy-enlisted-sleeve
+basic,ODS Ranks Demo (PDF),Navy enlisted sleeve insignia — E-2 SA?,Two diagonal bars,,,navy-enlisted-sleeve
+basic,ODS Ranks Demo (PDF),Navy enlisted sleeve insignia — E-3 SN?,Three diagonal bars,,,navy-enlisted-sleeve
+basic,ODS Ranks Demo (PDF),Navy enlisted sleeve insignia — E-4 PO3?,One eagle above one chevron,,,navy-enlisted-sleeve
+basic,ODS Ranks Demo (PDF),Navy enlisted sleeve insignia — E-5 PO2?,One eagle above two chevrons,,,navy-enlisted-sleeve
+basic,ODS Ranks Demo (PDF),Navy enlisted sleeve insignia — E-6 PO1?,One eagle over three chevrons,,,navy-enlisted-sleeve
+basic,ODS Ranks Demo (PDF),Navy enlisted sleeve insignia — E-7 CPO?,Gold fouled anchor with silver USN centered across the anchor,,,navy-enlisted-sleeve
+basic,ODS Ranks Demo (PDF),Navy enlisted sleeve insignia — E-8 SCPO?,Gold fouled anchor with silver USN centered across the anchor below one silver star,,,navy-enlisted-sleeve
+basic,ODS Ranks Demo (PDF),Navy enlisted sleeve insignia — E-9 MCPO?,Gold fouled anchor with silver USN centered across the anchor below two silver stars,,,navy-enlisted-sleeve
+basic,ODS Ranks Demo (PDF),Navy enlisted sleeve insignia — E-9 MCPON?,Gold fouled anchor with silver USN centered across the anchor below three silver stars with a gold star specialty mark,,,navy-enlisted-sleeve
+basic,ODS Ranks Demo (PDF),Marine officer rank — W-1?,Warrant Officer (WO),,,marine-officer-rank
+basic,ODS Ranks Demo (PDF),Marine officer rank — W-2?,Chief Warrant Officer Two (CWO2),,,marine-officer-rank
+basic,ODS Ranks Demo (PDF),Marine officer rank — W-3?,Chief Warrant Officer Three (CWO3),,,marine-officer-rank
+basic,ODS Ranks Demo (PDF),Marine officer rank — W-4?,Chief Warrant Officer Four (CWO4),,,marine-officer-rank
+basic,ODS Ranks Demo (PDF),Marine officer rank — W-5?,Chief Warrant Officer Five (CWO5),,,marine-officer-rank
+basic,ODS Ranks Demo (PDF),Marine officer rank — O-1?,Second Lieutenant (2ndLt),,,marine-officer-rank
+basic,ODS Ranks Demo (PDF),Marine officer rank — O-2?,First Lieutenant (1stLt),,,marine-officer-rank
+basic,ODS Ranks Demo (PDF),Marine officer rank — O-3?,Captain (Capt),,,marine-officer-rank
+basic,ODS Ranks Demo (PDF),Marine officer rank — O-4?,Major (Maj),,,marine-officer-rank
+basic,ODS Ranks Demo (PDF),Marine officer rank — O-5?,Lieutenant Colonel (LtCol),,,marine-officer-rank
+basic,ODS Ranks Demo (PDF),Marine officer rank — O-6?,Colonel (Col),,,marine-officer-rank
+basic,ODS Ranks Demo (PDF),Marine officer rank — O-7?,Brigadier General (BGen),,,marine-officer-rank
+basic,ODS Ranks Demo (PDF),Marine officer rank — O-8?,Major General (MajGen),,,marine-officer-rank
+basic,ODS Ranks Demo (PDF),Marine officer rank — O-9?,Lieutenant General (LtGen),,,marine-officer-rank
+basic,ODS Ranks Demo (PDF),Marine officer rank — O-10?,General (Gen),,,marine-officer-rank
+basic,ODS Ranks Demo (PDF),Marine officer collar device — W-1 WO?,Single bar device with a red background and one gold break,,,marine-officer-collar
+basic,ODS Ranks Demo (PDF),Marine officer collar device — W-2 CWO2?,Single bar device with a red background and two gold breaks,,,marine-officer-collar
+basic,ODS Ranks Demo (PDF),Marine officer collar device — W-3 CWO3?,Single bar device with a red background and one silver break,,,marine-officer-collar
+basic,ODS Ranks Demo (PDF),Marine officer collar device — W-4 CWO4?,Single bar device with a red background and two silver breaks,,,marine-officer-collar
+basic,ODS Ranks Demo (PDF),Marine officer collar device — W-5 CWO5?,Single silver bar device with a thin red break in the center,,,marine-officer-collar
+basic,ODS Ranks Demo (PDF),Marine officer collar device — O-1 2ndLt?,One gold bar,,,marine-officer-collar
+basic,ODS Ranks Demo (PDF),Marine officer collar device — O-2 1stLt?,One silver bar,,,marine-officer-collar
+basic,ODS Ranks Demo (PDF),Marine officer collar device — O-3 Capt?,Two silver bars,,,marine-officer-collar
+basic,ODS Ranks Demo (PDF),Marine officer collar device — O-4 Maj?,Gold oak leaf,,,marine-officer-collar
+basic,ODS Ranks Demo (PDF),Marine officer collar device — O-5 LtCol?,Silver oak leaf,,,marine-officer-collar
+basic,ODS Ranks Demo (PDF),Marine officer collar device — O-6 Col?,Silver eagle,,,marine-officer-collar
+basic,ODS Ranks Demo (PDF),Marine officer collar device — O-7 BGen?,One silver five-pointed star,,,marine-officer-collar
+basic,ODS Ranks Demo (PDF),Marine officer collar device — O-8 MajGen?,Two silver five-pointed stars,,,marine-officer-collar
+basic,ODS Ranks Demo (PDF),Marine officer collar device — O-9 LtGen?,Three silver five-pointed stars,,,marine-officer-collar
+basic,ODS Ranks Demo (PDF),Marine officer collar device — O-10 Gen?,Four silver five-pointed stars,,,marine-officer-collar
+basic,ODS Ranks Demo (PDF),Marine enlisted rank — E-1?,Private (Pvt),,,marine-enlisted-rank
+basic,ODS Ranks Demo (PDF),Marine enlisted rank — E-2?,Private First Class (PFC),,,marine-enlisted-rank
+basic,ODS Ranks Demo (PDF),Marine enlisted rank — E-3?,Lance Corporal (LCpl),,,marine-enlisted-rank
+basic,ODS Ranks Demo (PDF),Marine enlisted rank — E-4?,Corporal (Cpl),,,marine-enlisted-rank
+basic,ODS Ranks Demo (PDF),Marine enlisted rank — E-5?,Sergeant (Sgt),,,marine-enlisted-rank
+basic,ODS Ranks Demo (PDF),Marine enlisted rank — E-6?,Staff Sergeant (SSgt),,,marine-enlisted-rank
+basic,ODS Ranks Demo (PDF),Marine enlisted rank — E-7?,Gunnery Sergeant (GySgt),,,marine-enlisted-rank
+basic,ODS Ranks Demo (PDF),Marine enlisted rank — E-8?,Master Sergeant (MSgt),,,marine-enlisted-rank
+basic,ODS Ranks Demo (PDF),Marine enlisted rank — E-8 (alt)?,First Sergeant (1stSgt),,,marine-enlisted-rank
+basic,ODS Ranks Demo (PDF),Marine enlisted rank — E-9?,Master Gunnery Sergeant (MGySgt),,,marine-enlisted-rank
+basic,ODS Ranks Demo (PDF),Marine enlisted rank — E-9 (alt)?,Sergeant Major (SgtMaj),,,marine-enlisted-rank
+basic,ODS Ranks Demo (PDF),Marine enlisted rank — E-9 (top)?,Sergeant Major of the Marine Corps (SMMC),,,marine-enlisted-rank
+basic,ODS Ranks Demo (PDF),Marine enlisted sleeve insignia / collar device — E-1 Pvt?,None,,,marine-enlisted-insignia
+basic,ODS Ranks Demo (PDF),Marine enlisted sleeve insignia / collar device — E-2 PFC?,One stripe,,,marine-enlisted-insignia
+basic,ODS Ranks Demo (PDF),Marine enlisted sleeve insignia / collar device — E-3 LCpl?,One stripe over crossed rifles,,,marine-enlisted-insignia
+basic,ODS Ranks Demo (PDF),Marine enlisted sleeve insignia / collar device — E-4 Cpl?,Two stripes over crossed rifles,,,marine-enlisted-insignia
+basic,ODS Ranks Demo (PDF),Marine enlisted sleeve insignia / collar device — E-5 Sgt?,Three stripes over crossed rifles,,,marine-enlisted-insignia
+basic,ODS Ranks Demo (PDF),Marine enlisted sleeve insignia / collar device — E-6 SSgt?,Three stripes over crossed rifles over one rocker,,,marine-enlisted-insignia
+basic,ODS Ranks Demo (PDF),Marine enlisted sleeve insignia / collar device — E-7 GySgt?,Three stripes over crossed rifles over two rockers,,,marine-enlisted-insignia
+basic,ODS Ranks Demo (PDF),Marine enlisted sleeve insignia / collar device — E-8 MSgt?,Three stripes over crossed rifles over three rockers,,,marine-enlisted-insignia
+basic,ODS Ranks Demo (PDF),Marine enlisted sleeve insignia / collar device — E-8 1stSgt?,Three stripes over one diamond over three rockers,,,marine-enlisted-insignia
+basic,ODS Ranks Demo (PDF),Marine enlisted sleeve insignia / collar device — E-9 MGySgt?,Three stripes over a bursting bomb over four rockers,,,marine-enlisted-insignia
+basic,ODS Ranks Demo (PDF),Marine enlisted sleeve insignia / collar device — E-9 SgtMaj?,Three stripes over one star over four rockers,,,marine-enlisted-insignia
+basic,ODS Ranks Demo (PDF),Marine enlisted sleeve insignia / collar device — E-9 SMMC?,Three stripes over the Marine Corps emblem centered between two five-pointed stars over four rockers,,,marine-enlisted-insignia
+basic,ODS Ranks Demo (PDF),Line and Restricted Line officer sleeve/shoulder device?,A gold embroidered five-pointed star,,,corps-devices
+basic,ODS Ranks Demo (PDF),Line and Restricted Line officer collar device?,A gold embroidered five-pointed star (rank insignia worn on both collars),,,corps-devices
+basic,ODS Ranks Demo (PDF),Supply Corps officer sleeve/shoulder device?,A gold embroidered sprig of three oak leaves and three acorns,,,corps-devices
+basic,ODS Ranks Demo (PDF),Supply Corps officer collar device (left collar)?,A gold metal sprig of three oak leaves and three acorns,,,corps-devices
+basic,ODS Ranks Demo (PDF),Civil Engineer Corps officer sleeve/shoulder device?,Two gold embroidered sprigs of two oak leaves and a silver acorn in each sprig,,,corps-devices
+basic,ODS Ranks Demo (PDF),Civil Engineer Corps officer collar device (left collar)?,A gold metal pin with two sprigs of two oak leaves and a silver acorn in each sprig,,,corps-devices
+basic,ODS Ranks Demo (PDF),"Staff Corps officers (Supply, CEC): where is the corps device worn on the collar?",Left collar; rank insignia is worn on the right collar,,,corps-devices
+basic,ODS Ranks Demo (PDF),Line and Restricted Line officers: where is rank insignia worn on the collar?,Both collars,,,corps-devices
+basic,ODS Ranks Demo (PDF),Navy E-7+ enlisted sleeve insignia: what anchor device is used?,Gold fouled anchor with silver USN centered across the anchor (with stars below for E-8/E-9),,,navy-enlisted-sleeve
+basic,ODS Ranks Demo (PDF),Navy PO1 (E-6) vs CPO (E-7) collar device — what changes?,CPO adds one rocker between the eagle and the three chevrons,,,navy-enlisted-collar
+basic,ODS Ranks Demo (PDF),Navy SCPO vs MCPO collar device — star difference?,SCPO: one silver star above eagle/rocker/chevrons. MCPO: two silver stars,,,navy-enlisted-collar
+basic,ODS Ranks Demo (PDF),Marine MSgt vs 1stSgt (both E-8) — insignia difference?,MSgt: crossed rifles. 1stSgt: one diamond (no crossed rifles),,,marine-enlisted-insignia
+basic,ODS Ranks Demo (PDF),What rank wears this collar device?,Chief Warrant Officer Two (CWO2),,insignia/navy-officer-collar/w2-cwo2.svg,"navy-officer-rank,image-beta,pdf-demo"
+basic,ODS Ranks Demo (PDF),What rank wears this collar device?,Chief Warrant Officer Three (CWO3),,insignia/navy-officer-collar/w3-cwo3.svg,"navy-officer-rank,image-beta,pdf-demo"
+basic,ODS Ranks Demo (PDF),What rank wears this collar device?,Chief Warrant Officer Four (CWO4),,insignia/navy-officer-collar/w4-cwo4.svg,"navy-officer-rank,image-beta,pdf-demo"
+basic,ODS Ranks Demo (PDF),What rank wears this collar device?,Chief Warrant Officer Five (CWO5),,insignia/navy-officer-collar/w5-cwo5.svg,"navy-officer-rank,image-beta,pdf-demo"
+basic,ODS Ranks Demo (PDF),What rank wears this collar device?,Ensign (ENS),,insignia/navy-officer-collar/o1-ens.svg,"navy-officer-rank,image-beta,pdf-demo"
+basic,ODS Ranks Demo (PDF),What rank wears this collar device?,Lieutenant Junior Grade (LTJG),,insignia/navy-officer-collar/o2-ltjg.svg,"navy-officer-rank,image-beta,pdf-demo"
+basic,ODS Ranks Demo (PDF),What rank wears this collar device?,Lieutenant (LT),,insignia/navy-officer-collar/o3-lt.svg,"navy-officer-rank,image-beta,pdf-demo"
+basic,ODS Ranks Demo (PDF),What rank wears this collar device?,Lieutenant Commander (LCDR),,insignia/navy-officer-collar/o4-lcdr.svg,"navy-officer-rank,image-beta,pdf-demo"
+basic,ODS Ranks Demo (PDF),What rank wears this collar device?,Commander (CDR),,insignia/navy-officer-collar/o5-cdr.svg,"navy-officer-rank,image-beta,pdf-demo"
+basic,ODS Ranks Demo (PDF),What rank wears this collar device?,Captain (CAPT),,insignia/navy-officer-collar/o6-capt.svg,"navy-officer-rank,image-beta,pdf-demo"
+basic,ODS Ranks Demo (PDF),What rank wears this collar device?,Rear Admiral Lower Half (RDML),,insignia/navy-officer-collar/o7-rdml.svg,"navy-officer-rank,image-beta,pdf-demo"
+basic,ODS Ranks Demo (PDF),What rank wears this collar device?,Rear Admiral (RADM),,insignia/navy-officer-collar/o8-radm.svg,"navy-officer-rank,image-beta,pdf-demo"
+basic,ODS Ranks Demo (PDF),What rank wears this collar device?,Vice Admiral (VADM),,insignia/navy-officer-collar/o9-vadm.svg,"navy-officer-rank,image-beta,pdf-demo"
+basic,ODS Ranks Demo (PDF),What rank wears this collar device?,Admiral (ADM),,insignia/navy-officer-collar/o10-adm.svg,"navy-officer-rank,image-beta,pdf-demo"
+basic,ODS Ranks Demo (PDF),What rank wears this collar device?,Fleet Admiral (FADM),,insignia/navy-officer-collar/o11-fadm.svg,"navy-officer-rank,image-beta,pdf-demo"

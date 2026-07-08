@@ -1,8 +1,15 @@
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { FIELD_FRONT_IMAGE, resolveMediaUrl } from '../src/core/media.ts'
 import { renderContent } from '../src/core/schedule.ts'
-import { ensureImageDemoDeck, imageDemoItems } from '../src/core/image-demo.ts'
+import {
+  ensureImageDemoDeckFromCsv,
+  EXPECTED_IMAGE_CARDS,
+  IMAGE_DEMO_DECK_NAME,
+  imageDemoItems,
+} from '../src/core/image-demo.ts'
 import { getState } from '../src/core/store.ts'
 import type { Card, Note } from '../src/core/types.ts'
 
@@ -33,11 +40,21 @@ test('renderContent includes questionImage from frontImage field', () => {
   assert.equal(out.answer, 'Lieutenant Commander (LCDR)')
 })
 
-test('ensureImageDemoDeck adds image cards idempotently', () => {
-  ensureImageDemoDeck()
-  const first = imageDemoItems(getState()).length
-  ensureImageDemoDeck()
-  const second = imageDemoItems(getState()).length
-  assert.ok(first >= 3)
-  assert.equal(second, first)
+test('ensureImageDemoDeckFromCsv imports PDF demo deck idempotently', () => {
+  const csvPath = join(process.cwd(), 'public', 'decks', 'ODS_Ranks_Demo_deck.csv')
+  const csvText = readFileSync(csvPath, 'utf8')
+
+  const first = ensureImageDemoDeckFromCsv(csvText)
+  assert.equal(first.decksCreated, 1)
+  assert.ok(first.cardsAdded >= EXPECTED_IMAGE_CARDS)
+  assert.equal(first.imageCards, EXPECTED_IMAGE_CARDS)
+
+  const deck = getState().decks.find((d) => d.name === IMAGE_DEMO_DECK_NAME)
+  assert.ok(deck)
+
+  const second = ensureImageDemoDeckFromCsv(csvText)
+  assert.equal(second.decksCreated, 0)
+  assert.equal(second.cardsAdded, 0)
+  assert.equal(second.added, 0)
+  assert.equal(imageDemoItems(getState()).length, EXPECTED_IMAGE_CARDS)
 })

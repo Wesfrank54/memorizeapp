@@ -1,7 +1,12 @@
 import { useMemo, useState } from 'react'
 import type { AppState, Card, Note } from '../../core/types.ts'
 import { renderContent } from '../../core/schedule.ts'
-import { ensureImageDemoDeck, imageDemoItems, IMAGE_DEMO_ROWS } from '../../core/image-demo.ts'
+import {
+  ensureImageDemoDeck,
+  EXPECTED_IMAGE_CARDS,
+  imageDemoItems,
+  IMAGE_DEMO_DECK_NAME,
+} from '../../core/image-demo.ts'
 import { getState, recordQuizAttempt } from '../../core/store.ts'
 import { GradedAnswer } from './GradedAnswer.tsx'
 import { CardFace } from './CardFace.tsx'
@@ -24,29 +29,49 @@ interface Session {
 export function ImageTestingBeta({ state }: { state: AppState }) {
   const [session, setSession] = useState<Session | null>(null)
   const [flash, setFlash] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const items = useMemo(() => imageDemoItems(state), [state])
   const ready = items.length >= 3
 
-  function loadDeck() {
-    const result = ensureImageDemoDeck()
-    setFlash(
-      result.added > 0
-        ? `Added ${result.added} image card${result.added === 1 ? '' : 's'} to "${result.deckId ? 'Image Testing (beta)' : 'deck'}".`
-        : 'Demo deck already loaded — start a session.',
-    )
-    window.setTimeout(() => setFlash(''), 3000)
+  function showFlash(message: string) {
+    setFlash(message)
+    window.setTimeout(() => setFlash(''), 4000)
   }
 
-  function start() {
-    ensureImageDemoDeck()
-    const fresh = imageDemoItems(getState())
-    if (fresh.length < 3) {
-      setFlash('Could not load enough image cards — try Refresh demo deck.')
-      window.setTimeout(() => setFlash(''), 3000)
-      return
+  async function loadDeck() {
+    setLoading(true)
+    try {
+      const result = await ensureImageDemoDeck()
+      if (result.added > 0) {
+        showFlash(
+          `Imported "${IMAGE_DEMO_DECK_NAME}" — ${result.cardsAdded} cards (${result.imageCards} image MCQ).`,
+        )
+      } else {
+        showFlash('Demo deck already loaded — start a session.')
+      }
+    } catch (err) {
+      showFlash(err instanceof Error ? err.message : 'Failed to load demo deck.')
+    } finally {
+      setLoading(false)
     }
-    setSession({ queue: shuffle(fresh), index: 0, correct: 0 })
+  }
+
+  async function start() {
+    setLoading(true)
+    try {
+      await ensureImageDemoDeck()
+      const fresh = imageDemoItems(getState())
+      if (fresh.length < 3) {
+        showFlash('Could not load enough image cards — try Load demo deck.')
+        return
+      }
+      setSession({ queue: shuffle(fresh), index: 0, correct: 0 })
+    } catch (err) {
+      showFlash(err instanceof Error ? err.message : 'Failed to start session.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   if (!session) {
@@ -54,22 +79,27 @@ export function ImageTestingBeta({ state }: { state: AppState }) {
       <div className="panel form image-beta-panel">
         <h2 className="opt-title">Image Testing Beta</h2>
         <p className="muted small">
-          Prototype: show a collar-device image and pick the matching rank (multiple choice). Images are bundled SVGs
-          in <code>public/insignia/</code> — not user uploads yet.
+          Prototype: show a collar-device image and pick the matching rank (multiple choice). Built from the ODS
+          Knowledge Book (PDF 26070) — bundled SVGs in <code>public/insignia/</code>, not user uploads yet.
         </p>
         <div className="image-beta-stats">
           <span>
-            {items.length} / {IMAGE_DEMO_ROWS.length} image cards in collection
+            {items.length} / {EXPECTED_IMAGE_CARDS} image cards in &ldquo;{IMAGE_DEMO_DECK_NAME}&rdquo;
           </span>
           {!ready ? <span className="muted small">Need at least 3 for MCQ — load the demo deck.</span> : null}
         </div>
         {flash ? <p className="flash-ok">{flash}</p> : null}
         <div className="row image-beta-actions">
-          <button type="button" className="primary" onClick={loadDeck}>
-            {items.length === 0 ? 'Load demo deck' : 'Refresh demo deck'}
+          <button type="button" className="primary" onClick={() => void loadDeck()} disabled={loading}>
+            {loading ? 'Loading…' : items.length === 0 ? 'Load demo deck' : 'Refresh demo deck'}
           </button>
-          <button type="button" className="primary" onClick={start} disabled={!ready && items.length === 0}>
-            {ready ? 'Start image MCQ' : 'Load deck & start'}
+          <button
+            type="button"
+            className="primary"
+            onClick={() => void start()}
+            disabled={loading || (!ready && items.length === 0)}
+          >
+            {loading ? 'Loading…' : ready ? 'Start image MCQ' : 'Load deck & start'}
           </button>
         </div>
         {items.length > 0 ? (

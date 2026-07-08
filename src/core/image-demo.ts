@@ -1,68 +1,21 @@
 import type { AppState } from './types.ts'
 import { FIELD_FRONT_IMAGE } from './media.ts'
-import { addBasicNoteWithFields, addDeck, getState } from './store.ts'
+import { getState, importCsv } from './store.ts'
 
-export const IMAGE_DEMO_DECK_NAME = 'Image Testing (beta)'
+export const IMAGE_DEMO_DECK_NAME = 'ODS Ranks Demo (PDF)'
+export const IMAGE_DEMO_CSV_URL = '/decks/ODS_Ranks_Demo_deck.csv'
 export const IMAGE_DEMO_TAG = 'image-beta'
 
-export interface ImageDemoRow {
-  front: string
-  back: string
-  frontImage: string
-  tags: string[]
-}
+/** Navy officer collar devices W-2 through O-11 from the ODS Knowledge Book PDF. */
+export const EXPECTED_IMAGE_CARDS = 15
 
-/** Collar-device image cards paired with the rank title answer. */
-export const IMAGE_DEMO_ROWS: ImageDemoRow[] = [
-  {
-    front: 'What rank wears this collar device?',
-    back: 'Ensign (ENS)',
-    frontImage: 'insignia/navy-officer-collar/o1-ens.svg',
-    tags: ['navy-officer-rank', IMAGE_DEMO_TAG],
-  },
-  {
-    front: 'What rank wears this collar device?',
-    back: 'Lieutenant Junior Grade (LTJG)',
-    frontImage: 'insignia/navy-officer-collar/o2-ltjg.svg',
-    tags: ['navy-officer-rank', IMAGE_DEMO_TAG],
-  },
-  {
-    front: 'What rank wears this collar device?',
-    back: 'Lieutenant (LT)',
-    frontImage: 'insignia/navy-officer-collar/o3-lt.svg',
-    tags: ['navy-officer-rank', IMAGE_DEMO_TAG],
-  },
-  {
-    front: 'What rank wears this collar device?',
-    back: 'Lieutenant Commander (LCDR)',
-    frontImage: 'insignia/navy-officer-collar/o4-lcdr.svg',
-    tags: ['navy-officer-rank', IMAGE_DEMO_TAG],
-  },
-  {
-    front: 'What rank wears this collar device?',
-    back: 'Commander (CDR)',
-    frontImage: 'insignia/navy-officer-collar/o5-cdr.svg',
-    tags: ['navy-officer-rank', IMAGE_DEMO_TAG],
-  },
-  {
-    front: 'What rank wears this collar device?',
-    back: 'Captain (CAPT)',
-    frontImage: 'insignia/navy-officer-collar/o6-capt.svg',
-    tags: ['navy-officer-rank', IMAGE_DEMO_TAG],
-  },
-  {
-    front: 'What rank wears this collar device?',
-    back: 'Rear Admiral Lower Half (RDML)',
-    frontImage: 'insignia/navy-officer-collar/o7-rdml.svg',
-    tags: ['navy-officer-rank', IMAGE_DEMO_TAG],
-  },
-  {
-    front: 'What rank wears this collar device?',
-    back: 'Rear Admiral (RADM)',
-    frontImage: 'insignia/navy-officer-collar/o8-radm.svg',
-    tags: ['navy-officer-rank', IMAGE_DEMO_TAG],
-  },
-]
+export interface ImageDemoLoadResult {
+  deckId: string
+  imageCards: number
+  added: number
+  decksCreated: number
+  cardsAdded: number
+}
 
 export function imageDemoDeckId(state: AppState = getState()): string | undefined {
   return state.decks.find((d) => d.name === IMAGE_DEMO_DECK_NAME)?.id
@@ -81,27 +34,32 @@ export function imageDemoItems(state: AppState): { card: AppState['cards'][0]; n
     })
 }
 
-/** Idempotent: adds demo deck and image question cards. */
-export function ensureImageDemoDeck(): { deckId: string; imageCards: number; added: number } {
-  let deckId = imageDemoDeckId()
+/** Idempotent: imports the PDF demo deck from CSV text (skips if deck already exists). */
+export function ensureImageDemoDeckFromCsv(csvText: string): ImageDemoLoadResult {
+  const existingDeckId = imageDemoDeckId()
+  if (existingDeckId) {
+    const imageCards = imageDemoItems(getState()).length
+    return { deckId: existingDeckId, imageCards, added: 0, decksCreated: 0, cardsAdded: 0 }
+  }
+
+  const { decksCreated, cardsAdded } = importCsv(csvText)
+  const deckId = imageDemoDeckId()
   if (!deckId) {
-    deckId = addDeck(IMAGE_DEMO_DECK_NAME).id
+    throw new Error(`CSV import did not create deck "${IMAGE_DEMO_DECK_NAME}"`)
+  }
+  const imageCards = imageDemoItems(getState()).length
+  return { deckId, imageCards, added: imageCards, decksCreated, cardsAdded }
+}
+
+/** Idempotent: fetches and imports the PDF ranks demo deck. */
+export async function ensureImageDemoDeck(): Promise<ImageDemoLoadResult> {
+  if (imageDemoDeckId()) {
+    return ensureImageDemoDeckFromCsv('')
   }
 
-  const state = getState()
-  const existingImages = new Set(
-    state.notes
-      .filter((n) => n.deckId === deckId && n.fields[FIELD_FRONT_IMAGE])
-      .map((n) => n.fields[FIELD_FRONT_IMAGE]!.trim()),
-  )
-
-  let added = 0
-  for (const row of IMAGE_DEMO_ROWS) {
-    if (existingImages.has(row.frontImage)) continue
-    addBasicNoteWithFields(deckId, row.front, row.back, row.tags, { [FIELD_FRONT_IMAGE]: row.frontImage })
-    existingImages.add(row.frontImage)
-    added++
+  const res = await fetch(IMAGE_DEMO_CSV_URL)
+  if (!res.ok) {
+    throw new Error(`Failed to load demo deck (${res.status})`)
   }
-
-  return { deckId, imageCards: IMAGE_DEMO_ROWS.length, added }
+  return ensureImageDemoDeckFromCsv(await res.text())
 }
