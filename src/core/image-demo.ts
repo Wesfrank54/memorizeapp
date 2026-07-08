@@ -1,8 +1,10 @@
 import type { AppState } from './types.ts'
 import { FIELD_FRONT_IMAGE } from './media.ts'
-import { getState, importCsv } from './store.ts'
+import { deleteDeck, getState, importCsv } from './store.ts'
 
 export const IMAGE_DEMO_DECK_NAME = 'ODS Ranks Demo (PDF)'
+/** Pre-PDF demo deck name — removed on reload so stale SVG cards do not linger. */
+export const LEGACY_IMAGE_DEMO_DECK_NAME = 'Image Testing (beta)'
 export const IMAGE_DEMO_CSV_URL = '/decks/ODS_Ranks_Demo_deck.csv'
 export const IMAGE_DEMO_TAG = 'image-beta'
 
@@ -21,6 +23,26 @@ export function imageDemoDeckId(state: AppState = getState()): string | undefine
   return state.decks.find((d) => d.name === IMAGE_DEMO_DECK_NAME)?.id
 }
 
+function demoDeckIdsToReplace(state: AppState = getState()): string[] {
+  const names = new Set([IMAGE_DEMO_DECK_NAME, LEGACY_IMAGE_DEMO_DECK_NAME])
+  return state.decks.filter((d) => names.has(d.name)).map((d) => d.id)
+}
+
+/** True when an existing demo deck is missing PNG image cards or still references SVG placeholders. */
+export function imageDemoDeckNeedsReload(state: AppState = getState()): boolean {
+  const deckId = imageDemoDeckId(state)
+  if (!deckId) return demoDeckIdsToReplace(state).length > 0
+
+  const imageNotes = state.notes.filter(
+    (n) => n.deckId === deckId && n.fields[FIELD_FRONT_IMAGE]?.trim(),
+  )
+  if (imageNotes.length < EXPECTED_IMAGE_CARDS) return true
+  return imageNotes.some((n) => {
+    const path = n.fields[FIELD_FRONT_IMAGE]!.trim().toLowerCase()
+    return path.endsWith('.svg') || !path.endsWith('.png')
+  })
+}
+
 export function imageDemoItems(state: AppState): { card: AppState['cards'][0]; note: AppState['notes'][0] }[] {
   const deckId = imageDemoDeckId(state)
   if (!deckId) return []
@@ -34,13 +56,34 @@ export function imageDemoItems(state: AppState): { card: AppState['cards'][0]; n
     })
 }
 
-/** Idempotent: imports the PDF demo deck from CSV text (skips if deck already exists). */
-export function ensureImageDemoDeckFromCsv(csvText: string): ImageDemoLoadResult {
-  const existingDeckId = imageDemoDeckId()
-  if (existingDeckId) {
-    const imageCards = imageDemoItems(getState()).length
+function removeDemoDecks(): number {
+  let removed = 0
+  for (const deckId of demoDeckIdsToReplace()) {
+    deleteDeck(deckId)
+    removed++
+  }
+  return removed
+}
+
+/** Import the PDF demo deck from CSV text. Replaces any existing demo deck when force or stale. */
+export function ensureImageDemoDeckFromCsv(
+  csvText: string,
+  options: { force?: boolean } = {},
+): ImageDemoLoadResult {
+  const state = getState()
+  const existingDeckId = imageDemoDeckId(state)
+  const shouldReplace = options.force || imageDemoDeckNeedsReload(state)
+
+  if (existingDeckId && !shouldReplace) {
+    const imageCards = imageDemoItems(state).length
     return { deckId: existingDeckId, imageCards, added: 0, decksCreated: 0, cardsAdded: 0 }
   }
+
+  if (!csvText.trim()) {
+    throw new Error('Demo deck CSV is empty — fetch the deck file before reloading.')
+  }
+
+  removeDemoDecks()
 
   const { decksCreated, cardsAdded } = importCsv(csvText)
   const deckId = imageDemoDeckId()
@@ -48,18 +91,30 @@ export function ensureImageDemoDeckFromCsv(csvText: string): ImageDemoLoadResult
     throw new Error(`CSV import did not create deck "${IMAGE_DEMO_DECK_NAME}"`)
   }
   const imageCards = imageDemoItems(getState()).length
+  if (imageCards < EXPECTED_IMAGE_CARDS) {
+    throw new Error(`Demo deck imported but only ${imageCards}/${EXPECTED_IMAGE_CARDS} image cards have PNG paths.`)
+  }
   return { deckId, imageCards, added: imageCards, decksCreated, cardsAdded }
 }
 
-/** Idempotent: fetches and imports the PDF ranks demo deck. */
-export async function ensureImageDemoDeck(): Promise<ImageDemoLoadResult> {
-  if (imageDemoDeckId()) {
-    return ensureImageDemoDeckFromCsv('')
+/** Fetches and imports the PDF ranks demo deck. Pass force:true to delete and re-import. */
+export async function ensureImageDemoDeck(options: { force?: boolean } = {}): Promise<ImageDemoLoadResult> {
+  const state = getState()
+  const needsWork = options.force || !imageDemoDeckId(state) || imageDemoDeckNeedsReload(state)
+  if (!needsWork) {
+    const deckId = imageDemoDeckId(state)!
+    return {
+      deckId,
+      imageCards: imageDemoItems(state).length,
+      added: 0,
+      decksCreated: 0,
+      cardsAdded: 0,
+    }
   }
 
   const res = await fetch(IMAGE_DEMO_CSV_URL)
   if (!res.ok) {
     throw new Error(`Failed to load demo deck (${res.status})`)
   }
-  return ensureImageDemoDeckFromCsv(await res.text())
+  return ensureImageDemoDeckFromCsv(await res.text(), options)
 }

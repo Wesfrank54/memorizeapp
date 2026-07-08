@@ -42,7 +42,8 @@ export function ImageTestingBeta({ state }: { state: AppState }) {
   async function loadDeck() {
     setLoading(true)
     try {
-      const result = await ensureImageDemoDeck()
+      const force = items.length > 0
+      const result = await ensureImageDemoDeck({ force })
       if (result.added > 0) {
         showFlash(
           `Imported "${IMAGE_DEMO_DECK_NAME}" — ${result.cardsAdded} cards (${result.imageCards} image MCQ).`,
