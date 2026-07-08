@@ -124,6 +124,34 @@ export function PassageRecall({
     return () => window.removeEventListener('keydown', onKey)
   }, [phase, finishScore, onDone])
 
+  useEffect(() => {
+    if (phase !== 'full' || fullChecked || !fullInput.trim()) return
+    const input = fullInput
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== 'Enter' || e.shiftKey) return
+      e.preventDefault()
+      const { total, correct } = gradePassageChunk(text, input)
+      const score = total ? correct / total : 1
+      setFinishScore(score)
+      setFullChecked(true)
+    }
+    window.addEventListener('keydown', onKey, true)
+    return () => window.removeEventListener('keydown', onKey, true)
+  }, [phase, fullChecked, fullInput, text])
+
+  useEffect(() => {
+    if (phase !== 'full' || !fullChecked || finishScore === null) return
+    if (finishScore < PASSAGE_PASS_SCORE) return
+    const score = finishScore
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== 'Enter') return
+      e.preventDefault()
+      onDone(score)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [phase, fullChecked, finishScore, onDone])
+
   function gradeLine(): { correct: number; total: number } {
     let correct = 0
     for (const i of blanks) if (normWord(values[i] ?? '') === normWord(words[i])) correct++
@@ -213,8 +241,14 @@ export function PassageRecall({
         <p className="muted small passage-full-prompt">
           Final check — type the <strong>entire passage</strong> from memory, same words in order.
           {fullChecked ? null : (
-            <span className="passage-live-hint"> Words turn <span className="w-ok">green</span> when right and{' '}
-            <span className="w-no">red</span> when off.</span>
+            <>
+              <span className="passage-live-hint">
+                {' '}
+                Words turn <span className="w-ok">green</span> when right and <span className="w-no">red</span> when
+                off.
+              </span>
+              <span className="passage-live-hint"> Press Enter to check (Shift+Enter for a new line).</span>
+            </>
           )}
         </p>
         {!fullChecked ? (
@@ -227,15 +261,9 @@ export function PassageRecall({
               value={fullInput}
               autoFocus
               onChange={(e) => setFullInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-                  e.preventDefault()
-                  checkFull()
-                }
-              }}
             />
             <button type="button" className="primary reveal" disabled={!fullInput.trim()} onClick={checkFull}>
-              Check full passage
+              Check full passage <span className="hint">enter</span>
             </button>
           </>
         ) : (
@@ -247,7 +275,7 @@ export function PassageRecall({
             />
             {passed ? (
               <button type="button" className="primary reveal" autoFocus onClick={() => onDone(finishScore!)}>
-                Continue
+                Continue <span className="hint">enter</span>
               </button>
             ) : (
               <button
