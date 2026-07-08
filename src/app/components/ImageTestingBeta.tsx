@@ -79,8 +79,8 @@ export function ImageTestingBeta({ state }: { state: AppState }) {
       <div className="panel form image-beta-panel">
         <h2 className="opt-title">Image Testing Beta</h2>
         <p className="muted small">
-          Prototype: show a collar-device image and pick the matching rank (multiple choice). Built from the ODS
-          Knowledge Book (PDF 26070) — bundled SVGs in <code>public/insignia/</code>, not user uploads yet.
+          Prototype: show a collar-device image and pick the matching rank (multiple choice). Images are cropped
+          from the ODS Knowledge Book (PDF 26070) — no rank labels on the image itself.
         </p>
         <div className="image-beta-stats">
           <span>

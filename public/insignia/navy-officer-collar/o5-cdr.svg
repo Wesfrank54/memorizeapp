@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 120" role="img" aria-label="O-5 CDR — silver oak leaf">
-  <rect width="200" height="120" fill="#f4f6f8" rx="8"/>
-  <rect x="20" y="48" width="160" height="24" fill="#d8dee6" rx="4"/>
-  <path d="M100 48c-8 6-14 10-14 16 0 6 6 10 14 10s14-4 14-10c0-6-6-10-14-16z" fill="#9ca3af"/><path d="M92 62c4 2 8 2 8 6h0c0-4 4-4 8-6" fill="none" stroke="#9ca3af" stroke-width="2"/>
-  <text x="100" y="110" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#6b7280">O-5 CDR — silver oak leaf</text>
-</svg>

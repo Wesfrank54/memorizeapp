@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 120" role="img" aria-label="O-9 VADM — three stars">
-  <rect width="200" height="120" fill="#f4f6f8" rx="8"/>
-  <rect x="20" y="48" width="160" height="24" fill="#d8dee6" rx="4"/>
-  <polygon points="70,50 73,58 82,58 75,63 78,71 70,66 62,71 65,63 58,58 67,58" fill="#9ca3af"/><polygon points="100,46 104,58 117,58 107,66 111,78 100,70 89,78 93,66 83,58 96,58" fill="#9ca3af"/><polygon points="130,50 133,58 142,58 135,63 138,71 130,66 122,71 125,63 118,58 127,58" fill="#9ca3af"/>
-  <text x="100" y="110" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#6b7280">O-9 VADM — three stars</text>
-</svg>

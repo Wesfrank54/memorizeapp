@@ -82,7 +82,7 @@ def add_image_rank(collar_key: str) -> None:
         "front": "What rank wears this collar device?",
         "back": rank,
         "text": "",
-        "image": f"insignia/navy-officer-collar/{slug}.svg",
+        "image": f"insignia/navy-officer-collar/{slug}.png",
         "tags": "navy-officer-rank,image-beta,pdf-demo",
     })
 

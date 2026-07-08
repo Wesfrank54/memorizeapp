@@ -28,7 +28,7 @@ test('renderContent includes questionImage from frontImage field', () => {
     fields: {
       front: 'What rank wears this collar device?',
       back: 'Lieutenant Commander (LCDR)',
-      [FIELD_FRONT_IMAGE]: 'insignia/navy-officer-collar/o4-lcdr.svg',
+      [FIELD_FRONT_IMAGE]: 'insignia/navy-officer-collar/o4-lcdr.png',
     },
     tags: ['navy-officer-rank'],
     createdAt: 'x',
@@ -36,7 +36,7 @@ test('renderContent includes questionImage from frontImage field', () => {
   }
   const card: Card = { id: 'c1', noteId: 'n1', deckId: 'd1', ord: 0, createdAt: 'x', updatedAt: 'x' }
   const out = renderContent(note, card)
-  assert.equal(out.questionImage, '/insignia/navy-officer-collar/o4-lcdr.svg')
+  assert.equal(out.questionImage, '/insignia/navy-officer-collar/o4-lcdr.png')
   assert.equal(out.answer, 'Lieutenant Commander (LCDR)')
 })
 

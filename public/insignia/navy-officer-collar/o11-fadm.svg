@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 120" role="img" aria-label="O-11 FADM — five stars">
-  <rect width="200" height="120" fill="#f4f6f8" rx="8"/>
-  <rect x="20" y="48" width="160" height="24" fill="#d8dee6" rx="4"/>
-  <polygon points="52,52 54,58 60,58 56,62 58,67 52,64 46,67 48,62 44,58 50,58" fill="#9ca3af"/><polygon points="72,48 75,56 84,56 77,61 80,69 72,64 64,69 67,61 60,56 69,56" fill="#9ca3af"/><polygon points="100,44 104,56 117,56 107,64 111,76 100,68 89,76 93,64 83,56 96,56" fill="#9ca3af"/><polygon points="128,48 131,56 140,56 133,61 136,69 128,64 120,69 123,61 116,56 125,56" fill="#9ca3af"/><polygon points="148,52 150,58 156,58 152,62 154,67 148,64 142,67 144,62 140,58 146,58" fill="#9ca3af"/>
-  <text x="100" y="110" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#6b7280">O-11 FADM — five stars</text>
-</svg>

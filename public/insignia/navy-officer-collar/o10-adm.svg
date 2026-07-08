@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 120" role="img" aria-label="O-10 ADM — four stars">
-  <rect width="200" height="120" fill="#f4f6f8" rx="8"/>
-  <rect x="20" y="48" width="160" height="24" fill="#d8dee6" rx="4"/>
-  <polygon points="58,52 61,58 68,58 63,62 65,68 58,64 51,68 53,62 48,58 55,58" fill="#9ca3af"/><polygon points="82,48 85,56 94,56 87,61 90,69 82,64 74,69 77,61 70,56 79,56" fill="#9ca3af"/><polygon points="118,48 121,56 130,56 123,61 126,69 118,64 110,69 113,61 106,56 115,56" fill="#9ca3af"/><polygon points="142,52 145,58 152,58 147,62 149,68 142,64 135,68 137,62 132,58 139,58" fill="#9ca3af"/>
-  <text x="100" y="110" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#6b7280">O-10 ADM — four stars</text>
-</svg>

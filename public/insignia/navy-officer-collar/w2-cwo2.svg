@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 120" role="img" aria-label="W-2 CWO2 — gold bar, three blue breaks">
-  <rect width="200" height="120" fill="#f4f6f8" rx="8"/>
-  <rect x="20" y="48" width="160" height="24" fill="#d8dee6" rx="4"/>
-  <rect x="72" y="52" width="56" height="16" fill="#c9a227" rx="2"/><rect x="82" y="52" width="3" height="16" fill="#1e40af"/><rect x="98" y="52" width="3" height="16" fill="#1e40af"/><rect x="114" y="52" width="3" height="16" fill="#1e40af"/>
-  <text x="100" y="110" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#6b7280">W-2 CWO2 — gold bar, three blue breaks</text>
-</svg>
