@@ -27,7 +27,6 @@ import type { SynthesisPartResult } from './unit-synthesis.ts'
 //   - Optional pre-test: one typed attempt before the ladder for brand-new cards.
 //   - Mastery events returned from answerLearn for FSRS graduation in the UI layer.
 
-const GRADED_LADDER: AnswerMode[] = ['mcq', 'blank', 'typed']
 export const LADDER_LABELS: Record<AnswerMode, string> = {
   mcq: 'Choices',
   blank: 'Fill blank',
@@ -179,12 +178,16 @@ export function cardLadder(state: AppState, card: Card, note: Note): AnswerMode[
   const { question, answer: ansRaw } = renderContent(note, card)
   const ans = ansRaw.trim()
   if (ans.length === 0) return ['self']
-  if (ans.length > MAX_TYPE_LEN) return ['passage']
-  return GRADED_LADDER.filter((m) => {
-    if (m === 'mcq') return mcqIsWorthwhile(state, card, note, question, ans)
-    if (m === 'blank') return blankIsWorthwhile(ans)
-    return true
-  })
+
+  const long = ans.length > MAX_TYPE_LEN
+  const rungs: AnswerMode[] = []
+  if (mcqIsWorthwhile(state, card, note, question, ans)) rungs.push('mcq')
+  if (blankIsWorthwhile(ans)) rungs.push('blank')
+  if (long) rungs.push('passage')
+  else rungs.push('typed')
+
+  if (rungs.length > 0) return rungs
+  return long ? ['passage'] : ['typed']
 }
 
 /** Progressive blank coverage: easier rungs reveal more of the answer. */
@@ -767,7 +770,13 @@ export interface LearnAnswerResult {
 
 function pretestModeForLadder(session: LearnSession, ladder: AnswerMode[]): AnswerMode | null {
   const adaptive = (session.tabMode ?? 'manual') === 'adaptive'
-  if (adaptive && ladder.includes('mcq')) return 'mcq'
+  if (adaptive) {
+    // Brand-new adaptive sessions: start with the easiest graded mode available.
+    if (ladder.includes('mcq')) return 'mcq'
+    if (ladder.includes('blank')) return 'blank'
+    if (ladder.includes('typed')) return 'typed'
+    return null
+  }
   if (ladder.includes('typed')) return 'typed'
   return null
 }
@@ -892,7 +901,8 @@ export function startLearnFromUnits(
   for (const u of units) {
     for (const id of u.cardIds) {
       const ladder = ladders[id]
-      if (!ladder || ladder.length !== 1 || ladder[0] !== 'passage') continue
+      // Passage twins: cloze-only cards and long-answer basics that capstone on passage.
+      if (!ladder || !ladder.includes('passage') || ladder[ladder.length - 1] !== 'passage') continue
       const card = cardsById.get(id)
       const note = card ? notesById.get(card.noteId) : undefined
       if (!card || !note) continue

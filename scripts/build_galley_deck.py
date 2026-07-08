@@ -43,22 +43,32 @@ def add_cloze(text: str, tag: str) -> None:
     })
 
 
-# --- Overview ---
+# --- Overview (short intro cards first — better MCQ distractors in Learn) ---
 add(
     "Galley procedures motto (three words required at all times)?",
     "Speed, volume, and intensity",
     "galley-overview",
 )
 add(
+    "Galley motto — which is NOT part of it?",
+    "Silence, patience, and caution",
+    "galley-overview",
+)
+add(
     "Who may modify basic galley procedures?",
-    "The Class Team (for schedule or training requirements)",
+    "The Class Team",
+    "galley-overview",
+)
+add(
+    "Why may the Class Team modify galley procedures?",
+    "Schedule or training requirements",
     "galley-overview",
 )
 
 # --- Approach / halt ---
 add(
-    "Where does the Drill Officer march the company before entering the galley?",
-    "Front of Ney Hall under the blue awning (\"The Chute\"), halted at the step to the double doors",
+    "Before entering, the company halts at which building?",
+    "Ney Hall",
     "galley-approach",
 )
 add(
@@ -67,8 +77,18 @@ add(
     "galley-approach",
 )
 add(
+    "Where exactly does the company halt at Ney Hall?",
+    "The step leading to the double door entrance",
+    "galley-approach",
+)
+add(
     "Chow time for each class/company is found where?",
     "Plan of the day (POD)",
+    "galley-approach",
+)
+add(
+    "Where does the Drill Officer march the company before entering the galley?",
+    "Front of Ney Hall under the blue awning (\"The Chute\"), halted at the step to the double doors",
     "galley-approach",
 )
 

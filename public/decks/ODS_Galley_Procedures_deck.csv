@@ -1,9 +1,13 @@
 type,deck,front,back,text,image,tags
 basic,ODS Galley Procedures,Galley procedures motto (three words required at all times)?,"Speed, volume, and intensity",,,galley-overview
-basic,ODS Galley Procedures,Who may modify basic galley procedures?,The Class Team (for schedule or training requirements),,,galley-overview
-basic,ODS Galley Procedures,Where does the Drill Officer march the company before entering the galley?,"Front of Ney Hall under the blue awning (""The Chute""), halted at the step to the double doors",,,galley-approach
+basic,ODS Galley Procedures,Galley motto — which is NOT part of it?,"Silence, patience, and caution",,,galley-overview
+basic,ODS Galley Procedures,Who may modify basic galley procedures?,The Class Team,,,galley-overview
+basic,ODS Galley Procedures,Why may the Class Team modify galley procedures?,Schedule or training requirements,,,galley-overview
+basic,ODS Galley Procedures,"Before entering, the company halts at which building?",Ney Hall,,,galley-approach
 basic,ODS Galley Procedures,"What is ""The Chute""?",The blue awning at the front of Ney Hall,,,galley-approach
+basic,ODS Galley Procedures,Where exactly does the company halt at Ney Hall?,The step leading to the double door entrance,,,galley-approach
 basic,ODS Galley Procedures,Chow time for each class/company is found where?,Plan of the day (POD),,,galley-approach
+basic,ODS Galley Procedures,Where does the Drill Officer march the company before entering the galley?,"Front of Ney Hall under the blue awning (""The Chute""), halted at the step to the double doors",,,galley-approach
 basic,ODS Galley Procedures,Where does the Drill Officer post before commencing galley procedures?,"Port side of the formation, abreast of the first rank, then right face to the company",,,galley-drill-officer
 basic,ODS Galley Procedures,"Drill Officer: ""Guide, post the guidon."" — Guide's response?","Aye-aye, Sir/Ma'am",,,galley-drill-officer
 basic,ODS Galley Procedures,"After posting the guidon, where does the Guide fall in?",Rear of the company formation,,,galley-drill-officer

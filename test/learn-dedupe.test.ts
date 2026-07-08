@@ -2,10 +2,12 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
   answerLearn,
+  cardLadder,
   currentLearn,
   passageKey,
   passageSourceText,
   startLearn,
+  tickLearnQueue,
 } from '../src/core/learn.ts'
 import { buildUnitSynthesis } from '../src/core/unit-synthesis.ts'
 import type { AppState, Card, Note } from '../src/core/types.ts'
@@ -112,7 +114,10 @@ test('startLearn collapses passage twins to one item, preferring the non-cloze r
 
   const cur = currentLearn(session)
   assert.equal(cur?.cardId, recite.id)
-  assert.equal(cur?.mode, 'passage')
+  const notesById = new Map(state.notes.map((note) => [note.id, note]))
+  const ladder = cardLadder(state, state.cards.find((c) => c.id === recite.id)!, notesById.get(recite.noteId)!)
+  assert.ok(ladder.includes('passage'))
+  assert.ok(cur?.mode === 'mcq' || cur?.mode === 'blank' || cur?.mode === 'passage')
 })
 
 test('mastering the rep graduates every collapsed twin', () => {
@@ -120,10 +125,18 @@ test('mastering the rep graduates every collapsed twin', () => {
   const siblings = addCloze(state, CLOZE_TEXT, 4)
   const recite = addBasic(state, 'Recite the Mission of the Navy.', FULL_TEXT)
   const ids = [recite.id, ...siblings.map((c) => c.id)]
-  const session = startLearn(state, ids, { seed: 1 })
+  let session = startLearn(state, ids, { seed: 1 })
 
-  const { session: next, mastery } = answerLearn(state, session, true)
-  assert.equal(mastery?.cardId, recite.id)
+  let mastery: ReturnType<typeof answerLearn>['mastery'] = null
+  for (let i = 0; i < 12 && !session.done; i++) {
+    const result = answerLearn(state, session, true)
+    mastery = result.mastery
+    session = tickLearnQueue(result.session)
+    if (mastery) break
+  }
+  assert.ok(mastery)
+  assert.equal(mastery.cardId, recite.id)
+  const next = session
   assert.deepEqual(new Set(mastery?.peerCardIds), new Set(siblings.map((c) => c.id)))
   assert.deepEqual(new Set(next.graduatedCardIds), new Set(ids))
   assert.equal(next.masteredCount, 1)

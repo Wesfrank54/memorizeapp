@@ -53,7 +53,7 @@ const adaptiveOpts = {
   adaptiveLadder: true,
 }
 
-test('cardLadder: short answers climb mcq→blank→type; long answers use the recite trainer', () => {
+test('cardLadder: short answers climb mcq→blank→type; long answers add passage capstone', () => {
   const s = emptyState()
   const a = addCard(s, 'd', 'x', 'Q1', 'Alpha')
   addCard(s, 'd', 'x', 'Q2', 'Bravo')
@@ -63,9 +63,11 @@ test('cardLadder: short answers climb mcq→blank→type; long answers use the r
   assert.deepEqual(cardLadder(s, cardA, noteA), ['mcq', 'blank', 'typed'])
 
   const longId = addCard(s, 'd', 'y', 'Recite the thing', 'x'.repeat(60))
+  addCard(s, 'd', 'y', 'Other long', 'y'.repeat(60))
+  addCard(s, 'd', 'y', 'Third long', 'z'.repeat(60))
   const cl = s.cards.find((c) => c.id === longId)!
   const nl = s.notes.find((n) => n.id === cl.noteId)!
-  assert.deepEqual(cardLadder(s, cl, nl), ['passage'])
+  assert.deepEqual(cardLadder(s, cl, nl), ['mcq', 'blank', 'passage'])
 })
 
 test('buildUnits groups by first concept tag', () => {
@@ -343,11 +345,13 @@ test('adaptiveStartRung: card data beats the familiarity answer (stale-perfect h
 test('brand new adaptive session pre-tests cards with no prior attempts', () => {
   const s = emptyState()
   const id = addCard(s, 'd', 'x', 'q', 'Alpha')
+  addCard(s, 'd', 'x', 'q2', 'Bravo')
+  addCard(s, 'd', 'x', 'q3', 'Charlie')
   const units = buildUnits(s, [id])
   const sess = startLearnFromUnits(s, units, { ...adaptiveOpts, familiarity: 'new' })
   const cur = currentLearn(sess)
   assert.ok(cur?.pretest)
-  assert.equal(cur?.mode, 'typed')
+  assert.equal(cur?.mode, 'mcq')
 })
 
 test('adaptiveStartRung: history skips rungs, discounted by staleness', () => {
