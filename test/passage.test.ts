@@ -11,12 +11,14 @@ import {
   splitPassage,
 } from '../src/core/passage.ts'
 
-test('passageWantsFullRecall: recitations get the typed capstone, very short clozes stay blanks-only', () => {
+test('passageWantsFullRecall: only 1–2 word clozes skip the typed capstone', () => {
   const mission =
     'The mission of the Navy is to recruit, train, equip, and organize to deliver combat ready Naval forces to win conflicts and wars while maintaining security and deterrence through sustained forward presence.'
   assert.equal(passageWantsFullRecall(mission), true)
   assert.equal(passageWantsFullRecall('Give the alarm in case of fire or disorder.'), true)
-  assert.equal(passageWantsFullRecall('The capital of France is Paris.'), false)
+  assert.equal(passageWantsFullRecall('The capital of France is Paris.'), true)
+  assert.equal(passageWantsFullRecall('Paris'), false)
+  assert.equal(passageWantsFullRecall('Yes sir'), false)
 })
 
 test('single-chunk passage gets warm-up, blank rotations, then full-line before capstone', () => {
