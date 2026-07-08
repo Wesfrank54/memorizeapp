@@ -11,6 +11,21 @@ build, tests).
 
 ---
 
+## 2026-07-08 — Quiz: topic (concept) selection like Learn
+
+- User request: pick topics in Quiz the same way as Learn. Quiz now shows the same concept-unit
+  picker (buildUnits by concept — first note tag, deck fallback) as chips with select-all/clear.
+- Quiz.tsx: added selectedKeys state + deckCardIds/allUnits/chosenCardIds memos; the quiz pool is
+  now drawn from the selected topics' cards (was: all deck cards). Topics default to all-selected
+  and reset on deck change, so the prior "quiz the whole deck" behavior is preserved out of the box.
+  The "cards available" count and Questions max follow the selection.
+- Verified in browser (6 cards across geography/biology/history): picker lists all three concepts
+  all-checked ("3 of 3 selected · 6 cards"); clearing and choosing biology → "1 of 3 selected ·
+  2 cards", Questions max 2; starting served only biology questions. typecheck, 134/134 tests,
+  vite build clean, no console errors.
+
+Files: src/app/components/Quiz.tsx, CHANGELOG.md
+
 ## 2026-07-08 — Fix: unit-synthesis "check one, grade all" Enter bug
 
 - User report: on the final full-unit review (the synthesis "tower" of sections), pressing Enter to

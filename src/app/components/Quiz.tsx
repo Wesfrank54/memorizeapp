@@ -3,6 +3,7 @@ import type { AppState, Card, Note } from '../../core/types.ts'
 import { renderContent } from '../../core/schedule.ts'
 import { recordQuizAttempt } from '../../core/store.ts'
 import { computeConcepts } from '../../core/concepts.ts'
+import { buildUnits } from '../../core/learn.ts'
 import { GradedAnswer, type GradedMode } from './GradedAnswer.tsx'
 
 const MODES: { id: GradedMode; label: string }[] = [
@@ -33,14 +34,41 @@ export function Quiz({ state }: { state: AppState }) {
   const [deckId, setDeckId] = useState('')
   const [mode, setMode] = useState<GradedMode>('typed')
   const [length, setLength] = useState(10)
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set())
   const [session, setSession] = useState<QuizSession | null>(null)
 
-  const available = useMemo(() => state.cards.filter((c) => !deckId || c.deckId === deckId).length, [state.cards, deckId])
+  const deckCardIds = useMemo(
+    () => state.cards.filter((c) => !deckId || c.deckId === deckId).map((c) => c.id),
+    [state.cards, deckId],
+  )
+  // Same concept grouping the Learn tab uses (first tag → deck fallback).
+  const allUnits = useMemo(() => buildUnits(state, deckCardIds, { byConcept: true }), [state, deckCardIds])
+  const chosenCardIds = useMemo(
+    () => allUnits.filter((u) => selectedKeys.has(u.key)).flatMap((u) => u.cardIds),
+    [allUnits, selectedKeys],
+  )
+  const available = chosenCardIds.length
+
+  // Default to every topic selected (quiz the whole deck) and reset on deck change.
+  useEffect(() => {
+    setSelectedKeys(new Set(allUnits.map((u) => u.key)))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deckId])
+
+  function toggleUnit(key: string) {
+    setSelectedKeys((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
 
   function start() {
     const notesById = new Map(state.notes.map((n) => [n.id, n]))
+    const idSet = new Set(chosenCardIds)
     const pool = state.cards
-      .filter((c) => !deckId || c.deckId === deckId)
+      .filter((c) => idSet.has(c.id))
       .map((c) => ({ card: c, note: notesById.get(c.noteId) }))
       .filter((x): x is { card: Card; note: Note } => !!x.note)
     const picked = shuffle(pool).slice(0, length)
@@ -101,6 +129,38 @@ export function Quiz({ state }: { state: AppState }) {
               </option>
             ))}
           </select>
+        </div>
+        <div className="field">
+          <div className="row spread">
+            <label>Topics</label>
+            <span className="muted small">
+              {allUnits.filter((u) => selectedKeys.has(u.key)).length} of {allUnits.length} selected · {available} cards
+            </span>
+          </div>
+          {allUnits.length > 0 ? (
+            <>
+              <div className="unit-picker-actions">
+                <button type="button" className="link" onClick={() => setSelectedKeys(new Set(allUnits.map((u) => u.key)))}>
+                  select all
+                </button>
+                <button type="button" className="link" onClick={() => setSelectedKeys(new Set())}>
+                  clear
+                </button>
+              </div>
+              <div className="unit-picker">
+                {allUnits.map((u) => (
+                  <label key={u.key} className={`unit-chip selectable${selectedKeys.has(u.key) ? ' selected' : ''}`}>
+                    <input type="checkbox" checked={selectedKeys.has(u.key)} onChange={() => toggleUnit(u.key)} />
+                    <span>
+                      {u.label} <span className="muted">({u.cardIds.length})</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </>
+          ) : (
+            <p className="muted small">No cards in this deck.</p>
+          )}
         </div>
         <div className="field">
           <label>Answer mode</label>
