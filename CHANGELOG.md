@@ -11,6 +11,28 @@ build, tests).
 
 ---
 
+## 2026-07-08 — Fix: unit-synthesis "check one, grade all" Enter bug
+
+- User report: on the final full-unit review (the synthesis "tower" of sections), pressing Enter to
+  check ONE section checked ALL of them — the untouched sections got graded wrong for having no
+  input.
+- Root cause: `PassageRecall` registers its Enter handlers on `window`. That's fine for the normal
+  Learn flow (one PassageRecall on screen), but `UnitSynthesis` mounts several passage sections at
+  once, so a single Enter fired every section's global listener (the practice "check" listener is
+  even a capturing window listener). Pressing Enter in a typed section's textarea leaked to the
+  passage sections too.
+- Fix: added a `standalone` prop to PassageRecall (default true → unchanged single-card behavior).
+  UnitSynthesis passes `standalone={false}`; in that mode every window keydown handler is gated on
+  `rootRef.current.contains(document.activeElement)` (a new root ref via callback), so only the
+  section holding keyboard focus responds. The study-phase Enter listener is disabled in tower mode
+  (click "start recall") so one Enter can't start every section; its "enter" hint is hidden there.
+- Verified in browser at the real synthesis phase (drove the core to synthesis, resumed into the
+  tower): with two passage sections, filling + Enter on section 1 left section 2 untouched (still in
+  study, no ✗), and vice versa; positive path (Enter checks the focused section) still works both
+  directions. typecheck clean, 134/134 tests, vite build clean, no console errors.
+
+Files: src/app/components/PassageRecall.tsx, src/app/components/UnitSynthesis.tsx, CHANGELOG.md
+
 ## 2026-07-08 — Per-concept in-session tuning (plan item C, final Adaptive plan item)
 
 - **Per-concept blank coverage** (src/core/learn.ts): `LearnSession.concepts` (cardId → concept via

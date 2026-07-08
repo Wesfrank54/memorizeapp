@@ -24,6 +24,7 @@ export function PassageRecall({
   coverage,
   variant = 0,
   fullRecall,
+  standalone = true,
   onDone,
 }: {
   text: string
@@ -31,6 +32,14 @@ export function PassageRecall({
   variant?: number
   /** After practice rounds, require typing the full passage (default: multi-line text). */
   fullRecall?: boolean
+  /**
+   * True (default) when this is the only PassageRecall on screen: Enter is
+   * handled via window listeners for convenience. False when several are
+   * mounted together (e.g. the unit-synthesis tower) — then Enter only acts on
+   * the instance that holds keyboard focus, so checking one section can't grade
+   * the others as wrong.
+   */
+  standalone?: boolean
   onDone: (score: number) => void
 }) {
   const chunks = useMemo(() => splitPassage(text), [text])
@@ -85,6 +94,12 @@ export function PassageRecall({
   const advanceReadyRef = useRef(false)
   const nextRef = useRef<() => void>(() => {})
   const inputRefs = useRef<Record<number, HTMLInputElement | null>>({})
+  const rootRef = useRef<HTMLElement | null>(null)
+  const setRoot = (el: HTMLElement | null) => {
+    rootRef.current = el
+  }
+  /** In tower mode, only the focused instance responds to window-level Enter. */
+  const keyOwner = () => standalone || !!rootRef.current?.contains(document.activeElement)
 
   useEffect(() => {
     advancedRef.current = false
@@ -102,19 +117,19 @@ export function PassageRecall({
   useEffect(() => {
     if (phase !== 'practice' || checked) return
     function onKey(e: KeyboardEvent) {
-      if (e.key !== 'Enter') return
+      if (e.key !== 'Enter' || !keyOwner()) return
       e.preventDefault()
       advanceReadyRef.current = false
       setChecked(true)
     }
     window.addEventListener('keydown', onKey, true)
     return () => window.removeEventListener('keydown', onKey, true)
-  }, [phase, checked])
+  }, [phase, checked, standalone])
 
   useEffect(() => {
     if (phase !== 'practice' || !checked) return
     function onKey(e: KeyboardEvent) {
-      if (e.key !== 'Enter') return
+      if (e.key !== 'Enter' || !keyOwner()) return
       e.preventDefault()
       if (!advanceReadyRef.current || advancedRef.current) return
       if (!linePasses()) return
@@ -123,10 +138,12 @@ export function PassageRecall({
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [phase, checked, values, words, blanks, roundIdx, idx, isCumulative])
+  }, [phase, checked, values, words, blanks, roundIdx, idx, isCumulative, standalone])
 
   useEffect(() => {
-    if (phase !== 'study') return
+    // In tower mode the study screen shows the answer text; requiring a click to
+    // start recall also stops one Enter from starting every section at once.
+    if (phase !== 'study' || !standalone) return
     function onKey(e: KeyboardEvent) {
       if (e.key !== 'Enter') return
       e.preventDefault()
@@ -134,25 +151,25 @@ export function PassageRecall({
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [phase])
+  }, [phase, standalone])
 
   useEffect(() => {
     if (phase !== 'finish' || finishScore === null) return
     const score = finishScore
     function onKey(e: KeyboardEvent) {
-      if (e.key !== 'Enter') return
+      if (e.key !== 'Enter' || !keyOwner()) return
       e.preventDefault()
       onDone(score)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [phase, finishScore, onDone])
+  }, [phase, finishScore, onDone, standalone])
 
   useEffect(() => {
     if (phase !== 'full' || fullChecked || !fullInput.trim()) return
     const input = fullInput
     function onKey(e: KeyboardEvent) {
-      if (e.key !== 'Enter' || e.shiftKey) return
+      if (e.key !== 'Enter' || e.shiftKey || !keyOwner()) return
       e.preventDefault()
       advanceReadyRef.current = false
       const { total, correct } = gradePassageChunk(text, input)
@@ -162,14 +179,14 @@ export function PassageRecall({
     }
     window.addEventListener('keydown', onKey, true)
     return () => window.removeEventListener('keydown', onKey, true)
-  }, [phase, fullChecked, fullInput, text])
+  }, [phase, fullChecked, fullInput, text, standalone])
 
   useEffect(() => {
     if (phase !== 'full' || !fullChecked || finishScore === null) return
     if (finishScore < PASSAGE_PASS_SCORE) return
     const score = finishScore
     function onKey(e: KeyboardEvent) {
-      if (e.key !== 'Enter') return
+      if (e.key !== 'Enter' || !keyOwner()) return
       e.preventDefault()
       if (!advanceReadyRef.current || advancedRef.current) return
       advancedRef.current = true
@@ -177,7 +194,7 @@ export function PassageRecall({
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [phase, fullChecked, finishScore, onDone])
+  }, [phase, fullChecked, finishScore, onDone, standalone])
 
   function gradeLine(): { correct: number; total: number } {
     let correct = 0
@@ -242,7 +259,7 @@ export function PassageRecall({
 
   if (chunks.length === 0) {
     return (
-      <button className="primary reveal" onClick={() => onDone(1)}>
+      <button ref={setRoot} className="primary reveal" onClick={() => onDone(1)}>
         Continue
       </button>
     )
@@ -256,13 +273,13 @@ export function PassageRecall({
           ? ' · then full passage'
           : ''
     return (
-      <div className="graded">
+      <div ref={setRoot} className="graded">
         <div className="card-face answer passage-study">{text}</div>
         <p className="muted small">
           You&apos;ll practice in stages — easier blanks first, building up to the full recite{roundHint}.
         </p>
         <button className="primary reveal" onClick={() => setPhase('practice')}>
-          I&apos;ve studied it — start recall <span className="hint">enter</span>
+          I&apos;ve studied it — start recall {standalone ? <span className="hint">enter</span> : null}
         </button>
       </div>
     )
@@ -271,7 +288,7 @@ export function PassageRecall({
   if (phase === 'full') {
     const passed = finishScore !== null && finishScore >= PASSAGE_PASS_SCORE
     return (
-      <div className="graded passage-recall passage-full">
+      <div ref={setRoot} className="graded passage-recall passage-full">
         <p className="muted small passage-full-prompt">
           Final check — type the <strong>entire passage</strong> from memory, same words in order.
           {fullChecked ? null : (
@@ -343,7 +360,7 @@ export function PassageRecall({
     const pct = Math.round(finishScore * 100)
     const passed = finishScore >= PASSAGE_PASS_SCORE
     return (
-      <div className="graded passage-recall">
+      <div ref={setRoot} className="graded passage-recall">
         <VerdictBanner correct={passed} detail={`${pct}% of blanks correct`} />
         <button className="primary reveal" autoFocus onClick={() => onDone(finishScore)}>
           Continue <span className="hint">enter</span>
@@ -432,7 +449,7 @@ export function PassageRecall({
   let globalOffset = 0
 
   return (
-    <div className="graded passage-recall">
+    <div ref={setRoot} className="graded passage-recall">
       <div className="cp-progress">
         Round {roundIdx + 1} / {rounds.length} · {currentRound.title}
         {isCumulative ? null : (

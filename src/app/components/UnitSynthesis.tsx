@@ -82,6 +82,7 @@ export function UnitSynthesis({
                     key={part.cardId}
                     text={part.text}
                     coverage={coverage}
+                    standalone={false}
                     onDone={(score) => {
                       const passed = score >= PASSAGE_PASS_SCORE
                       setPartResults((prev) => ({
