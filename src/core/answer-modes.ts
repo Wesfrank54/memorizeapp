@@ -1,5 +1,5 @@
 import type { AnswerMode, AppState, Card, Note } from './types.ts'
-import { answerShape, mcqAnswerGroup, sameMcqGroup, sameShape } from './distractors.ts'
+import { answerShape, sameShape } from './distractors.ts'
 import { makeChoices, normalize } from './grading.ts'
 import { renderContent } from './schedule.ts'
 
@@ -35,7 +35,14 @@ export function answerAppearsInQuestion(question: string, answer: string): boole
   const q = normalize(question)
   const a = normalize(answer)
   if (!a || a.length < 2) return false
-  if (q.includes(a)) return true
+  // Whole-phrase match with word boundaries — "alpha" must not match inside "alphabet".
+  let idx = 0
+  while ((idx = q.indexOf(a, idx)) !== -1) {
+    const before = idx > 0 ? q[idx - 1]! : ' '
+    const after = idx + a.length < q.length ? q[idx + a.length]! : ' '
+    if (!/[a-z0-9]/.test(before) && !/[a-z0-9]/.test(after)) return true
+    idx += 1
+  }
   const num = a.match(/(?:article|art|section|part)\s*(\d+)/i)
   if (num) {
     const n = num[1]
@@ -57,11 +64,9 @@ export function blankIsWorthwhile(answer: string): boolean {
   return letters.length >= 4 && !/\d/.test(words[0] ?? '')
 }
 
-function plausibleDistractor(correct: string, distractor: string, question?: string): boolean {
-  const correctGroup = mcqAnswerGroup([], question, correct)
-  const distractorGroup = mcqAnswerGroup([], undefined, distractor)
-  // Question text pins rank/insignia type even when tags are absent on import.
-  if (!sameMcqGroup(correctGroup, distractorGroup)) return false
+function plausibleDistractor(correct: string, distractor: string): boolean {
+  // Semantic grouping is enforced in makeChoices (tags + question cues). Here we
+  // only judge whether a foil is substantively confusable — length, labels, shape.
   // Same-shape options (both dates, both counts with the same unit, …) are
   // inherently plausible regardless of length — "9" is a fine foil for "11".
   if (sameShape(correct, distractor)) return true
@@ -95,7 +100,7 @@ export function mcqIsWorthwhile(
   if (choices.length < 3) return false
 
   const distractors = choices.slice(1)
-  const plausible = distractors.filter((d) => plausibleDistractor(ans, d, question))
+  const plausible = distractors.filter((d) => plausibleDistractor(ans, d))
   return plausible.length >= 2
 }
 

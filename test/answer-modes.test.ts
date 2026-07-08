@@ -50,6 +50,11 @@ test('answerAppearsInQuestion catches leaks', () => {
   assert.equal(answerAppearsInQuestion('What is prohibited harassment?', 'No member shall harass another.'), false)
 })
 
+test('answerAppearsInQuestion does not treat Alpha as leaking inside alphabet', () => {
+  assert.equal(answerAppearsInQuestion('Phonetic alphabet — A?', 'Alpha'), false)
+  assert.equal(answerAppearsInQuestion('Phonetic alphabet — B?', 'Bravo'), false)
+})
+
 test('blankIsWorthwhile rejects labels but allows real short answers', () => {
   assert.equal(blankIsWorthwhile('Article 4'), false)
   assert.equal(blankIsWorthwhile('Alpha'), true)

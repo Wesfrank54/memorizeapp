@@ -164,6 +164,29 @@ test('makeChoices: navy officer rank only draws other rank titles, not collar de
 
 const RANK_OR_ADMIRAL = /\b(?:admiral|lieutenant|captain|ensign|commander|warrant officer|chief warrant)\b/i
 
+test('mcqIsWorthwhile: insignia and phonetic cards qualify when same-group distractors exist', () => {
+  const s = emptyState()
+  const collar = addBasic(
+    s,
+    'ranks',
+    'navy-officer-collar',
+    'Navy officer collar device — W-2 CWO2?',
+    'Gold bar with three blue breaks',
+  )
+  addBasic(s, 'ranks', 'navy-officer-collar', 'Navy officer collar device — W-3 CWO3?', 'Silver bar with two blue breaks')
+  addBasic(s, 'ranks', 'navy-officer-collar', 'Navy officer collar device — W-4 CWO4?', 'Silver bar with three blue breaks')
+  addBasic(s, 'ranks', 'navy-officer-collar', 'Navy officer collar device — O-1 ENS?', 'One gold bar')
+  const phon = addBasic(s, 'ods', 'phonetic-alphabet', 'Phonetic alphabet — A?', 'Alpha')
+  addBasic(s, 'ods', 'phonetic-alphabet', 'Phonetic alphabet — B?', 'Bravo')
+  addBasic(s, 'ods', 'phonetic-alphabet', 'Phonetic alphabet — C?', 'Charlie')
+  addBasic(s, 'ods', 'phonetic-alphabet', 'Phonetic alphabet — D?', 'Delta')
+  assert.equal(
+    mcqIsWorthwhile(s, collar.card, collar.note, 'Navy officer collar device — W-2 CWO2?', 'Gold bar with three blue breaks'),
+    true,
+  )
+  assert.equal(mcqIsWorthwhile(s, phon.card, phon.note, 'Phonetic alphabet — A?', 'Alpha'), true)
+})
+
 test('makeChoices: navy officer collar device only draws other collar devices', () => {
   const s = emptyState()
   const { card, note } = addBasic(

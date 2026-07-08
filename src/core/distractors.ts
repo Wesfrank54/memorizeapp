@@ -47,6 +47,7 @@ function mcqGroupFromAnswer(answer: string): McqAnswerGroup {
   if (!t) return null
   if (RANK_ABBR_RE.test(t) && RANK_TITLE_RE.test(t)) return '__rank-name__'
   if (INSIGNIA_DESC_RE.test(t) && INSIGNIA_DETAIL_RE.test(t)) return '__insignia-short__'
+  if (/^(?:gold|silver)\s+bar\b/i.test(t) && INSIGNIA_DETAIL_RE.test(t)) return '__insignia-short__'
   if (INSIGNIA_DETAIL_RE.test(t) && t.length <= 120 && !RANK_TITLE_RE.test(t)) return '__insignia-detail__'
   return null
 }
@@ -75,7 +76,7 @@ export function mcqAnswerGroup(tags: string[], question?: string, answer?: strin
 function mcqGroupFamily(g: McqAnswerGroup): string | null {
   if (g === null) return null
   if (g === '__rank-name__' || g.endsWith('-rank')) return 'rank'
-  if (g === '__insignia-short__' || g.endsWith('-collar')) return 'collar'
+  if (g === '__insignia-short__' || g === '__insignia-detail__' || g.endsWith('-collar')) return 'collar'
   if (g.endsWith('-shoulder')) return 'shoulder'
   if (g.endsWith('-sleeve')) return 'sleeve'
   return g
@@ -84,12 +85,7 @@ function mcqGroupFamily(g: McqAnswerGroup): string | null {
 /** True when two answers may appear together as MCQ foils. */
 export function sameMcqGroup(a: McqAnswerGroup, b: McqAnswerGroup): boolean {
   if (a === null || b === null) return true
-  const fa = mcqGroupFamily(a)
-  const fb = mcqGroupFamily(b)
-  if (fa === fb) return true
-  // Long insignia prose without a tag may only pair with exact topical tags.
-  if (a === '__insignia-detail__' || b === '__insignia-detail__') return false
-  return false
+  return mcqGroupFamily(a) === mcqGroupFamily(b)
 }
 
 export type AnswerShape =
