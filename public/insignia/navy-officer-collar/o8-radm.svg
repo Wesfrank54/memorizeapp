@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 120" role="img" aria-label="O-8 RADM — two stars">
+  <rect width="200" height="120" fill="#f4f6f8" rx="8"/>
+  <rect x="20" y="48" width="160" height="24" fill="#d8dee6" rx="4"/>
+  <polygon points="82,50 85,58 94,58 87,63 90,71 82,66 74,71 77,63 70,58 79,58" fill="#9ca3af"/><polygon points="118,50 121,58 130,58 123,63 126,71 118,66 110,71 113,63 106,58 115,58" fill="#9ca3af"/>
+  <text x="100" y="110" text-anchor="middle" font-family="system-ui,sans-serif" font-size="9" fill="#6b7280">O-8 RADM — two stars</text>
+</svg>

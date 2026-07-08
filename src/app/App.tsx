@@ -11,6 +11,7 @@ import { SyncBar } from './components/SyncBar.tsx'
 import { Commitments } from './components/Commitments.tsx'
 import { Quiz } from './components/Quiz.tsx'
 import { Learn } from './components/Learn.tsx'
+import { ImageTestingBeta } from './components/ImageTestingBeta.tsx'
 
 export type Tab =
   | 'learn'
@@ -22,6 +23,7 @@ export type Tab =
   | 'quiz'
   | 'tune'
   | 'commitments'
+  | 'image-beta'
 
 export function App() {
   const state = useStore()
@@ -46,6 +48,7 @@ export function App() {
         {tab === 'quiz' && <Quiz state={state} />}
         {tab === 'tune' && <Optimize state={state} />}
         {tab === 'commitments' && <Commitments state={state} />}
+        {tab === 'image-beta' && <ImageTestingBeta state={state} />}
       </main>
     </div>
   )

@@ -72,6 +72,9 @@ export interface CsvNote {
   back: string
   /** cloze text with {{c1::...}} deletions (cloze notes only) */
   text: string
+  /** Optional path or URL for question-side image (basic notes). */
+  frontImage: string
+  backImage: string
   tags: string[]
 }
 
@@ -89,8 +92,17 @@ export function csvToNotes(text: string, defaultDeck = 'Imported'): CsvNote[] {
   const hasHeader = header.includes('front') || header.includes('text') || header.includes('type')
   const col = (name: string) => header.indexOf(name)
   const idx = hasHeader
-    ? { type: col('type'), deck: col('deck'), front: col('front'), back: col('back'), text: col('text'), tags: col('tags') }
-    : { type: -1, deck: 2, front: 0, back: 1, text: -1, tags: 3 }
+    ? {
+        type: col('type'),
+        deck: col('deck'),
+        front: col('front'),
+        back: col('back'),
+        text: col('text'),
+        frontImage: col('frontimage') >= 0 ? col('frontimage') : col('image'),
+        backImage: col('backimage'),
+        tags: col('tags'),
+      }
+    : { type: -1, deck: 2, front: 0, back: 1, text: -1, frontImage: -1, backImage: -1, tags: 3 }
 
   const body = hasHeader ? rows.slice(1) : rows
   const notes: CsvNote[] = []
@@ -104,12 +116,14 @@ export function csvToNotes(text: string, defaultDeck = 'Imported'): CsvNote[] {
     if (type === 'cloze') {
       const clozeText = get(idx.text)
       if (!clozeText) continue
-      notes.push({ type: 'cloze', deck, front: '', back: '', text: clozeText, tags })
+      notes.push({ type: 'cloze', deck, front: '', back: '', text: clozeText, frontImage: '', backImage: '', tags })
     } else {
       const front = get(idx.front)
       const back = get(idx.back)
-      if (!front || !back) continue
-      notes.push({ type: 'basic', deck, front, back, text: '', tags })
+      const frontImage = get(idx.frontImage)
+      const backImage = get(idx.backImage)
+      if ((!front && !frontImage) || !back) continue
+      notes.push({ type: 'basic', deck, front, back, text: '', frontImage, backImage, tags })
     }
   }
   return notes

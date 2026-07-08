@@ -398,7 +398,22 @@ export function updateNote(noteId: string, patch: Partial<Pick<Note, 'fields' | 
 }
 
 export const addBasicNote = (deckId: string, front: string, back: string, tags: string[] = []) =>
-  addNote(deckId, 'basic', { front: front.trim(), back: back.trim() }, tags)
+  addBasicNoteWithFields(deckId, front, back, tags, {})
+
+export function addBasicNoteWithFields(
+  deckId: string,
+  front: string,
+  back: string,
+  tags: string[] = [],
+  extraFields: Record<string, string> = {},
+): Note {
+  const fields: Record<string, string> = { front: front.trim(), back: back.trim(), ...extraFields }
+  for (const k of Object.keys(fields)) {
+    if (fields[k] !== undefined && fields[k] !== '') continue
+    delete fields[k]
+  }
+  return addNote(deckId, 'basic', fields, tags)
+}
 
 export const addClozeNote = (deckId: string, text: string, tags: string[] = []) =>
   addNote(deckId, 'cloze', { text: text.trim() }, tags)
@@ -555,7 +570,15 @@ export function importCsv(text: string, defaultDeck = 'Imported'): { decksCreate
       newDecks.push(deck)
     }
     const ts = now()
-    const fields: Record<string, string> = r.type === 'cloze' ? { text: r.text } : { front: r.front, back: r.back }
+    const fields: Record<string, string> =
+      r.type === 'cloze'
+        ? { text: r.text }
+        : {
+            front: r.front,
+            back: r.back,
+            ...(r.frontImage ? { frontImage: r.frontImage } : {}),
+            ...(r.backImage ? { backImage: r.backImage } : {}),
+          }
     const note: Note = { id: newId(), deckId: deck.id, type: r.type, fields, tags: r.tags, createdAt: ts, updatedAt: ts }
     notes.push(note)
     const noteCards = cardsForNote(note) // one call -> consistent ids; cloze notes yield one card per {{cN::}}

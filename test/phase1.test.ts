@@ -69,7 +69,16 @@ test('csvToNotes: basic + cloze rows with a type column', () => {
   ].join('\n')
   const notes = csvToNotes(csv)
   assert.equal(notes.length, 2)
-  assert.deepEqual(notes[0], { type: 'basic', deck: 'Nav', front: 'Navy birthday?', back: '13 October 1775', text: '', tags: ['facts'] })
+  assert.deepEqual(notes[0], {
+    type: 'basic',
+    deck: 'Nav',
+    front: 'Navy birthday?',
+    back: '13 October 1775',
+    text: '',
+    frontImage: '',
+    backImage: '',
+    tags: ['facts'],
+  })
   assert.equal(notes[1].type, 'cloze')
   assert.equal(notes[1].text, 'I am a United States {{c1::Sailor}}.')
   assert.deepEqual(notes[1].tags, ['creed'])
@@ -79,6 +88,12 @@ test('csvToNotes: basic + cloze rows with a type column', () => {
   assert.equal(legacy[0].type, 'basic')
   assert.equal(legacy[0].front, 'Capital of Japan?')
   assert.equal(legacy[0].deck, 'Geo')
+})
+
+test('csvToNotes: optional image column maps to frontImage', () => {
+  const csv = 'type,deck,front,back,image,tags\nbasic,Img,What rank?,Commander (CDR),insignia/o5-cdr.svg,navy-officer-rank'
+  const notes = csvToNotes(csv)
+  assert.equal(notes[0].frontImage, 'insignia/o5-cdr.svg')
 })
 
 test('schedule: new cards are limited by newPerDay; reviewed cards leave the queue', () => {

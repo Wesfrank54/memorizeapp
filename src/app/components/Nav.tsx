@@ -14,6 +14,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'quiz', label: 'Quiz' },
   { id: 'tune', label: 'Tune' },
   { id: 'commitments', label: 'Commitments' },
+  { id: 'image-beta', label: 'Image Testing beta' },
 ]
 
 export function Nav({ tab, setTab, state }: { tab: Tab; setTab: Dispatch<SetStateAction<Tab>>; state: AppState }) {

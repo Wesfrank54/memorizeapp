@@ -154,6 +154,46 @@ body {
 .card-face.answer {
   font-weight: 500;
 }
+.card-face.has-media {
+  padding: 16px 8px 20px;
+}
+.card-face-media {
+  margin: 0 0 12px;
+  display: flex;
+  justify-content: center;
+}
+.card-face-img {
+  max-width: min(100%, 320px);
+  max-height: 200px;
+  object-fit: contain;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+.card-face-text {
+  margin: 0;
+  font-size: 20px;
+}
+.image-beta-panel .image-beta-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 12px 0;
+  font-size: 14px;
+}
+.image-beta-actions {
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.image-beta-preview {
+  margin-top: 20px;
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+}
+.image-beta-session .skip-link {
+  margin-top: 12px;
+}
 .divider {
   border: none;
   border-top: 1px solid var(--border);

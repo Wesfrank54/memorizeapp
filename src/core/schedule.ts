@@ -2,6 +2,7 @@ import type { Card as FsrsCard } from 'ts-fsrs'
 import type { AppState, Card, Note, ReviewEvent, ReviewItem } from './types.ts'
 import { recomputeCard } from './fsrs.ts'
 import { renderCloze } from './cloze.ts'
+import { noteImageFields } from './media.ts'
 
 /** Group every event by card id. */
 export function eventsByCard(events: ReviewEvent[]): Map<string, ReviewEvent[]> {
@@ -22,12 +23,27 @@ function isSameDay(a: Date, b: Date): boolean {
   )
 }
 
-/** Render a card to question/answer text based on its note type. */
-export function renderContent(note: Note, card: Card): { question: string; answer: string } {
+export interface RenderedContent {
+  question: string
+  answer: string
+  /** Resolved URL for an image shown with the question (basic notes). */
+  questionImage?: string
+  /** Resolved URL for an image shown with the answer (basic notes). */
+  answerImage?: string
+}
+
+/** Render a card to question/answer text (and optional images) based on its note type. */
+export function renderContent(note: Note, card: Card): RenderedContent {
   if (note.type === 'cloze') {
     return renderCloze(note.fields.text ?? '', card.ord + 1)
   }
-  return { question: note.fields.front ?? '', answer: note.fields.back ?? '' }
+  const images = noteImageFields(note.fields)
+  return {
+    question: note.fields.front ?? '',
+    answer: note.fields.back ?? '',
+    questionImage: images.frontImage,
+    answerImage: images.backImage,
+  }
 }
 
 /**
