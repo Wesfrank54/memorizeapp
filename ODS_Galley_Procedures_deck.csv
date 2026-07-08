@@ -1,0 +1,49 @@
+type,deck,front,back,text,image,tags
+basic,ODS Galley Procedures,Galley procedures motto (three words required at all times)?,"Speed, volume, and intensity",,,galley-overview
+basic,ODS Galley Procedures,Who may modify basic galley procedures?,The Class Team (for schedule or training requirements),,,galley-overview
+basic,ODS Galley Procedures,Where does the Drill Officer march the company before entering the galley?,"Front of Ney Hall under the blue awning (""The Chute""), halted at the step to the double doors",,,galley-approach
+basic,ODS Galley Procedures,"What is ""The Chute""?",The blue awning at the front of Ney Hall,,,galley-approach
+basic,ODS Galley Procedures,Chow time for each class/company is found where?,Plan of the day (POD),,,galley-approach
+basic,ODS Galley Procedures,Where does the Drill Officer post before commencing galley procedures?,"Port side of the formation, abreast of the first rank, then right face to the company",,,galley-drill-officer
+basic,ODS Galley Procedures,"Drill Officer: ""Guide, post the guidon."" — Guide's response?","Aye-aye, Sir/Ma'am",,,galley-drill-officer
+basic,ODS Galley Procedures,"After posting the guidon, where does the Guide fall in?",Rear of the company formation,,,galley-drill-officer
+basic,ODS Galley Procedures,"Drill Officer: ""Mess Treasurer, fall out."" — Mess Treasurer's response?","Aye-aye, Sir/Ma'am",,,galley-drill-officer
+basic,ODS Galley Procedures,"When the Mess Treasurer falls out, what two things do they do?",Report company arrival to the mess attendant and request seating,,,galley-mess-treasurer
+basic,ODS Galley Procedures,Glow belts during entering: stow in which pocket?,Starboard pocket,,,galley-drill-officer
+basic,ODS Galley Procedures,"""Prepare to crush starboard"" — when do students say ""Pain""?",When both heels come together after the starboard side-step,,,galley-drill-officer
+cloze,ODS Galley Procedures,,,"Drill Officer: ""Ready"" → company: ""{{c1::Discipline}}""; Drill Officer: ""Move"" → company: ""{{c2::Pain}}"" (crush starboard).",,galley-drill-officer
+basic,ODS Galley Procedures,"Drill Officer: ""Mess Treasurer, Report."" — what does the Mess Treasurer report about lines?","The company will utilize all lines (1, 2, 3, 4)",,,galley-mess-treasurer
+basic,ODS Galley Procedures,Mess Treasurer report: seating location is directed by whom?,Galley Attendant (goat locker / active scullery / inactive scullery / shark tank),,,galley-mess-treasurer
+basic,ODS Galley Procedures,"Drill Officer: ""First four to the door"" — what do the first four do?",Open the inner and outer doors to the galley,,,galley-entry
+basic,ODS Galley Procedures,"Drill Officer: ""Column of files from the left, last Sailor sound off last Sailor."" — column leader's response?",Forward,,,galley-entry
+basic,ODS Galley Procedures,Other squad leaders during column of files from the left?,Stand Fast (heads snapped left),,,galley-entry
+cloze,ODS Galley Procedures,,,"Last Sailor in the column sounds off: ""{{c1::Last Sailor}}""",,galley-entry
+basic,ODS Galley Procedures,"When entering the galley, where are hand sanitizer dispensers?",On the right inside the doors,,,galley-entry
+basic,ODS Galley Procedures,When are covers removed during entry?,"While filing out, before sanitizing hands",,,galley-entry
+basic,ODS Galley Procedures,In the chow line: talking or looking around?,No talking and no looking around,,,galley-lines
+basic,ODS Galley Procedures,Tray position while moving through chow lines?,"Elbows tucked, arms parallel to the deck",,,galley-lines
+basic,ODS Galley Procedures,Student forgot knowledge book/sheet at chow — what do they study with?,A table condiment held straight out in the right hand,,,galley-lines
+basic,ODS Galley Procedures,Outer garments (coats/jackets) at the table — when removed?,Before arranging trays; placed on the back of the chair,,,galley-lines
+basic,ODS Galley Procedures,Coffee/salad bar (if authorized): retrieve when?,After the 15-minute warning (or at 15-minute warning per class team),,,galley-lines
+basic,ODS Galley Procedures,Section Leader seat location at the table?,"Forward-most, inboard to the active scullery",,,galley-seating
+basic,ODS Galley Procedures,"Section Leader: ""Put it away table one"" — table response?",Aye-aye Sir/Ma'am,,,galley-seating
+basic,ODS Galley Procedures,"At preparatory command ""Take"" (before Seats), where is the right hand?","On the back of the chair (overhand grip), in unison",,,galley-seating
+cloze,ODS Galley Procedures,,,"At execution ""Seats,"" the table recites: ""{{c1::TO LEAD IS TO SERVE}} / {{c2::ALWAYS WATCHED ALWAYS JUDGED}} / {{c3::YOUR COMPANY MANTRA}}""",,galley-seating
+basic,ODS Galley Procedures,Seated at attention: heel angle?,45 degrees,,,galley-seating
+basic,ODS Galley Procedures,Seated at attention: hand position?,"Knife hands flat on each lap, not beyond the knees",,,galley-seating
+basic,ODS Galley Procedures,From which side do students move into seats?,Port side,,,galley-seating
+basic,ODS Galley Procedures,15-minute warning: what may students begin?,Eating (thousand-yard stare; elbows off table; chew with mouth closed),,,galley-meal
+basic,ODS Galley Procedures,10- or 5-minute warnings: company reply if no food in mouth?,Aye-aye Sir/Ma'am,,,galley-meal
+basic,ODS Galley Procedures,Done eating early before warnings end — position?,"POA, thousand-yard stare, feet 45°, knife hands on upper thighs",,,galley-meal
+basic,ODS Galley Procedures,Immediate warning: does the table respond verbally?,No — pause; no one gets up to retrieve anything,,,galley-meal
+basic,ODS Galley Procedures,"After immediate warning, cups go where?",On the tray (all eating/drinking/chewing finished),,,galley-meal
+basic,ODS Galley Procedures,"""Take … feet"" — list three actions before facing inboard.","Stand, push chairs in, don outer wear and glow belts, pick up trays, wipe table area",,,galley-exit
+basic,ODS Galley Procedures,Trash vs trays on exit: where does each go?,Trash (non-food) in trash cans; trays in the scullery,,,galley-exit
+basic,ODS Galley Procedures,Exit route after scullery?,Up the center passageway as directed by the Class Chief,,,galley-exit
+basic,ODS Galley Procedures,Column of files to exit: which side is chosen?,Left or right — whichever is closest to the active scullery,,,galley-exit
+basic,ODS Galley Procedures,"Company fails commands (not in unison / no motivation) — who may call ""As you were""?",Any student (especially the Section Leader),,,galley-corrections
+basic,ODS Galley Procedures,Tray arrangement reference?,Tray diagrams on page F-4 of the knowledge book,,,galley-corrections
+basic,ODS Galley Procedures,"Galley entering: after Mess Treasurer returns and centers, next Drill Officer command?","Mess Treasurer, Report",,,galley-sequence
+basic,ODS Galley Procedures,"Galley entering: after crush starboard, next step involving Mess Treasurer?","Mess Treasurer, Report (after MT centers on company)",,,galley-sequence
+basic,ODS Galley Procedures,"After ""Put it away,"" next Section Leader command sequence?",Take … (pause) … Seats,,,galley-sequence
+basic,ODS Galley Procedures,"After immediate warning, next Section Leader command?",Take … (pause) … feet,,,galley-sequence
