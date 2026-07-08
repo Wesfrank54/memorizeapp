@@ -360,7 +360,8 @@ export function Learn({ state, onGoToReview }: { state: AppState; onGoToReview?:
         <h2 className="opt-title">Learn</h2>
         <p className="muted small">
           Each card starts at a difficulty set by your own track record — recent answers and memory state.
-          Brand-new cards use a one-time familiarity answer, and blank coverage adapts as you perform. Mastery
+          Brand-new cards get multiple-choice placement questions to find your starting level; blank coverage adapts as
+          you perform. Mastery
           graduates cards into your FSRS schedule.
         </p>
         {studyPlan ? (
@@ -626,7 +627,13 @@ export function Learn({ state, onGoToReview }: { state: AppState; onGoToReview?:
   const passageVariant = state.attempts.filter((a) => a.cardId === cur.cardId).length
   const passageText = note.type === 'cloze' ? clozeFullText(note.fields.text ?? '') : answerText
   const promptText =
-    cur.pretest ? `${question} — try from memory first` : cur.mode === 'passage' && note.type === 'cloze' ? 'Fill in the blanks' : question
+    cur.pretest
+      ? cur.mode === 'mcq'
+        ? `${question} — pick the answer (calibrating your level)`
+        : `${question} — try from memory first`
+      : cur.mode === 'passage' && note.type === 'cloze'
+        ? 'Fill in the blanks'
+        : question
 
   const deferred = deferredLearnCount(s)
   const waiting = waitingLearnCount(s)
@@ -654,11 +661,17 @@ export function Learn({ state, onGoToReview }: { state: AppState; onGoToReview?:
         </span>
         <div className="ladder">
           {cur.pretest ? (
-            <span className="rung active">Pre-test</span>
+            <span className="rung active">{cur.mode === 'mcq' ? 'Placement (choices)' : 'Pre-test'}</span>
           ) : (
             cur.ladder.map((m, i) => (
               <span key={`${m}-${i}`} className={`rung ${i === cur.rung ? 'active' : i < cur.rung ? 'done' : ''}`}>
                 {LADDER_LABELS[m]}
+                {i === cur.rung && m === 'mcq' && cur.mcqCalibrationStreak > 1 ? (
+                  <span className="rung-streak">
+                    {' '}
+                    · {cur.mcqPasses + 1}/{cur.mcqCalibrationStreak}
+                  </span>
+                ) : null}
               </span>
             ))
           )}
@@ -674,7 +687,7 @@ export function Learn({ state, onGoToReview }: { state: AppState; onGoToReview?:
         <div className="review-meta">
           <span className="chip">{state.decks.find((d) => d.id === card.deckId)?.name ?? '—'}</span>
           {isReview && <span className="chip chip-due">review</span>}
-          {cur.pretest && <span className="chip">pre-test</span>}
+          {cur.pretest && <span className="chip">{cur.mode === 'mcq' ? 'placement' : 'pre-test'}</span>}
         </div>
         <div className="card-face question">{promptText}</div>
 

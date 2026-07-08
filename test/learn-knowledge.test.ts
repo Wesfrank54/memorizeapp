@@ -4,6 +4,7 @@ import {
   adaptiveStartRung,
   cardKnowledge,
   cardSeen,
+  currentLearn,
   knowledgeStartRung,
   startLearn,
 } from '../src/core/learn.ts'
@@ -137,8 +138,10 @@ test('adaptive session: proven card starts at top rung even when familiarity say
   assert.equal(adaptiveStartRung(state, fresh.id, freshLadder, phase, withFam), 0)
 })
 
-test('unseen adaptive card gets a pretest; a self-rated card does not', () => {
+test('unseen adaptive card gets an MCQ pretest; a self-rated card does not', () => {
   const state = emptyState()
+  withCard(state, 'What is the capital of Peru?', 'Lima')
+  withCard(state, 'What is the capital of Brazil?', 'Brasilia')
   const selfRated = withCard(state, 'What is the capital of Chile?', 'Santiago')
   const fresh = withCard(state, 'What is the capital of Kenya?', 'Nairobi')
   selfReview(state, selfRated.id, 2, new Date())
@@ -151,4 +154,6 @@ test('unseen adaptive card gets a pretest; a self-rated card does not', () => {
   const items = new Map(session.queue.map((i) => [i.cardId, i]))
   assert.equal(items.get(fresh.id)?.pretest, true)
   assert.equal(items.get(selfRated.id)?.pretest ?? false, false)
+  const freshCur = currentLearn({ ...session, queue: session.queue.filter((i) => i.cardId === fresh.id) })
+  assert.equal(freshCur?.mode, 'mcq')
 })

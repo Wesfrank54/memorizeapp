@@ -42,6 +42,8 @@ const MAX_TYPE_LEN = 40
 
 const ACCURACY_SKIP = 0.8
 const MIN_ATTEMPTS_SKIP = 2
+/** Adaptive placement: recognition passes before leaving the MCQ rung. */
+export const MCQ_CALIBRATION_STREAK = 2
 /** Per-card mastery in a session — remaining cards start on harder rungs. */
 const MASTERY_RAMP = 0.08
 /** Correct rung advance (not yet mastered) — gentle session-wide ramp. */
@@ -131,6 +133,11 @@ export interface LearnOptions {
    * Weak-area drills use 2 — prove the hardest mode twice, spaced apart.
    */
   masteryStreak?: number
+  /**
+   * Adaptive tab: MCQ passes at the recognition rung before advancing to fill-blank
+   * (default MCQ_CALIBRATION_STREAK). Manual tab always uses 1.
+   */
+  mcqCalibrationStreak?: number
 }
 
 export const DEFAULT_LEARN_OPTIONS: LearnOptions = {
@@ -569,12 +576,14 @@ export function buildPhases(units: Unit[], enableSynthesis = true, focus?: 'weak
 export interface LearnItem {
   cardId: string
   rung: number
-  /** Brand-new card: one generation-effect attempt before the ladder. */
+  /** Brand-new card: one placement attempt before the ladder (MCQ in adaptive). */
   pretest?: boolean
   /** Don't surface until session.seen reaches this value. */
   readyAt?: number
   /** Consecutive top-rung passes so far (drill-in streak; reset by a top-rung miss). */
   topPasses?: number
+  /** Consecutive MCQ passes while calibrating starting difficulty (adaptive tab). */
+  mcqPasses?: number
 }
 
 export interface LearnSession {
@@ -756,6 +765,13 @@ export interface LearnAnswerResult {
   mastery: LearnMastery | null
 }
 
+function pretestModeForLadder(session: LearnSession, ladder: AnswerMode[]): AnswerMode | null {
+  const adaptive = (session.tabMode ?? 'manual') === 'adaptive'
+  if (adaptive && ladder.includes('mcq')) return 'mcq'
+  if (ladder.includes('typed')) return 'typed'
+  return null
+}
+
 function buildLearnItem(state: AppState, session: LearnSession, cardId: string, ladder: AnswerMode[], phase: Phase): LearnItem {
   const rung = adaptiveStartRung(state, cardId, ladder, phase, session)
   const adaptive = (session.tabMode ?? 'manual') === 'adaptive'
@@ -766,8 +782,8 @@ function buildLearnItem(state: AppState, session: LearnSession, cardId: string, 
     wantsPretest &&
     !skipPretest &&
     !cardSeen(state, cardId) &&
-    ladder.includes('typed') &&
-    rung === 0
+    rung === 0 &&
+    pretestModeForLadder(session, ladder) != null
   return { cardId, rung, pretest: pretest || undefined }
 }
 
@@ -972,6 +988,10 @@ export interface CurrentLearn {
   /** Top-rung passes THIS card needs to master (session option, or 2 earned by
    * struggling — see effectiveMasteryStreak). */
   masteryStreak: number
+  /** MCQ passes so far while calibrating placement (adaptive tab). */
+  mcqPasses: number
+  /** MCQ passes required before leaving the recognition rung. */
+  mcqCalibrationStreak: number
   /** Full-unit recall test after mastering individual cards in a topic. */
   unitSynthesis?: { unitIndex: number }
 }
@@ -982,6 +1002,7 @@ export function currentLearn(session: LearnSession): CurrentLearn | null {
   if (s.done) return null
   const streak = Math.max(1, s.opts.masteryStreak ?? 1)
   const phase = s.phases[s.phaseIndex]
+  const mcqCal = effectiveMcqCalibrationStreak(s)
   if (phase?.kind === 'synthesis' && !s.synthesisRemediate && s.queue.length === 0) {
     return {
       cardId: s.units[phase.unit].cardIds[0],
@@ -991,6 +1012,8 @@ export function currentLearn(session: LearnSession): CurrentLearn | null {
       pretest: false,
       topPasses: 0,
       masteryStreak: streak,
+      mcqPasses: 0,
+      mcqCalibrationStreak: mcqCal,
       unitSynthesis: { unitIndex: phase.unit },
     }
   }
@@ -999,7 +1022,18 @@ export function currentLearn(session: LearnSession): CurrentLearn | null {
   const ladder = s.ladders[item.cardId] ?? ['self']
   const cardStreak = effectiveMasteryStreak(s, item.cardId)
   if (item.pretest) {
-    return { cardId: item.cardId, mode: 'typed', ladder, rung: 0, pretest: true, topPasses: 0, masteryStreak: cardStreak }
+    const mode = pretestModeForLadder(s, ladder) ?? 'typed'
+    return {
+      cardId: item.cardId,
+      mode,
+      ladder,
+      rung: 0,
+      pretest: true,
+      topPasses: 0,
+      masteryStreak: cardStreak,
+      mcqPasses: 0,
+      mcqCalibrationStreak: mcqCal,
+    }
   }
   const rung = Math.min(item.rung, ladder.length - 1)
   return {
@@ -1010,6 +1044,8 @@ export function currentLearn(session: LearnSession): CurrentLearn | null {
     pretest: false,
     topPasses: item.topPasses ?? 0,
     masteryStreak: cardStreak,
+    mcqPasses: item.mcqPasses ?? 0,
+    mcqCalibrationStreak: mcqCal,
   }
 }
 
@@ -1189,6 +1225,12 @@ export function effectiveMasteryStreak(session: LearnSession, cardId: string): n
   return (session.fails?.[cardId] ?? 0) >= DRILL_IN_FAILS ? Math.max(base, 2) : base
 }
 
+/** MCQ passes required at the recognition rung before advancing (adaptive placement). */
+export function effectiveMcqCalibrationStreak(session: LearnSession): number {
+  if ((session.tabMode ?? 'manual') !== 'adaptive') return 1
+  return Math.max(1, session.opts.mcqCalibrationStreak ?? MCQ_CALIBRATION_STREAK)
+}
+
 function bumpFails(session: LearnSession, cardId: string): Record<string, number> {
   return { ...session.fails, [cardId]: (session.fails?.[cardId] ?? 0) + 1 }
 }
@@ -1257,6 +1299,28 @@ export function answerLearn(state: AppState, session: LearnSession, passed: bool
   let mastery: LearnMastery | null = null
 
   if (isSelf || passed) {
+    if (passed && mode === 'mcq') {
+      const calStreak = effectiveMcqCalibrationStreak(s)
+      const passes = (cur.mcqPasses ?? 0) + 1
+      if (passes < calStreak) {
+        const item: LearnItem = { cardId: cur.cardId, rung: cur.rung, mcqPasses: passes, topPasses: cur.topPasses }
+        const mid = {
+          ...s,
+          queue: rest,
+          seen: s.seen + 1,
+          attempts: s.attempts + 1,
+          correct: s.correct + 1,
+          difficultyBias: nextDifficultyBias(s, RUNG_PASS_RAMP),
+          ...coverageUpdates(s, cur.cardId, true, false),
+          failStreak: { ...s.failStreak, [cur.cardId]: 0 },
+        }
+        let n = requeue(mid, item, false, rest)
+        n = promoteWaiting(n)
+        if (n.queue.length === 0 && n.waiting.length === 0) n = advanceWhenQueueEmpty(state, n)
+        return { session: n, mastery: null }
+      }
+    }
+
     const nextRung = cur.rung + 1
     if (nextRung >= ladder.length) {
       // Top rung passed. Drill-in: with masteryStreak > 1 the card must pass the
@@ -1307,7 +1371,12 @@ export function answerLearn(state: AppState, session: LearnSession, passed: bool
   } else {
     // Miss: drop a rung and reset the drill streak — "drilled in" means
     // consecutive proof, not accumulated passes.
-    const item: LearnItem = { cardId: cur.cardId, rung: Math.max(0, cur.rung - 1), topPasses: undefined }
+    const item: LearnItem = {
+      cardId: cur.cardId,
+      rung: Math.max(0, cur.rung - 1),
+      topPasses: undefined,
+      mcqPasses: undefined,
+    }
     const mid = {
       ...s,
       queue: rest,

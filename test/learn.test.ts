@@ -222,15 +222,45 @@ test('adaptive ladder skips rungs when typed history is strong', () => {
   assert.equal(startRungFromHistory(s, id, ladder), ladder.indexOf('typed'))
 })
 
-test('pretest shows typed mode for brand-new cards', () => {
+test('manual pretest shows typed mode for brand-new cards', () => {
   const s = emptyState()
   addCard(s, 'd', 'x', 'q1', 'Alpha')
-  addCard(s, 'd', 'x', 'q2', 'Bravo')
-  addCard(s, 'd', 'x', 'q3', 'Charlie')
-  const sess = startLearn(s, s.cards.map((c) => c.id).slice(0, 1), { ...deterministicOpts, pretest: true })
+  const sess = startLearn(s, s.cards.map((c) => c.id).slice(0, 1), {
+    ...deterministicOpts,
+    pretest: true,
+    tabMode: 'manual',
+  })
   const cur = currentLearn(sess)
   assert.ok(cur?.pretest)
   assert.equal(cur?.mode, 'typed')
+})
+
+test('adaptive pretest uses MCQ; two recognition passes before fill-blank', () => {
+  const s = emptyState()
+  const id = addCard(s, 'd', 'x', 'What is the capital of France?', 'Paris')
+  addCard(s, 'd', 'x', 'What is the capital of Italy?', 'Rome')
+  addCard(s, 'd', 'x', 'What is the capital of Spain?', 'Madrid')
+  let sess = startLearn(s, [id], {
+    ...deterministicOpts,
+    spacingGap: 0,
+    tabMode: 'adaptive',
+    familiarity: 'new',
+  })
+  const pre = currentLearn(sess)
+  assert.ok(pre?.pretest)
+  assert.equal(pre?.mode, 'mcq')
+
+  sess = tickLearnQueue(answerLearn(s, sess, true).session)
+  assert.equal(currentLearn(sess)?.mode, 'mcq')
+  assert.equal(currentLearn(sess)?.rung, 0)
+  assert.equal(currentLearn(sess)?.mcqCalibrationStreak, 2)
+
+  sess = tickLearnQueue(answerLearn(s, sess, true).session)
+  assert.equal(currentLearn(sess)?.mode, 'mcq')
+  assert.equal(currentLearn(sess)?.mcqPasses, 1)
+
+  sess = tickLearnQueue(answerLearn(s, sess, true).session)
+  assert.equal(currentLearn(sess)?.mode, 'blank')
 })
 
 test('blankCoverageForRung ramps from easy to base coverage', () => {
@@ -365,13 +395,11 @@ test('difficultyBias rises after mastering a card', () => {
   addCard(s, 'd', 'x', 'q3', 'Charlie')
   let sess = startLearn(s, [id], adaptiveOpts)
   assert.equal(sess.difficultyBias, 0)
-  for (let i = 0; i < 2; i++) {
-    sess = answerLearn(s, sess, true).session
-    sess = tickLearnQueue(sess)
+  while (!sess.done && currentLearn(sess)) {
+    sess = tickLearnQueue(answerLearn(s, sess, true).session)
   }
-  const { session: done } = answerLearn(s, sess, true)
-  assert.ok(done.difficultyBias > 0)
-  assert.equal(done.graduatedCardIds.length, 1)
+  assert.ok(sess.difficultyBias > 0)
+  assert.equal(sess.graduatedCardIds.length, 1)
 })
 
 test('manual learn does not ramp difficultyBias or coverageBias', () => {
