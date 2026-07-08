@@ -21,13 +21,56 @@ function shuffle<T>(arr: T[]): T[] {
   return a
 }
 
+interface QuizItem {
+  card: Card
+  note: Note
+}
+
 interface QuizSession {
-  remaining: { card: Card; note: Note }[]
-  deferred: { card: Card; note: Note }[]
+  /** Current round's queue. */
+  remaining: QuizItem[]
+  /** Skipped this round — replayed in a catch-up sub-phase before the round ends. */
+  deferred: QuizItem[]
+  /** Answered wrong this round — becomes the next retry round. */
+  missed: QuizItem[]
   catchUp: boolean
-  correct: number
-  planned: number
-  answered: number
+  /** 1 = initial run; 2+ = retry rounds over the previous round's misses. */
+  round: number
+  /** Cards in the current round (for progress). */
+  roundTotal: number
+  roundAnswered: number
+  /** First-attempt score (the headline), measured on the initial round only. */
+  firstTryCorrect: number
+  firstTryTotal: number
+  /** How many retry rounds it took to clear every card (for the summary). */
+  retryRounds: number
+}
+
+/**
+ * Advance a session after its queues changed: enter the catch-up sub-phase when
+ * only skipped cards remain, or start a fresh retry round over this round's
+ * misses. Returns the session unchanged (queues empty) once everything is right.
+ */
+function afterQueueChange(s: QuizSession): QuizSession {
+  if (!s.catchUp && s.remaining.length === 0 && s.deferred.length > 0) {
+    return { ...s, catchUp: true }
+  }
+  if (s.remaining.length === 0 && s.deferred.length === 0) {
+    if (s.missed.length > 0) {
+      return {
+        ...s,
+        remaining: s.missed,
+        deferred: [],
+        missed: [],
+        catchUp: false,
+        round: s.round + 1,
+        roundTotal: s.missed.length,
+        roundAnswered: 0,
+        retryRounds: s.retryRounds + 1,
+      }
+    }
+  }
+  return s
 }
 
 export function Quiz({ state }: { state: AppState }) {
@@ -73,7 +116,18 @@ export function Quiz({ state }: { state: AppState }) {
       .filter((x): x is { card: Card; note: Note } => !!x.note)
     const picked = shuffle(pool).slice(0, length)
     if (picked.length === 0) return
-    setSession({ remaining: picked, deferred: [], catchUp: false, correct: 0, planned: picked.length, answered: 0 })
+    setSession({
+      remaining: picked,
+      deferred: [],
+      missed: [],
+      catchUp: false,
+      round: 1,
+      roundTotal: picked.length,
+      roundAnswered: 0,
+      firstTryCorrect: 0,
+      firstTryTotal: picked.length,
+      retryRounds: 0,
+    })
   }
 
   function skip() {
@@ -86,18 +140,11 @@ export function Quiz({ state }: { state: AppState }) {
       }
       const [cur, ...rest] = s.remaining
       if (!cur) return s
-      return { ...s, remaining: rest, deferred: [...s.deferred, cur] }
+      return afterQueueChange({ ...s, remaining: rest, deferred: [...s.deferred, cur] })
     })
   }
 
   const current = session ? (session.catchUp ? session.deferred[0] : session.remaining[0]) : undefined
-
-  useEffect(() => {
-    if (!session || session.catchUp) return
-    if (session.remaining.length === 0 && session.deferred.length > 0) {
-      setSession((s) => (s ? { ...s, catchUp: true } : s))
-    }
-  }, [session])
 
   useEffect(() => {
     if (!current) return
@@ -187,17 +234,22 @@ export function Quiz({ state }: { state: AppState }) {
   }
 
   if (!current && session.remaining.length === 0 && session.deferred.length === 0) {
-    const pct = session.answered > 0 ? Math.round((session.correct / session.answered) * 100) : 0
+    const pct = session.firstTryTotal > 0 ? Math.round((session.firstTryCorrect / session.firstTryTotal) * 100) : 0
     const weak = computeConcepts(state, { minAttempts: 1 }).slice(0, 5)
     return (
       <div className="panel center">
         <div className="cp-score">{pct}%</div>
         <p>
-          {session.correct} / {session.answered} correct
-          {session.answered < session.planned ? (
-            <span className="muted small"> · {session.planned - session.answered} skipped</span>
-          ) : null}
+          {session.firstTryCorrect} / {session.firstTryTotal} correct on the first try
         </p>
+        {session.retryRounds > 0 ? (
+          <p className="muted small">
+            Retried every miss until all {session.firstTryTotal} were right — {session.retryRounds} retry round
+            {session.retryRounds === 1 ? '' : 's'}.
+          </p>
+        ) : (
+          <p className="muted small">Perfect run — no retries needed. 🎯</p>
+        )}
         {weak.length > 0 && (
           <div className="quiz-weak">
             <div className="stat-label">weakest concepts</div>
@@ -220,34 +272,31 @@ export function Quiz({ state }: { state: AppState }) {
 
   const { card, note } = current
   const { question } = renderContent(note, card)
-  const doneCount = session.answered
   const progressLabel = session.catchUp
     ? `Catch-up · ${session.deferred.length} remaining`
-    : `quiz · ${doneCount + 1} / ${session.planned}`
+    : session.round === 1
+      ? `quiz · ${session.roundAnswered + 1} / ${session.roundTotal}`
+      : `Retry ${session.round - 1} · ${session.roundAnswered + 1} / ${session.roundTotal}`
   const deferredCount = session.catchUp ? 0 : session.deferred.length
 
   function advance(correct: boolean) {
     setSession((s) => {
       if (!s) return s
-      if (s.catchUp) {
-        const next = {
-          ...s,
-          deferred: s.deferred.slice(1),
-          correct: s.correct + (correct ? 1 : 0),
-          answered: s.answered + 1,
-        }
-        return next
-      }
-      const next = {
+      const cur = s.catchUp ? s.deferred[0] : s.remaining[0]
+      if (!cur) return s
+      const remaining = s.catchUp ? s.remaining : s.remaining.slice(1)
+      const deferred = s.catchUp ? s.deferred.slice(1) : s.deferred
+      // Wrong answers become the next retry round; keep looping until all right.
+      const missed = correct ? s.missed : [...s.missed, cur]
+      const firstTry = s.round === 1
+      return afterQueueChange({
         ...s,
-        remaining: s.remaining.slice(1),
-        correct: s.correct + (correct ? 1 : 0),
-        answered: s.answered + 1,
-      }
-      if (next.remaining.length === 0 && next.deferred.length > 0) {
-        return { ...next, catchUp: true }
-      }
-      return next
+        remaining,
+        deferred,
+        missed,
+        roundAnswered: s.roundAnswered + 1,
+        firstTryCorrect: s.firstTryCorrect + (firstTry && correct ? 1 : 0),
+      })
     })
   }
 
@@ -259,7 +308,7 @@ export function Quiz({ state }: { state: AppState }) {
       </div>
       <div className="card-face question">{question}</div>
       <GradedAnswer
-        key={card.id}
+        key={`${card.id}-r${session.round}`}
         state={state}
         card={card}
         note={note}

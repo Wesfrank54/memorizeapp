@@ -11,6 +11,29 @@ build, tests).
 
 ---
 
+## 2026-07-08 — Quiz: retry-missed rounds until everything is right
+
+- User request: after the initial questions, re-quiz the ones you missed in a separate round, and
+  keep going until all correct.
+- Quiz.tsx session model reworked into rounds: `missed` collects wrong answers in the current round;
+  when a round's queue empties (`afterQueueChange` helper, which also handles the existing skip
+  catch-up sub-phase), any misses become the next round (`round++`, `retryRounds++`). Loops until a
+  round finishes with no misses. Progress shows "quiz · k/n" for the initial run and "Retry N ·
+  k/m" for retry rounds.
+- Scoring changed to first-attempt: headline % and "X / Y correct on the first try" use the initial
+  round only (`firstTryCorrect`/`firstTryTotal`); summary adds "Retried every miss until all Y were
+  right — N retry rounds" (or "Perfect run — no retries needed" when N=0).
+- Bug found + fixed during verification: a single-card retry loop reused the same GradedAnswer
+  instance (key was `card.id`, unchanged across rounds), so the retry showed the previous wrong
+  answer's feedback instead of a fresh input. Key now includes the round (`${card.id}-r${round}`) so
+  each presentation remounts clean.
+- Verified in browser: 3-card quiz, one miss → Retry 1 (just the miss) → wrong again → Retry 2
+  (fresh input confirmed) → correct → summary "67% · 2/3 first try · 2 retry rounds"; a perfect run
+  shows "100% · Perfect run — no retries needed". typecheck, 134/134 tests, build clean, no console
+  errors.
+
+Files: src/app/components/Quiz.tsx, CHANGELOG.md
+
 ## 2026-07-08 — Quiz: topic (concept) selection like Learn
 
 - User request: pick topics in Quiz the same way as Learn. Quiz now shows the same concept-unit
