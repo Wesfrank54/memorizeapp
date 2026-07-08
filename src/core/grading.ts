@@ -2,7 +2,8 @@ import { Rating } from 'ts-fsrs'
 import type { AppState, Card, Grade, Note } from './types.ts'
 import { cardAnswer } from './accountability.ts'
 import { isLabelOnlyAnswer } from './answer-modes.ts'
-import { answerShape, sameShape, synthesizeDistractors } from './distractors.ts'
+import { answerShape, mcqAnswerGroup, sameMcqGroup, sameShape, synthesizeDistractors } from './distractors.ts'
+import { renderContent } from './schedule.ts'
 
 // Auto-grading for the typed / fill-in-the-blank / multiple-choice answer modes.
 // Text answers are graded by normalized exact match with a small near-miss
@@ -74,10 +75,12 @@ export function ratingFromResult(r: GradeResult): Grade {
  */
 export function makeChoices(state: AppState, card: Card, note: Note, n = 4): string[] {
   const correct = cardAnswer(note, card)
+  const { question } = renderContent(note, card)
+  const myGroup = mcqAnswerGroup(note.tags, question, correct)
   const notesById = new Map(state.notes.map((nn) => [nn.id, nn]))
   const myTags = new Set(note.tags)
 
-  type Cand = { text: string; sameTag: boolean; sameDeck: boolean }
+  type Cand = { text: string; sameTag: boolean; sameDeck: boolean; sameGroup: boolean }
   const seen = new Set<string>([normalize(correct)])
   const cands: Cand[] = []
   for (const c of state.cards) {
@@ -88,9 +91,21 @@ export function makeChoices(state: AppState, card: Card, note: Note, n = 4): str
     const key = normalize(text)
     if (!key || seen.has(key)) continue
     seen.add(key)
-    cands.push({ text, sameTag: nn.tags.some((t) => myTags.has(t)), sameDeck: c.deckId === card.deckId })
+    const candQ = renderContent(nn, c).question
+    const candGroup = mcqAnswerGroup(nn.tags, candQ, text)
+    cands.push({
+      text,
+      sameTag: nn.tags.some((t) => myTags.has(t)),
+      sameDeck: c.deckId === card.deckId,
+      sameGroup: sameMcqGroup(myGroup, candGroup),
+    })
   }
-  cands.sort((a, b) => Number(b.sameTag) - Number(a.sameTag) || Number(b.sameDeck) - Number(a.sameDeck))
+  cands.sort(
+    (a, b) =>
+      Number(b.sameGroup) - Number(a.sameGroup) ||
+      Number(b.sameTag) - Number(a.sameTag) ||
+      Number(b.sameDeck) - Number(a.sameDeck),
+  )
 
   // Shaped answers (dates, years, quantities): every option must share the
   // shape — a lone date among prose options is obviously the answer. Real
@@ -127,6 +142,7 @@ export function makeChoices(state: AppState, card: Card, note: Note, n = 4): str
   const picked: string[] = []
   for (const c of cands) {
     if (picked.length >= n - 1) break
+    if (myGroup !== null && !c.sameGroup) continue
     const len = c.text.trim().length
     if (isLabelOnlyAnswer(correct) && isLabelOnlyAnswer(c.text)) {
       picked.push(c.text)

@@ -1,5 +1,5 @@
 import type { AnswerMode, AppState, Card, Note } from './types.ts'
-import { answerShape, sameShape } from './distractors.ts'
+import { answerShape, mcqAnswerGroup, sameMcqGroup, sameShape } from './distractors.ts'
 import { makeChoices, normalize } from './grading.ts'
 import { renderContent } from './schedule.ts'
 
@@ -57,7 +57,11 @@ export function blankIsWorthwhile(answer: string): boolean {
   return letters.length >= 4 && !/\d/.test(words[0] ?? '')
 }
 
-function plausibleDistractor(correct: string, distractor: string): boolean {
+function plausibleDistractor(correct: string, distractor: string, question?: string): boolean {
+  const correctGroup = mcqAnswerGroup([], question, correct)
+  const distractorGroup = mcqAnswerGroup([], undefined, distractor)
+  // Question text pins rank/insignia type even when tags are absent on import.
+  if (!sameMcqGroup(correctGroup, distractorGroup)) return false
   // Same-shape options (both dates, both counts with the same unit, …) are
   // inherently plausible regardless of length — "9" is a fine foil for "11".
   if (sameShape(correct, distractor)) return true
@@ -91,7 +95,7 @@ export function mcqIsWorthwhile(
   if (choices.length < 3) return false
 
   const distractors = choices.slice(1)
-  const plausible = distractors.filter((d) => plausibleDistractor(ans, d))
+  const plausible = distractors.filter((d) => plausibleDistractor(ans, d, question))
   return plausible.length >= 2
 }
 

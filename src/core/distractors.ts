@@ -4,6 +4,94 @@
 // Generation is deterministic (seeded by card id) so a card's options are
 // stable and testable, and fully offline — no AI/API involved.
 
+/**
+ * Semantic bucket for MCQ distractors. Cards in the same group have
+ * interchangeable wrong answers (rank vs rank, collar device vs collar device).
+ * `null` means no constraint — legacy decks without tags still work.
+ */
+export type McqAnswerGroup = string | null
+
+/** Tags that pin rank/insignia answer types (navy-officer-rank, marine-officer-collar, …). */
+const MCQ_INSIGNIA_TAG_RE = /-(?:rank|collar|sleeve|shoulder)$/i
+
+const RANK_TITLE_RE =
+  /\b(?:admiral|lieutenant|captain|ensign|commander|colonel|general|sergeant|corporal|petty officer|seaman|warrant|chief petty|master chief|brigadier|major)\b/i
+const RANK_ABBR_RE = /\([A-Za-z0-9]{2,6}\)\s*$/
+const INSIGNIA_DESC_RE =
+  /^(?:none|one|two|three|four|five)\s+(?:gold|silver|thin|diagonal|single)\b/i
+const INSIGNIA_DETAIL_RE =
+  /\b(?:bar|bars|stripe|stripes|star|stars|chevron|chevrons|oak leaf|eagle|rocker|anchor|break|outboard|1\/2-inch|1\/4-inch|2-inch)\b/i
+
+function insigniaKindToken(raw: string): string {
+  const k = raw.toLowerCase().trim()
+  if (k === 'rank') return 'rank'
+  if (k.includes('collar')) return 'collar'
+  if (k.includes('shoulder')) return 'shoulder'
+  if (k.includes('sleeve')) return 'sleeve'
+  return k.replace(/\s+/g, '-')
+}
+
+function mcqGroupFromQuestion(question: string): McqAnswerGroup {
+  const m = question.match(
+    /\b(Navy|Marine|Army|Air Force|Coast Guard)\s+(officer|enlisted)\s+(rank|collar device|shoulder board|sleeve insignia)\b/i,
+  )
+  if (!m) return null
+  const branch = m[1].toLowerCase().replace(/\s+/g, '')
+  const tier = m[2].toLowerCase()
+  const kind = insigniaKindToken(m[3])
+  return `${branch}-${tier}-${kind}`
+}
+
+function mcqGroupFromAnswer(answer: string): McqAnswerGroup {
+  const t = answer.trim()
+  if (!t) return null
+  if (RANK_ABBR_RE.test(t) && RANK_TITLE_RE.test(t)) return '__rank-name__'
+  if (INSIGNIA_DESC_RE.test(t) && INSIGNIA_DETAIL_RE.test(t)) return '__insignia-short__'
+  if (INSIGNIA_DETAIL_RE.test(t) && t.length <= 120 && !RANK_TITLE_RE.test(t)) return '__insignia-detail__'
+  return null
+}
+
+function pickGroupingTag(tags: string[]): string | null {
+  for (const tag of tags) {
+    if (MCQ_INSIGNIA_TAG_RE.test(tag) || tag.toLowerCase() === 'corps-devices') return tag.toLowerCase()
+  }
+  if (tags.length === 1) return tags[0].toLowerCase()
+  return null
+}
+
+/** Classify an answer for same-type MCQ grouping (tags preferred, then question/answer cues). */
+export function mcqAnswerGroup(tags: string[], question?: string, answer?: string): McqAnswerGroup {
+  const fromTag = pickGroupingTag(tags)
+  if (fromTag) return fromTag
+  if (question) {
+    const fromQ = mcqGroupFromQuestion(question)
+    if (fromQ) return fromQ
+  }
+  if (answer) return mcqGroupFromAnswer(answer)
+  return null
+}
+
+/** Collapse tag + heuristic labels into a coarse family for comparison. */
+function mcqGroupFamily(g: McqAnswerGroup): string | null {
+  if (g === null) return null
+  if (g === '__rank-name__' || g.endsWith('-rank')) return 'rank'
+  if (g === '__insignia-short__' || g.endsWith('-collar')) return 'collar'
+  if (g.endsWith('-shoulder')) return 'shoulder'
+  if (g.endsWith('-sleeve')) return 'sleeve'
+  return g
+}
+
+/** True when two answers may appear together as MCQ foils. */
+export function sameMcqGroup(a: McqAnswerGroup, b: McqAnswerGroup): boolean {
+  if (a === null || b === null) return true
+  const fa = mcqGroupFamily(a)
+  const fb = mcqGroupFamily(b)
+  if (fa === fb) return true
+  // Long insignia prose without a tag may only pair with exact topical tags.
+  if (a === '__insignia-detail__' || b === '__insignia-detail__') return false
+  return false
+}
+
 export type AnswerShape =
   | {
       kind: 'date'

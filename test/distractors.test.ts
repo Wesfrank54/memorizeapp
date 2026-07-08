@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { answerShape, sameShape, synthesizeDistractors } from '../src/core/distractors.ts'
+import { answerShape, mcqAnswerGroup, sameMcqGroup, sameShape, synthesizeDistractors } from '../src/core/distractors.ts'
 import { makeChoices } from '../src/core/grading.ts'
 import { mcqIsWorthwhile } from '../src/core/answer-modes.ts'
 import { cardLadder } from '../src/core/learn.ts'
@@ -124,6 +124,67 @@ test('mcqIsWorthwhile: date and bare-count facts now qualify; article labels sti
   assert.equal(mcqIsWorthwhile(s, bday.card, bday.note, "When is the Navy's birthday?", '13 October 1775'), true)
   assert.equal(mcqIsWorthwhile(s, count.card, count.note, 'How many general orders are there?', '11'), true)
   assert.equal(mcqIsWorthwhile(s, art.card, art.note, 'Which article covers escape?', 'Article 3'), false)
+})
+
+test('mcqAnswerGroup: rank tags differ from collar/shoulder tags', () => {
+  assert.equal(mcqAnswerGroup(['navy-officer-rank'], 'Navy officer rank — O-7?', 'Rear Admiral Lower Half (RDML)'), 'navy-officer-rank')
+  assert.equal(mcqAnswerGroup(['navy-officer-collar'], 'Navy officer collar device — O-7 RDML?', 'One silver five-pointed star'), 'navy-officer-collar')
+  assert.equal(
+    sameMcqGroup('navy-officer-rank', 'navy-officer-collar'),
+    false,
+    'rank and collar are different MCQ groups',
+  )
+  assert.equal(sameMcqGroup('navy-officer-rank', 'marine-officer-rank'), true, 'rank family matches across branches')
+})
+
+test('makeChoices: navy officer rank only draws other rank titles, not collar devices', () => {
+  const s = emptyState()
+  const { card, note } = addBasic(
+    s,
+    'ranks',
+    'navy-officer-rank',
+    'Navy officer rank — O-7?',
+    'Rear Admiral Lower Half (RDML)',
+  )
+  addBasic(s, 'ranks', 'navy-officer-rank', 'Navy officer rank — O-8?', 'Rear Admiral (RADM)')
+  addBasic(s, 'ranks', 'navy-officer-rank', 'Navy officer rank — O-9?', 'Vice Admiral (VADM)')
+  addBasic(s, 'ranks', 'navy-officer-rank', 'Navy officer rank — O-10?', 'Admiral (ADM)')
+  addBasic(s, 'ranks', 'navy-officer-collar', 'Navy officer collar device — W-3 CWO3?', 'Silver bar with two blue breaks')
+  addBasic(s, 'ranks', 'navy-officer-collar', 'Navy officer collar device — W-4 CWO4?', 'Silver bar with three blue breaks')
+  addBasic(s, 'ranks', 'navy-officer-collar', 'Navy officer collar device — W-2 CWO2?', 'Gold bar with three blue breaks')
+
+  const opts = makeChoices(s, card, note, 4)
+  assert.equal(opts.length, 4)
+  assert.ok(opts.includes('Rear Admiral Lower Half (RDML)'))
+  for (const o of opts) {
+    assert.ok(!/bar with/i.test(o), `collar device excluded: ${o}`)
+    assert.ok(RANK_OR_ADMIRAL.test(o) || o === 'Rear Admiral Lower Half (RDML)', `expected rank title: ${o}`)
+  }
+})
+
+const RANK_OR_ADMIRAL = /\b(?:admiral|lieutenant|captain|ensign|commander|warrant officer|chief warrant)\b/i
+
+test('makeChoices: navy officer collar device only draws other collar devices', () => {
+  const s = emptyState()
+  const { card, note } = addBasic(
+    s,
+    'ranks',
+    'navy-officer-collar',
+    'Navy officer collar device — O-7 RDML?',
+    'One silver five-pointed star',
+  )
+  addBasic(s, 'ranks', 'navy-officer-collar', 'Navy officer collar device — O-8 RADM?', 'Two silver five-pointed stars')
+  addBasic(s, 'ranks', 'navy-officer-collar', 'Navy officer collar device — O-9 VADM?', 'Three silver five-pointed stars')
+  addBasic(s, 'ranks', 'navy-officer-collar', 'Navy officer collar device — O-1 ENS?', 'One gold bar')
+  addBasic(s, 'ranks', 'navy-officer-rank', 'Navy officer rank — O-7?', 'Rear Admiral Lower Half (RDML)')
+  addBasic(s, 'ranks', 'navy-officer-rank', 'Navy officer rank — O-8?', 'Rear Admiral (RADM)')
+
+  const opts = makeChoices(s, card, note, 4)
+  assert.equal(opts.length, 4)
+  assert.ok(opts.includes('One silver five-pointed star'))
+  for (const o of opts) {
+    assert.ok(!RANK_OR_ADMIRAL.test(o), `rank title excluded: ${o}`)
+  }
 })
 
 test('cardLadder: date card climbs mcq → typed (blank stays off — digits leak)', () => {
