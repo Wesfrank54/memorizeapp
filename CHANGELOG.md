@@ -11,6 +11,36 @@ build, tests).
 
 ---
 
+## 2026-07-08 — Per-concept in-session tuning (plan item C, final Adaptive plan item)
+
+- **Per-concept blank coverage** (src/core/learn.ts): `LearnSession.concepts` (cardId → concept via
+  new `conceptKeyForCard`, shared with buildUnits) + `conceptCoverageBias`. On each graded answer
+  the answered card's concept forks its own coverage bias from the session-wide value and adjusts
+  independently (`coverageUpdates` — global still updated as the fallback for untouched concepts).
+  `learnBlankCoverage` takes an optional cardId; Learn.tsx passes the current card. Struggling on
+  one topic now eases ITS blanks without loosening every other topic. Manual-tabMode resumed
+  sessions unaffected (fixed coverage). Difficulty ramp deliberately stays session-global (it
+  models warm-up and only affects unseen-card starts since item A).
+- **Automatic drill-in** — `LearnSession.fails` counts graded misses per card; at ≥2
+  (`DRILL_IN_FAILS`) the card's mastery requires 2 consecutive top-rung passes
+  (`effectiveMasteryStreak`, used by answerLearn + currentLearn so the ×2 chip shows). Applies in
+  any tab mode.
+- **Grok cross-review findings fixed** (headless grok-review; 2 findings, both verified):
+  (1 MED) `fails` never cleared on mastery → a drilled-in card demanded ×2 again when it
+  reappeared in cumulative review — mastery now wipes the card's miss ledger (`clearedFails`);
+  (2 LOW) multi-day `decayLearnSession` reset proof streaks (topPasses) but kept struggle history —
+  decay now clears `fails` too (dropped rungs already force re-proving). Grok also confirmed:
+  legacy persisted sessions degrade safely, remediation/catch-up paths correct, no AGENTS.md
+  invariant violations.
+- All new session fields optional → old saved sessions resume fine.
+- Validation: typecheck clean, 134/134 tests (test/learn-concept-tuning.test.ts ×9 incl. the two
+  regression tests for the review findings), vite build clean, browser smoke (session carries
+  concepts map, Study now composes, no console errors).
+
+Files: src/core/learn.ts, src/app/components/Learn.tsx, test/learn-concept-tuning.test.ts,
+CHANGELOG.md. (AGENTS.md also gained a "do not auto-push" deploy policy — pushes only on
+explicit request.)
+
 ## 2026-07-07 — Study now: one-click session composition (plan item B)
 
 - New core planner `buildStudyNow(state, {maxCards, maxNew, at})` (src/core/learn.ts): composes a

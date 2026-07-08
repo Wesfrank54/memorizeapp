@@ -621,7 +621,7 @@ export function Learn({ state, onGoToReview }: { state: AppState; onGoToReview?:
   const isReview = s.phases[s.phaseIndex]?.kind === 'review'
   const coverage =
     cur.mode === 'passage' || cur.mode === 'blank'
-      ? learnBlankCoverage(s, cur.rung, cur.ladder, baseCoverage)
+      ? learnBlankCoverage(s, cur.rung, cur.ladder, baseCoverage, cur.cardId)
       : baseCoverage
   const passageVariant = state.attempts.filter((a) => a.cardId === cur.cardId).length
   const passageText = note.type === 'cloze' ? clozeFullText(note.fields.text ?? '') : answerText

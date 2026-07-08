@@ -200,10 +200,14 @@ export function learnBlankCoverage(
   rung: number,
   ladder: AnswerMode[],
   baseCoverage: number,
+  cardId?: string,
 ): number {
   if ((session.tabMode ?? 'manual') === 'manual') return baseCoverage
   const rungBased = blankCoverageForRung(rung, ladder, baseCoverage)
-  const bias = session.coverageBias ?? 0.5
+  // Per-concept bias when this card's concept has its own track record this
+  // session; otherwise the session-wide bias.
+  const key = cardId ? session.concepts?.[cardId] : undefined
+  const bias = (key ? session.conceptCoverageBias?.[key] : undefined) ?? session.coverageBias ?? 0.5
   const shift = (bias - 0.5) * 0.5
   return Math.max(0.15, Math.min(0.95, rungBased + shift))
 }
@@ -380,6 +384,12 @@ export interface Unit {
   cardIds: string[]
 }
 
+/** A card's concept: first note tag, falling back to its deck. Shared by unit
+ * grouping, weak-area stats, and per-concept session tuning. */
+export function conceptKeyForCard(card: Card, note: Note | undefined): string {
+  return note && note.tags.length > 0 ? note.tags[0] : `deck:${card.deckId}`
+}
+
 /** Group cards into units: by first concept tag (fallback: deck), or fixed chunks. */
 export function buildUnits(state: AppState, cardIds: string[], opts?: { byConcept?: boolean; size?: number }): Unit[] {
   const byConcept = opts?.byConcept ?? true
@@ -404,7 +414,7 @@ export function buildUnits(state: AppState, cardIds: string[], opts?: { byConcep
     const card = cardsById.get(id)
     if (!card) continue
     const note = notesById.get(card.noteId)
-    const key = note && note.tags.length > 0 ? note.tags[0] : `deck:${card.deckId}`
+    const key = conceptKeyForCard(card, note)
     if (!groups.has(key)) {
       groups.set(key, [])
       order.push(key)
@@ -597,6 +607,14 @@ export interface LearnSession {
   difficultyBias: number
   /** 0..1 — adaptive tab: rises with correct answers, drops on misses; shifts blank coverage. */
   coverageBias: number
+  /** cardId → concept key, computed once at session start (per-concept tuning). */
+  concepts?: Record<string, string>
+  /** Per-concept coverage bias — forks from the session-wide value when a
+   * concept is first answered, so struggling on one topic eases ITS blanks
+   * without loosening every other topic. Missing key → session-wide fallback. */
+  conceptCoverageBias?: Record<string, number>
+  /** Cumulative graded misses per card this session (drives automatic drill-in). */
+  fails?: Record<string, number>
   /** Drilling missed sections before retrying a full-unit synthesis test. */
   synthesisRemediate?: { unit: number; cardIds: string[] }
   /** How many times the full-unit test has been attempted (for retry label). */
@@ -668,6 +686,9 @@ export function decayLearnSession(session: LearnSession, savedAt: string, at = n
     queue: session.queue.map(drop),
     waiting: session.waiting.map(drop),
     deferred: session.deferred.map(drop),
+    // Days away wipe the drill-in ledger with the proof streaks: dropped rungs
+    // already force re-proving; stale struggle shouldn't also demand ×2.
+    fails: undefined,
     done: false,
   }
 }
@@ -885,6 +906,14 @@ export function startLearnFromUnits(
       .map((u) => ({ ...u, cardIds: u.cardIds.filter((id) => !dropped.has(id)) }))
       .filter((u) => u.cardIds.length > 0)
   }
+  const concepts: Record<string, string> = {}
+  for (const u of units) {
+    for (const id of u.cardIds) {
+      const card = cardsById.get(id)
+      if (card) concepts[id] = conceptKeyForCard(card, notesById.get(card.noteId))
+    }
+  }
+
   const { tabMode: tabModeOpt, familiarity: familiarityOpt, focus, ...learnOptRest } = opts ?? {}
   const learnOpts = learnOptionsFromSettings(state.settings, learnOptRest)
   const tabMode = tabModeOpt ?? 'manual'
@@ -915,6 +944,7 @@ export function startLearnFromUnits(
     familiarity,
     difficultyBias: 0,
     coverageBias: 0.5,
+    concepts,
     focus,
     passagePeers: dropped.size > 0 ? passagePeers : undefined,
   }
@@ -939,7 +969,8 @@ export interface CurrentLearn {
   pretest: boolean
   /** Consecutive top-rung passes so far on this card (drill-in streak). */
   topPasses: number
-  /** Top-rung passes required to master (1 = normal, 2 = weak-area drill). */
+  /** Top-rung passes THIS card needs to master (session option, or 2 earned by
+   * struggling — see effectiveMasteryStreak). */
   masteryStreak: number
   /** Full-unit recall test after mastering individual cards in a topic. */
   unitSynthesis?: { unitIndex: number }
@@ -966,8 +997,9 @@ export function currentLearn(session: LearnSession): CurrentLearn | null {
   if (s.queue.length === 0) return null
   const item = s.queue[0]
   const ladder = s.ladders[item.cardId] ?? ['self']
+  const cardStreak = effectiveMasteryStreak(s, item.cardId)
   if (item.pretest) {
-    return { cardId: item.cardId, mode: 'typed', ladder, rung: 0, pretest: true, topPasses: 0, masteryStreak: streak }
+    return { cardId: item.cardId, mode: 'typed', ladder, rung: 0, pretest: true, topPasses: 0, masteryStreak: cardStreak }
   }
   const rung = Math.min(item.rung, ladder.length - 1)
   return {
@@ -977,7 +1009,7 @@ export function currentLearn(session: LearnSession): CurrentLearn | null {
     rung,
     pretest: false,
     topPasses: item.topPasses ?? 0,
-    masteryStreak: streak,
+    masteryStreak: cardStreak,
   }
 }
 
@@ -1103,18 +1135,71 @@ function isAdaptiveSession(session: LearnSession): boolean {
   return (session.tabMode ?? 'manual') === 'adaptive'
 }
 
+function adjustCoverageBias(b: number, passed: boolean, mastered: boolean): number {
+  if (mastered) return Math.min(1, b + MASTERY_COVERAGE_RAMP)
+  if (passed) return Math.min(1, b + COVERAGE_PASS_RAMP)
+  return Math.max(0, b - COVERAGE_FAIL_DROP)
+}
+
 function nextCoverageBias(session: LearnSession, passed: boolean, mastered: boolean): number {
   if (!isAdaptiveSession(session)) return session.coverageBias ?? 0.5
-  let b = session.coverageBias ?? 0.5
-  if (mastered) b = Math.min(1, b + MASTERY_COVERAGE_RAMP)
-  else if (passed) b = Math.min(1, b + COVERAGE_PASS_RAMP)
-  else b = Math.max(0, b - COVERAGE_FAIL_DROP)
-  return b
+  return adjustCoverageBias(session.coverageBias ?? 0.5, passed, mastered)
+}
+
+/**
+ * Coverage-bias updates for an answer: the session-wide bias moves as before,
+ * and the answered card's concept forks its own bias (seeded from whatever it
+ * currently reads) so one topic's struggles stop loosening every other topic.
+ */
+function coverageUpdates(
+  session: LearnSession,
+  cardId: string,
+  passed: boolean,
+  mastered: boolean,
+): Pick<LearnSession, 'coverageBias' | 'conceptCoverageBias'> {
+  const coverageBias = nextCoverageBias(session, passed, mastered)
+  if (!isAdaptiveSession(session)) return { coverageBias, conceptCoverageBias: session.conceptCoverageBias }
+  const key = session.concepts?.[cardId]
+  if (!key) return { coverageBias, conceptCoverageBias: session.conceptCoverageBias }
+  const current = session.conceptCoverageBias?.[key] ?? session.coverageBias ?? 0.5
+  return {
+    coverageBias,
+    conceptCoverageBias: {
+      ...session.conceptCoverageBias,
+      [key]: adjustCoverageBias(current, passed, mastered),
+    },
+  }
 }
 
 function nextDifficultyBias(session: LearnSession, delta: number): number {
   if (!isAdaptiveSession(session)) return session.difficultyBias
   return Math.min(1, session.difficultyBias + delta)
+}
+
+/** Graded misses in one session before a card must prove its top rung twice. */
+const DRILL_IN_FAILS = 2
+
+/**
+ * Top-rung passes this card needs to master: the session option (weak drills
+ * use 2), or an automatic 2 once the card has struggled enough this session —
+ * a card you keep missing shouldn't master on one lucky pass.
+ */
+export function effectiveMasteryStreak(session: LearnSession, cardId: string): number {
+  const base = Math.max(1, session.opts.masteryStreak ?? 1)
+  return (session.fails?.[cardId] ?? 0) >= DRILL_IN_FAILS ? Math.max(base, 2) : base
+}
+
+function bumpFails(session: LearnSession, cardId: string): Record<string, number> {
+  return { ...session.fails, [cardId]: (session.fails?.[cardId] ?? 0) + 1 }
+}
+
+/** Drop a mastered card's miss count: drill-in is proof required to MASTER —
+ * once proven, later reappearances (cumulative review) start clean instead of
+ * demanding the double top-rung pass again. */
+function clearedFails(session: LearnSession, cardId: string): Record<string, number> | undefined {
+  if (!session.fails || session.fails[cardId] === undefined) return session.fails
+  const { [cardId]: _cleared, ...rest } = session.fails
+  return rest
 }
 
 /** Advance after answering the current card. Handles rung movement + phase transitions. Pure. */
@@ -1154,7 +1239,13 @@ export function answerLearn(state: AppState, session: LearnSession, passed: bool
       return { session: next, mastery: null }
     }
     const item: LearnItem = { cardId: cur.cardId, rung: cur.rung }
-    const mid = { ...s, queue: rest, seen: s.seen + 1, coverageBias: nextCoverageBias(s, false, false) }
+    const mid = {
+      ...s,
+      queue: rest,
+      seen: s.seen + 1,
+      ...coverageUpdates(s, cur.cardId, false, false),
+      fails: graded ? bumpFails(s, cur.cardId) : s.fails,
+    }
     let n = requeue(mid, item, true, rest)
     n = promoteWaiting(n)
     if (n.queue.length === 0 && n.waiting.length === 0) n = advanceWhenQueueEmpty(state, n)
@@ -1169,8 +1260,9 @@ export function answerLearn(state: AppState, session: LearnSession, passed: bool
     const nextRung = cur.rung + 1
     if (nextRung >= ladder.length) {
       // Top rung passed. Drill-in: with masteryStreak > 1 the card must pass the
-      // top rung `streak` consecutive times (spaced apart) before it masters.
-      const streakNeeded = Math.max(1, s.opts.masteryStreak ?? 1)
+      // top rung `streak` consecutive times (spaced apart) before it masters —
+      // required by the session option, or earned by struggling this session.
+      const streakNeeded = effectiveMasteryStreak(s, cur.cardId)
       const passes = (cur.topPasses ?? 0) + 1
       if (passes < streakNeeded) {
         const item: LearnItem = { cardId: cur.cardId, rung: cur.rung, topPasses: passes }
@@ -1181,7 +1273,7 @@ export function answerLearn(state: AppState, session: LearnSession, passed: bool
           attempts: s.attempts + (graded ? 1 : 0),
           correct: s.correct + (graded ? 1 : 0),
           difficultyBias: nextDifficultyBias(s, RUNG_PASS_RAMP),
-          coverageBias: nextCoverageBias(s, true, false),
+          ...coverageUpdates(s, cur.cardId, true, false),
           failStreak: { ...s.failStreak, [cur.cardId]: 0 },
         }
         let n = requeue(mid, item, false, rest)
@@ -1205,7 +1297,7 @@ export function answerLearn(state: AppState, session: LearnSession, passed: bool
         queue: rest,
         seen: s.seen + 1,
         difficultyBias: nextDifficultyBias(s, RUNG_PASS_RAMP),
-        coverageBias: nextCoverageBias(s, true, false),
+        ...coverageUpdates(s, cur.cardId, true, false),
       }
       let n = requeue(mid, item, false, rest)
       n = promoteWaiting(n)
@@ -1216,7 +1308,13 @@ export function answerLearn(state: AppState, session: LearnSession, passed: bool
     // Miss: drop a rung and reset the drill streak — "drilled in" means
     // consecutive proof, not accumulated passes.
     const item: LearnItem = { cardId: cur.cardId, rung: Math.max(0, cur.rung - 1), topPasses: undefined }
-    const mid = { ...s, queue: rest, seen: s.seen + 1, coverageBias: nextCoverageBias(s, false, false) }
+    const mid = {
+      ...s,
+      queue: rest,
+      seen: s.seen + 1,
+      ...coverageUpdates(s, cur.cardId, false, false),
+      fails: bumpFails(s, cur.cardId),
+    }
     let n = requeue(mid, item, true, rest)
     n = promoteWaiting(n)
     if (n.queue.length === 0 && n.waiting.length === 0) n = advanceWhenQueueEmpty(state, n)
@@ -1237,8 +1335,9 @@ export function answerLearn(state: AppState, session: LearnSession, passed: bool
       ? [...new Set([...s.graduatedCardIds, cur.cardId, ...(s.passagePeers?.[cur.cardId] ?? [])])]
       : s.graduatedCardIds,
     difficultyBias: countsMastery ? nextDifficultyBias(s, MASTERY_RAMP) : s.difficultyBias,
-    coverageBias: nextCoverageBias(s, true, countsMastery),
+    ...coverageUpdates(s, cur.cardId, true, countsMastery),
     failStreak: { ...s.failStreak, [cur.cardId]: 0 },
+    fails: clearedFails(s, cur.cardId),
   }
 
   if (next.queue.length === 0 && next.waiting.length === 0) next = advanceWhenQueueEmpty(state, next)

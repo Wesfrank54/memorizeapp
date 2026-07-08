@@ -19,6 +19,18 @@ npm run typecheck
 
 Run `npm test` and `npm run typecheck` before considering a change done.
 
+## Git & deploy — do not auto-push
+
+**Do not run `git push` (or trigger Netlify/hosting deploys) unless the user
+explicitly asks** — e.g. "push this", "deploy", "upload to the site".
+
+- Local commits are fine when useful for checkpointing, but batch work on the
+  branch and leave pushing to the user or to an explicit end-of-session request.
+- After finishing a task, summarize what changed locally; do **not** assume the
+  user wants it live yet.
+- We are exploring hosting options (GitHub Pages, etc.) and conserving deploy
+  quota — treat every production deploy as intentional.
+
 ## Invariants — do not break
 
 - `src/core/` is framework-agnostic: **zero React imports**. It must stay
