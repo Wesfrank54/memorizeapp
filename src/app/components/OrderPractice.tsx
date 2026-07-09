@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   allOrderSlotsFilled,
   correctOrderIds,
@@ -20,8 +20,6 @@ const CATEGORY_LABELS: Record<OrderChallenge['category'], string> = {
   ranks: 'Rank Structures',
 }
 
-const PERFECT_AUTO_RESHUFFLE_MS = 1500
-
 export function OrderPractice() {
   const [challengeId, setChallengeId] = useState(ORDER_CHALLENGES[0]!.id)
   const [phase, setPhase] = useState<'pick' | 'active' | 'graded'>('pick')
@@ -29,8 +27,7 @@ export function OrderPractice() {
   const [slots, setSlots] = useState<OrderSlotState>([])
   const [grade, setGrade] = useState<OrderGradeResult | null>(null)
   const [attempts, setAttempts] = useState(0)
-  const [autoReshufflePending, setAutoReshufflePending] = useState(false)
-  const earnedPerfectRef = useRef(false)
+  const [earnedPerfect, setEarnedPerfect] = useState(false)
 
   const challenge = orderChallengeById(challengeId) ?? ORDER_CHALLENGES[0]!
   const itemsById = useMemo(() => new Map(challenge.items.map((i) => [i.id, i])), [challenge])
@@ -61,8 +58,7 @@ export function OrderPractice() {
     setSlots(placement.slots)
     setGrade(null)
     setAttempts(0)
-    earnedPerfectRef.current = false
-    setAutoReshufflePending(false)
+    setEarnedPerfect(false)
     setPhase('active')
   }
 
@@ -72,33 +68,33 @@ export function OrderPractice() {
     setSlots(placement.slots)
     setGrade(null)
     setPhase('active')
-    earnedPerfectRef.current = false
-    setAutoReshufflePending(false)
+    setEarnedPerfect(false)
     if (resetAttempts) setAttempts(0)
   }
 
   function checkOrder() {
     if (!allOrderSlotsFilled(slots)) return
     const result = gradeOrder(slotsToOrder(slots), correctIds)
-    earnedPerfectRef.current = result.perfect
+    setEarnedPerfect(result.perfect)
     setGrade(result)
     setAttempts((a) => a + 1)
     setPhase('graded')
   }
 
+  const waitingForNextRound = phase === 'graded' && grade?.perfect === true && earnedPerfect
+
   useEffect(() => {
-    if (phase !== 'graded' || !grade?.perfect || !earnedPerfectRef.current) {
-      setAutoReshufflePending(false)
-      return
+    if (!waitingForNextRound) return
+
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key !== 'Enter' || e.repeat) return
+      e.preventDefault()
+      reshuffle(true)
     }
 
-    setAutoReshufflePending(true)
-    const timer = window.setTimeout(() => reshuffle(true), PERFECT_AUTO_RESHUFFLE_MS)
-    return () => {
-      window.clearTimeout(timer)
-      setAutoReshufflePending(false)
-    }
-  }, [phase, grade?.perfect, correctIds])
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [waitingForNextRound, correctIds])
 
   if (phase === 'pick') {
     return (
@@ -173,7 +169,7 @@ export function OrderPractice() {
           {grade.perfect ? (
             <p className="flash-ok">
               Perfect order{attempts > 1 ? ` in ${attempts} attempt${attempts === 1 ? '' : 's'}` : ''}!
-              {autoReshufflePending ? ' Starting a new shuffle…' : ''}
+              {waitingForNextRound ? ' Press Enter for a new shuffle.' : ''}
             </p>
           ) : null}
         </>
@@ -189,9 +185,13 @@ export function OrderPractice() {
               Reshuffle
             </button>
           </>
+        ) : waitingForNextRound ? (
+          <button type="button" className="primary" onClick={() => reshuffle(true)}>
+            Next round (Enter)
+          </button>
         ) : grade?.perfect ? (
-          <button type="button" className="link" onClick={() => reshuffle(true)}>
-            New shuffle now
+          <button type="button" className="link" onClick={() => reshuffle()}>
+            New shuffle
           </button>
         ) : (
           <>
@@ -212,7 +212,7 @@ export function OrderPractice() {
               type="button"
               className="link"
               onClick={() => {
-                earnedPerfectRef.current = false
+                setEarnedPerfect(false)
                 setPool([])
                 setSlots([...correctIds])
                 setGrade({
