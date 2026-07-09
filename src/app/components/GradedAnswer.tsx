@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { AppState, Card, Note } from '../../core/types.ts'
 import { cardAnswer } from '../../core/accountability.ts'
 import { blankIsWorthwhile, resolveGradedMode, type GradedMode } from '../../core/answer-modes.ts'
@@ -90,8 +90,6 @@ export function GradedAnswer({
   const [picked, setPicked] = useState<string | null>(null)
   const [result, setResult] = useState<GradeResult | null>(null)
   const advancedRef = useRef(false)
-  /** After checking with Enter, release the key before Enter can advance (same as Learn passages). */
-  const advanceReadyRef = useRef(false)
   const phaseRef = useRef(phase)
   const resultRef = useRef(result)
   const inputRef = useRef(input)
@@ -118,16 +116,7 @@ export function GradedAnswer({
     setPicked(null)
     setResult(null)
     advancedRef.current = false
-    advanceReadyRef.current = false
   }, [card.id, activeMode])
-
-  useEffect(() => {
-    function onKeyUp(e: KeyboardEvent) {
-      if (e.key === 'Enter') advanceReadyRef.current = true
-    }
-    window.addEventListener('keyup', onKeyUp)
-    return () => window.removeEventListener('keyup', onKeyUp)
-  }, [])
 
   function keyOwner() {
     const active = document.activeElement
@@ -142,21 +131,14 @@ export function GradedAnswer({
     return active === document.body || active === document.documentElement
   }
 
-  function revealVerdict(fromEnter: boolean, graded: GradeResult) {
+  function revealVerdict(graded: GradeResult) {
     if (phaseRef.current !== 'typing') return
-    advanceReadyRef.current = !fromEnter
     setResult(graded)
     setPhase('verdict')
   }
 
-  function checkTypedAnswer(fromEnter: boolean) {
-    revealVerdict(fromEnter, gradeText(expected, inputRef.current))
-  }
-
-  function advanceFromEnter() {
-    if (!advanceReadyRef.current || advancedRef.current || !resultRef.current) return
-    advancedRef.current = true
-    onGradedRef.current(resultRef.current, gradedCtx)
+  function checkTypedAnswer() {
+    revealVerdict(gradeText(expected, inputRef.current))
   }
 
   function advance() {
@@ -166,10 +148,9 @@ export function GradedAnswer({
     onGradedRef.current(graded, gradedCtx)
   }
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (phase !== 'verdict') return
-    const id = requestAnimationFrame(() => nextRef.current?.focus())
-    return () => cancelAnimationFrame(id)
+    nextRef.current?.focus()
   }, [phase, card.id, result])
 
   useEffect(() => {
@@ -177,7 +158,6 @@ export function GradedAnswer({
     function onKeyDown(e: KeyboardEvent) {
       if (phaseRef.current !== 'typing' || e.key !== 'Enter' || e.repeat || !keyOwner()) return
       e.preventDefault()
-      advanceReadyRef.current = false
       setResult(gradeText(expected, inputRef.current))
       setPhase('verdict')
     }
@@ -189,7 +169,7 @@ export function GradedAnswer({
     function onKeyDown(e: KeyboardEvent) {
       if (phaseRef.current !== 'verdict' || e.key !== 'Enter' || e.repeat || !focusAllowsVerdictEnter()) return
       e.preventDefault()
-      advanceFromEnter()
+      advance()
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
@@ -198,24 +178,14 @@ export function GradedAnswer({
   function pick(opt: string) {
     if (phase !== 'typing') return
     setPicked(opt)
-    revealVerdict(false, gradeChoice(expected, opt))
+    revealVerdict(gradeChoice(expected, opt))
   }
 
   const verdict =
     phase === 'verdict' && result ? (
       <div className="graded-verdict-screen">
         <VerdictBanner correct={result.correct} near={result.near} expected={expected} />
-        <button
-          ref={nextRef}
-          type="button"
-          className="primary reveal"
-          onClick={advance}
-          onKeyDown={(e) => {
-            if (e.key !== 'Enter') return
-            e.preventDefault()
-            advanceFromEnter()
-          }}
-        >
+        <button ref={nextRef} type="button" className="primary reveal" onClick={advance}>
           Next <span className="hint">enter</span>
         </button>
       </div>
@@ -275,7 +245,7 @@ export function GradedAnswer({
             placeholder={activeMode === 'blank' ? 'fill in the blank…' : 'type the answer from memory…'}
             onChange={(e) => setInput(e.target.value)}
           />
-          <button type="button" className="primary reveal" onClick={() => checkTypedAnswer(false)}>
+          <button type="button" className="primary reveal" onClick={checkTypedAnswer}>
             Check <span className="hint">enter</span>
           </button>
         </>
