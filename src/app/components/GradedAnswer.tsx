@@ -87,6 +87,8 @@ export function GradedAnswer({
   const [picked, setPicked] = useState<string | null>(null)
   const [result, setResult] = useState<GradeResult | null>(null)
   const advancedRef = useRef(false)
+  /** After checking with Enter, release the key before Enter can advance (same as Learn passages). */
+  const advanceReadyRef = useRef(false)
   const inputRef = useRef(input)
   const onGradedRef = useRef(onGraded)
   inputRef.current = input
@@ -97,7 +99,16 @@ export function GradedAnswer({
     setPicked(null)
     setResult(null)
     advancedRef.current = false
+    advanceReadyRef.current = false
   }, [card.id, activeMode])
+
+  useEffect(() => {
+    function onKeyUp(e: KeyboardEvent) {
+      if (e.key === 'Enter') advanceReadyRef.current = true
+    }
+    window.addEventListener('keyup', onKeyUp)
+    return () => window.removeEventListener('keyup', onKeyUp)
+  }, [])
 
   const gradedCtx = useMemo<GradedAnswerContext>(
     () => ({
@@ -114,8 +125,9 @@ export function GradedAnswer({
     onGradedRef.current(result, gradedCtx)
   }
 
-  function checkAnswer() {
+  function checkAnswer(fromEnter = false) {
     if (result) return
+    advanceReadyRef.current = !fromEnter
     setResult(gradeText(expected, inputRef.current))
   }
 
@@ -130,7 +142,7 @@ export function GradedAnswer({
       const el = e.target as HTMLElement
       if (!enterTargetAllowsAction(el)) return
       e.preventDefault()
-      checkAnswer()
+      checkAnswer(true)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -145,7 +157,7 @@ export function GradedAnswer({
       const el = e.target as HTMLElement
       if (!enterTargetAllowsAction(el)) return
       e.preventDefault()
-      if (advancedRef.current) return
+      if (!advanceReadyRef.current || advancedRef.current) return
       advancedRef.current = true
       onGradedRef.current(graded, gradedCtx)
     }
@@ -155,6 +167,7 @@ export function GradedAnswer({
   function pick(opt: string) {
     if (result) return
     setPicked(opt)
+    advanceReadyRef.current = true
     setResult(gradeChoice(expected, opt))
   }
 
@@ -217,10 +230,11 @@ export function GradedAnswer({
             onKeyDown={(e) => {
               if (e.key !== 'Enter') return
               e.preventDefault()
-              checkAnswer()
+              e.stopPropagation()
+              checkAnswer(true)
             }}
           />
-          <button type="button" className="primary reveal" onClick={checkAnswer}>
+          <button type="button" className="primary reveal" onClick={() => checkAnswer(false)}>
             Check <span className="hint">enter</span>
           </button>
         </>
