@@ -10,7 +10,8 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "test": "node --test"
+    "test": "node --test",
+    "merge-decks": "node scripts/merge-ods-decks.mjs"
   },
   "dependencies": {
     "@powersync/web": "^1.38.6",
