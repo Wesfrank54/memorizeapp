@@ -8,12 +8,18 @@ import {
   matchChallengeById,
   matchPoolItems,
   slotsToOrder,
+  type MatchBranch,
   type MatchChallenge,
   type OrderGradeResult,
   type OrderSlotState,
 } from '../../core/match-challenges.ts'
 import { MatchSortList } from './MatchSortList.tsx'
 import { VerdictBanner } from './VerdictBanner.tsx'
+
+const BRANCH_LABELS: Record<MatchBranch, string> = {
+  navy: 'Navy',
+  marine: 'Marine Corps',
+}
 
 const CATEGORY_LABELS: Record<MatchChallenge['category'], string> = {
   collar: 'Collar Devices',
@@ -35,11 +41,11 @@ export function MatchPractice() {
   const allFilled = allOrderSlotsFilled(slots)
 
   const grouped = useMemo(() => {
-    const map = new Map<MatchChallenge['category'], MatchChallenge[]>()
+    const map = new Map<MatchBranch, MatchChallenge[]>()
     for (const c of MATCH_CHALLENGES) {
-      const list = map.get(c.category) ?? []
+      const list = map.get(c.branch) ?? []
       list.push(c)
-      map.set(c.category, list)
+      map.set(c.branch, list)
     }
     return map
   }, [])
@@ -104,16 +110,18 @@ export function MatchPractice() {
           Beta: drag rank names onto the correct collar device or shoulder board. Insignia stay fixed on the right —
           match each rank from the pool on the left.
         </p>
-        {[...grouped.entries()].map(([cat, list]) => (
-          <div key={cat} className="order-challenge-group">
-            <div className="stat-label">{CATEGORY_LABELS[cat]}</div>
+        {[...grouped.entries()].map(([branch, list]) => (
+          <div key={branch} className="order-challenge-group">
+            <div className="stat-label">{BRANCH_LABELS[branch]}</div>
             <ul className="order-challenge-pick-list">
               {list.map((c) => (
                 <li key={c.id}>
                   <button type="button" className="order-challenge-card" onClick={() => start(c.id)}>
                     <span className="order-challenge-title">{c.title}</span>
                     <span className="muted small">{c.description}</span>
-                    <span className="order-challenge-meta">{c.pairs.length} ranks</span>
+                    <span className="order-challenge-meta">
+                      {CATEGORY_LABELS[c.category]} · {c.pairs.length} ranks
+                    </span>
                   </button>
                 </li>
               ))}
