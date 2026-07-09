@@ -86,6 +86,7 @@ export function OrderSortList({
   const splitLayout = slots.length >= 6
   const slotRows = Math.ceil(slots.length / 2)
   const slotRows3 = Math.ceil(slots.length / 3)
+  const slotRows4 = Math.ceil(slots.length / 4)
 
   return (
     <div className="order-board">
@@ -139,7 +140,11 @@ export function OrderSortList({
           className={['order-slots-list', splitLayout ? 'order-slots-list--split' : ''].filter(Boolean).join(' ')}
           style={
             splitLayout
-              ? ({ '--order-slot-rows': slotRows, '--order-slot-rows-3': slotRows3 } as CSSProperties)
+              ? ({
+                  '--order-slot-rows': slotRows,
+                  '--order-slot-rows-3': slotRows3,
+                  '--order-slot-rows-4': slotRows4,
+                } as CSSProperties)
               : undefined
           }
         >

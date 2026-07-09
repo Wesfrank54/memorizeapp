@@ -52,6 +52,32 @@ body {
 .app--wide .syncbar {
   margin-bottom: 8px;
 }
+.app--wide:has(.order-practice--session) {
+  padding: 4px 14px 4px;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+.app--wide:has(.order-practice--session) .topbar {
+  margin-bottom: 4px;
+  flex-shrink: 0;
+}
+.app--wide:has(.order-practice--session) .syncbar {
+  margin-bottom: 4px;
+  flex-shrink: 0;
+}
+.app--wide:has(.order-practice--session) .content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.app--wide:has(.order-practice--session) .order-practice--session {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+  max-height: none;
+}
 
 /* top bar */
 .topbar {
@@ -1100,9 +1126,9 @@ body {
 .order-practice--session {
   display: flex;
   flex-direction: column;
-  height: calc(100dvh - 94px);
-  max-height: calc(100dvh - 94px);
-  padding: 10px 12px;
+  height: calc(100dvh - 88px);
+  max-height: calc(100dvh - 88px);
+  padding: 8px 12px;
   overflow: hidden;
 }
 .order-session-body {
@@ -1112,15 +1138,20 @@ body {
 }
 .order-session-footer {
   flex-shrink: 0;
-  margin-top: 8px;
-  padding-top: 8px;
+  margin-top: 6px;
+  padding-top: 6px;
   border-top: 1px solid var(--border);
 }
 .order-session-verdict {
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 .order-perfect-msg {
-  margin: 6px 0 0;
+  margin: 2px 0 0;
+  font-size: 13px;
+}
+.order-practice--session .instant-verdict {
+  margin: 0;
+  font-size: 13px;
 }
 .order-practice .order-practice-head {
   display: flex;
@@ -1132,14 +1163,19 @@ body {
 }
 .order-practice-head--compact {
   flex-shrink: 0;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
+  align-items: center;
 }
 .order-practice-head--compact .opt-title {
-  font-size: 17px;
+  font-size: 16px;
   margin: 0;
+  line-height: 1.2;
 }
 .order-practice-head--compact .muted.small {
   margin: 2px 0 0;
+}
+.app--wide:has(.order-practice--session) .order-practice-head--compact .muted.small {
+  display: none;
 }
 .order-challenge-group {
   margin-top: 20px;
@@ -1231,6 +1267,10 @@ body {
   font-weight: 600;
   flex-shrink: 0;
 }
+.order-practice--session .order-panel-title {
+  margin: 0 0 3px;
+  font-size: 12px;
+}
 .order-panel-hint {
   margin: 0 0 10px;
 }
@@ -1278,6 +1318,16 @@ body {
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(var(--order-slot-rows-3, 5), auto);
     gap: 5px 14px;
+  }
+}
+@media (min-width: 1500px) {
+  .order-pool-list--split {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  .order-slots-list--split {
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(var(--order-slot-rows-4, 4), auto);
+    gap: 5px 12px;
   }
 }
 @media (min-width: 1000px) {
@@ -1435,7 +1485,8 @@ body {
   margin-top: 0;
 }
 .order-fill-hint {
-  margin: 0 0 8px;
+  margin: 0 0 4px;
+  font-size: 12px;
 }
 .order-practice-actions {
   margin-top: 0;
