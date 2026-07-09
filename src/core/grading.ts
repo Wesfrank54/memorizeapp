@@ -3,11 +3,12 @@ import type { AppState, Card, Grade, Note } from './types.ts'
 import { cardAnswer } from './accountability.ts'
 import { isLabelOnlyAnswer } from './answer-modes.ts'
 import { answerShape, answerSimilarity, mcqAnswerGroup, sameMcqGroup, sameShape, synthesizeDistractors } from './distractors.ts'
+import { gradePassageChunk } from './passage.ts'
 import { renderContent } from './schedule.ts'
 
 // Auto-grading for the typed / fill-in-the-blank / multiple-choice answer modes.
-// Text answers are graded by normalized exact match with a small near-miss
-// tolerance (so a typo isn't punished like a blank). MCQ is exact-option match.
+// Text answers must match every expected word (positional, normalized per word).
+// MCQ is exact-option match.
 
 export interface GradeResult {
   correct: boolean
@@ -45,14 +46,12 @@ export function levenshtein(a: string, b: string): number {
 
 /** Grade a typed/blank answer against the expected string. */
 export function gradeText(expected: string, given: string): GradeResult {
-  const e = normalize(expected)
-  const g = normalize(given)
-  if (g.length === 0) return { correct: false, near: false }
-  if (e === g) return { correct: true, near: false }
-  // Tolerance scales with length: ~1 edit per 6 chars, min 1.
-  const tolerance = Math.max(1, Math.floor(e.length / 6))
-  if (levenshtein(e, g) <= tolerance) return { correct: true, near: true }
-  return { correct: false, near: false }
+  const expWords = expected.trim().split(/\s+/).filter(Boolean)
+  const givWords = given.trim().split(/\s+/).filter(Boolean)
+  if (givWords.length === 0) return { correct: false, near: false }
+  if (expWords.length !== givWords.length) return { correct: false, near: false }
+  const { total, correct } = gradePassageChunk(expected, given)
+  return { correct: total > 0 && correct === total, near: false }
 }
 
 /** Grade a multiple-choice selection (exact-option match, normalized). */

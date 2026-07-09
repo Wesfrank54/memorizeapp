@@ -18,12 +18,14 @@ function addBasic(state: AppState, deckId: string, front: string, back: string):
   return { note, card }
 }
 
-test('gradeText: exact, normalized, near-miss, wrong, empty', () => {
+test('gradeText: every word must match exactly', () => {
   assert.deepEqual(gradeText('Paris', 'paris'), { correct: true, near: false })
-  assert.deepEqual(gradeText('Paris', '  Paris. '), { correct: true, near: false }) // case/space/punct normalized
-  const near = gradeText('mitochondria', 'mitochondia') // 1 missing letter
-  assert.equal(near.correct, true)
-  assert.equal(near.near, true)
+  assert.deepEqual(gradeText('Paris', '  Paris. '), { correct: true, near: false })
+  assert.deepEqual(gradeText('Davy Jones', 'davy jones'), { correct: true, near: false })
+  assert.deepEqual(gradeText('mitochondria', 'mitochondia'), { correct: false, near: false })
+  assert.deepEqual(gradeText('Davy Jones', 'Davy Jone'), { correct: false, near: false })
+  assert.deepEqual(gradeText('hello world', 'hello'), { correct: false, near: false })
+  assert.deepEqual(gradeText('hello world', 'hello world extra'), { correct: false, near: false })
   assert.deepEqual(gradeText('Paris', 'London'), { correct: false, near: false })
   assert.deepEqual(gradeText('Paris', ''), { correct: false, near: false })
 })

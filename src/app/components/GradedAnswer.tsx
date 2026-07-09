@@ -53,7 +53,7 @@ type AnswerPhase = 'typing' | 'verdict'
 /**
  * Renders the answer interaction for one card in a graded mode and reports the
  * result. Shared by the Review tab (drives SRS) and the Quiz tab (scoring only):
- *   - typed / blank → free-text input, graded with near-miss tolerance
+ *   - typed / blank → free-text input, every word must match
  *   - mcq           → multiple choice from auto-generated distractors
  * MCQ/blank requests downgrade to typed when quality gates fail (same rules as Learn).
  */
