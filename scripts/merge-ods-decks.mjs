@@ -18,7 +18,7 @@ const SOURCES = [
   { file: 'ODS_Galley_Procedures_deck.csv', label: 'ODS Galley Procedures' },
 ]
 
-const OUT_NAME = 'ODS_Knowledge_Complete_deck.csv'
+const OUT_NAME = 'ODS_Knowledge_Master.csv'
 const MASTER_DECK = 'ODS Knowledge'
 
 function dedupKey(note) {
@@ -130,13 +130,17 @@ const header = 'type,deck,front,back,text,image,tags'
 const lines = [header, ...order.map((k) => noteToRow(byKey.get(k)))]
 const outText = lines.join('\n') + '\n'
 
-const outRoot = path.join(root, OUT_NAME)
-const outPublic = path.join(root, 'public', 'decks', OUT_NAME)
-fs.writeFileSync(outRoot, outText, 'utf8')
-fs.mkdirSync(path.dirname(outPublic), { recursive: true })
-fs.writeFileSync(outPublic, outText, 'utf8')
+const outputs = [
+  path.join(root, OUT_NAME),
+  path.join(root, 'public', 'decks', OUT_NAME),
+  path.join(process.env.USERPROFILE ?? root, 'Downloads', OUT_NAME),
+]
+
+for (const outPath of outputs) {
+  fs.mkdirSync(path.dirname(outPath), { recursive: true })
+  fs.writeFileSync(outPath, outText, 'utf8')
+}
 
 console.log(`\nWrote ${order.length} unique cards → ${OUT_NAME}`)
-console.log(`  root: ${outRoot}`)
-console.log(`  public: ${outPublic}`)
+for (const outPath of outputs) console.log(`  ${outPath}`)
 console.log(`  stats: ${stats.added} first-seen, ${stats.merged} tag/field merges`)
