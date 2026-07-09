@@ -2,6 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
   answerShape,
+  answerSimilarity,
   canonicalMcqGroup,
   mcqAnswerGroup,
   sameMcqGroup,
@@ -243,6 +244,59 @@ test('makeChoices: navy officer collar device only draws other collar devices', 
   for (const o of opts) {
     assert.ok(!RANK_OR_ADMIRAL.test(o), `rank title excluded: ${o}`)
   }
+})
+
+test('answerSimilarity: adjacent/same-family answers score above unrelated ones', () => {
+  // Similarity is purely lexical — semantic "both are ranks" is handled by
+  // grouping, so a rank sharing words ("Chief Warrant Officer") beats one that
+  // doesn't ("Admiral"), which scores like any unrelated phrase.
+  const correct = 'Chief Warrant Officer Two (CWO2)'
+  const sibling = answerSimilarity(correct, 'Chief Warrant Officer Three (CWO3)')
+  const distantRank = answerSimilarity(correct, 'Admiral (ADM)')
+  assert.ok(sibling > distantRank, `sibling ${sibling} > distant ${distantRank}`)
+  assert.ok(sibling > 0.4 && sibling <= 1)
+  // Symmetric-ish and bounded; identical strings peg at 1.
+  assert.equal(answerSimilarity('Alpha', 'Alpha'), 1)
+  assert.equal(answerSimilarity('', 'Alpha'), 0)
+})
+
+test('answerSimilarity: shared words beat shared length', () => {
+  const correct = 'John Paul Jones'
+  const sharedWord = answerSimilarity(correct, 'John Barry') // shares "John"
+  const sameLenNoOverlap = answerSimilarity(correct, 'Oliver Hazard') // similar length, no shared word
+  assert.ok(sharedWord > sameLenNoOverlap)
+})
+
+test('makeChoices: picks the most confusable same-group foils (adjacent ranks)', () => {
+  const s = emptyState()
+  const { card, note } = addBasic(s, 'ranks', 'navy-warrant-rank', 'Navy warrant rank — W-2?', 'Chief Warrant Officer Two (CWO2)')
+  addBasic(s, 'ranks', 'navy-warrant-rank', 'Navy warrant rank — W-3?', 'Chief Warrant Officer Three (CWO3)')
+  addBasic(s, 'ranks', 'navy-warrant-rank', 'Navy warrant rank — W-4?', 'Chief Warrant Officer Four (CWO4)')
+  addBasic(s, 'ranks', 'navy-warrant-rank', 'Navy warrant rank — W-5?', 'Chief Warrant Officer Five (CWO5)')
+  // Same rank family, but far less confusable — should be crowded out.
+  addBasic(s, 'ranks', 'navy-warrant-rank', 'Navy officer rank — O-10?', 'Admiral (ADM)')
+  addBasic(s, 'ranks', 'navy-warrant-rank', 'Navy officer rank — O-1?', 'Ensign (ENS)')
+
+  const opts = makeChoices(s, card, note, 4)
+  assert.equal(opts.length, 4)
+  assert.equal(opts[0], 'Chief Warrant Officer Two (CWO2)')
+  const foils = opts.slice(1)
+  assert.ok(foils.every((o) => /Chief Warrant Officer/.test(o)), `all foils are CWO siblings: ${foils.join(' | ')}`)
+  assert.ok(!opts.includes('Admiral (ADM)'))
+  assert.ok(!opts.includes('Ensign (ENS)'))
+})
+
+test('makeChoices: stable/deterministic option set across calls', () => {
+  const s = emptyState()
+  const { card, note } = addBasic(s, 'geo', 'capitals', 'Capital of France?', 'Paris')
+  addBasic(s, 'geo', 'capitals', 'Capital of Italy?', 'Rome')
+  addBasic(s, 'geo', 'capitals', 'Capital of Spain?', 'Madrid')
+  addBasic(s, 'geo', 'capitals', 'Capital of Peru?', 'Lima')
+  addBasic(s, 'geo', 'capitals', 'Capital of Japan?', 'Tokyo')
+  const a = makeChoices(s, card, note, 4)
+  const b = makeChoices(s, card, note, 4)
+  assert.deepEqual(a, b)
+  assert.equal(a.length, 4)
 })
 
 test('cardLadder: date card climbs mcq → typed (blank stays off — digits leak)', () => {

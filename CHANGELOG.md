@@ -11,6 +11,30 @@ build, tests).
 
 ---
 
+## 2026-07-08 — MCQ distractor engine: confusability-ranked options from the answer set
+
+- User request: an engine that generates similar MCQ options from our existing answers, for every
+  feature that shows multiple choice.
+- New `answerSimilarity(correct, candidate)` in src/core/distractors.ts — a pure, deterministic
+  0..1 confusability score blending word-overlap (Jaccard), character-trigram overlap, shared
+  leading-token prefix, and length proximity. No RNG, no corpus, no AI.
+- `makeChoices` (src/core/grading.ts) now ranks candidate distractors by that score (after the
+  same-group gate, before tag/deck affinity, with a stable text tiebreak), so the foils are the
+  *most tempting* neighbors instead of arbitrary deck-order picks. Because every feature (Learn,
+  Quiz, Review, image MCQ) routes through makeChoices/resolveGradedMode, the improvement is global.
+  Semantic grouping (rank vs collar), shape synthesis (dates/numbers), and the typed-downgrade gate
+  are all unchanged — this only reorders which real same-group answers get chosen.
+- Honest scope note: for free-form prose in a thin deck the engine still can't fabricate meaningful
+  new text offline (that would give the answer away), so it mines/ranks the real answer set and
+  falls back to shape-synthesis for numeric/date answers; genuinely sparse groups still downgrade
+  to typed as before.
+- Validation: typecheck clean, 158/158 tests (4 new: similarity ranking, shared-words-beat-length,
+  adjacent-rank foils chosen, deterministic option set). Browser-verified against a 10-rank deck:
+  "Rear Admiral (RADM)" → Rear Admiral Lower Half / Admiral / Vice Admiral; "Lieutenant (LT)" →
+  Lieutenant Commander / Lieutenant Junior Grade / Captain. No console errors.
+
+Files: src/core/distractors.ts, src/core/grading.ts, test/distractors.test.ts, CHANGELOG.md
+
 ## 2026-07-08 — Quiz: retry-missed rounds until everything is right
 
 - User request: after the initial questions, re-quiz the ones you missed in a separate round, and

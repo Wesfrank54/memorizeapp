@@ -2,7 +2,7 @@ import { Rating } from 'ts-fsrs'
 import type { AppState, Card, Grade, Note } from './types.ts'
 import { cardAnswer } from './accountability.ts'
 import { isLabelOnlyAnswer } from './answer-modes.ts'
-import { answerShape, mcqAnswerGroup, sameMcqGroup, sameShape, synthesizeDistractors } from './distractors.ts'
+import { answerShape, answerSimilarity, mcqAnswerGroup, sameMcqGroup, sameShape, synthesizeDistractors } from './distractors.ts'
 import { renderContent } from './schedule.ts'
 
 // Auto-grading for the typed / fill-in-the-blank / multiple-choice answer modes.
@@ -80,7 +80,7 @@ export function makeChoices(state: AppState, card: Card, note: Note, n = 4): str
   const notesById = new Map(state.notes.map((nn) => [nn.id, nn]))
   const myTags = new Set(note.tags)
 
-  type Cand = { text: string; sameTag: boolean; sameDeck: boolean; sameGroup: boolean }
+  type Cand = { text: string; sameTag: boolean; sameDeck: boolean; sameGroup: boolean; sim: number }
   const candByKey = new Map<string, Cand>()
   for (const c of state.cards) {
     if (c.id === card.id) continue
@@ -96,6 +96,7 @@ export function makeChoices(state: AppState, card: Card, note: Note, n = 4): str
       sameTag: nn.tags.some((t) => myTags.has(t)),
       sameDeck: c.deckId === card.deckId,
       sameGroup: sameMcqGroup(myGroup, candGroup),
+      sim: answerSimilarity(correct, text),
     }
     const prev = candByKey.get(key)
     if (prev) {
@@ -107,11 +108,15 @@ export function makeChoices(state: AppState, card: Card, note: Note, n = 4): str
     candByKey.set(key, entry)
   }
   const cands = [...candByKey.values()]
+  // Same-group first (correctness), then most confusable (the tempting foils),
+  // then tag/deck affinity, then a stable text tiebreak for deterministic options.
   cands.sort(
     (a, b) =>
       Number(b.sameGroup) - Number(a.sameGroup) ||
+      b.sim - a.sim ||
       Number(b.sameTag) - Number(a.sameTag) ||
-      Number(b.sameDeck) - Number(a.sameDeck),
+      Number(b.sameDeck) - Number(a.sameDeck) ||
+      (normalize(a.text) < normalize(b.text) ? -1 : 1),
   )
 
   // Shaped answers (dates, years, quantities): every option must share the

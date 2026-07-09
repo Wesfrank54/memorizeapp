@@ -270,6 +270,65 @@ function yearVariants(year: number, rnd: () => number): string[] {
   return deltas.map((d) => String(year + d)).filter((y) => y !== String(year))
 }
 
+// ---- confusability similarity ---------------------------------------------
+// Ranks real candidate answers by how easily they'd be mistaken for the correct
+// one, so MCQ foils are the *tempting* neighbors (adjacent ranks, same-family
+// facts) rather than arbitrary picks. Pure + deterministic — no corpus, no RNG.
+
+function simNormalize(s: string): string {
+  return s.trim().toLowerCase().replace(/[.,;:!?'"()[\]]/g, '').replace(/\s+/g, ' ')
+}
+
+function tokenize(s: string): string[] {
+  return simNormalize(s).split(' ').filter(Boolean)
+}
+
+function jaccard<T>(a: Set<T>, b: Set<T>): number {
+  if (a.size === 0 && b.size === 0) return 0
+  let inter = 0
+  for (const x of a) if (b.has(x)) inter++
+  const union = a.size + b.size - inter
+  return union === 0 ? 0 : inter / union
+}
+
+function trigrams(s: string): Set<string> {
+  const t = `  ${simNormalize(s).replace(/\s+/g, ' ')}  `
+  const out = new Set<string>()
+  for (let i = 0; i + 3 <= t.length; i++) out.add(t.slice(i, i + 3))
+  return out
+}
+
+/** Count of shared leading tokens (e.g. "Chief Warrant Officer Two/Three" → 3). */
+function sharedPrefixTokens(a: string[], b: string[]): number {
+  const n = Math.min(a.length, b.length)
+  let i = 0
+  while (i < n && a[i] === b[i]) i++
+  return i
+}
+
+/**
+ * Confusability of `candidate` as a wrong answer for `correct`, in [0, 1].
+ * Blends word overlap, character-trigram overlap, shared prefix, and length
+ * proximity. Higher = more plausible as an MCQ foil. Symmetric-ish; used only
+ * for ranking so exact calibration doesn't matter.
+ */
+export function answerSimilarity(correct: string, candidate: string): number {
+  const ca = simNormalize(correct)
+  const cb = simNormalize(candidate)
+  if (!ca || !cb) return 0
+  if (ca === cb) return 1
+
+  const ta = tokenize(correct)
+  const tb = tokenize(candidate)
+  const tokenJac = jaccard(new Set(ta), new Set(tb))
+  const triJac = jaccard(trigrams(correct), trigrams(candidate))
+  const prefix = sharedPrefixTokens(ta, tb)
+  const prefixScore = Math.max(ta.length, tb.length) === 0 ? 0 : prefix / Math.max(ta.length, tb.length)
+  const lenProx = 1 - Math.abs(ca.length - cb.length) / Math.max(ca.length, cb.length)
+
+  return 0.4 * tokenJac + 0.3 * triJac + 0.2 * prefixScore + 0.1 * lenProx
+}
+
 /**
  * Generate up to n same-shape wrong answers for a shaped answer (dates, years,
  * quantities). Returns [] for plain text — those keep drawing real distractors
