@@ -125,8 +125,8 @@ export function OrderPractice() {
   }
 
   return (
-    <div className="panel form order-practice">
-      <div className="order-practice-head">
+    <div className="panel form order-practice order-practice--session">
+      <div className="order-practice-head order-practice-head--compact">
         <div>
           <h2 className="opt-title">{challenge.title}</h2>
           <p className="muted small">{challenge.description}</p>
@@ -136,98 +136,97 @@ export function OrderPractice() {
         </button>
       </div>
 
-      <p className="order-instructions muted small">
-        All options start on the left. Drag each one into the correct numbered box on the right (1st, 2nd, …). Drag
-        back to the options list to change your answer.
-      </p>
+      <div className="order-session-body">
+        <OrderSortList
+          itemsById={itemsById}
+          pool={pool}
+          slots={slots}
+          onChange={setPlacement}
+          locked={phase === 'graded'}
+          slotResults={grade?.correctPositions ?? null}
+        />
+      </div>
 
-      <OrderSortList
-        itemsById={itemsById}
-        pool={pool}
-        slots={slots}
-        onChange={setPlacement}
-        locked={phase === 'graded'}
-        slotResults={grade?.correctPositions ?? null}
-      />
+      <div className="order-session-footer">
+        {phase === 'active' && !allFilled ? (
+          <p className="muted small order-fill-hint">
+            Fill all {challenge.items.length} slots before checking.
+          </p>
+        ) : null}
 
-      {phase === 'active' && !allFilled ? (
-        <p className="muted small order-fill-hint">
-          Fill all {challenge.items.length} slots before checking your order.
-        </p>
-      ) : null}
+        {phase === 'graded' && grade ? (
+          <div className="order-session-verdict">
+            <VerdictBanner
+              correct={grade.perfect}
+              expected={
+                grade.perfect
+                  ? undefined
+                  : `${grade.wrongCount} of ${challenge.items.length} out of place (${Math.round(grade.score * 100)}% correct slots)`
+              }
+            />
+            {grade.perfect ? (
+              <p className="flash-ok order-perfect-msg">
+                Perfect order{attempts > 1 ? ` in ${attempts} attempt${attempts === 1 ? '' : 's'}` : ''}!
+                {waitingForNextRound ? ' Press Enter for a new shuffle.' : ''}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
 
-      {phase === 'graded' && grade ? (
-        <>
-          <VerdictBanner
-            correct={grade.perfect}
-            expected={
-              grade.perfect
-                ? undefined
-                : `${grade.wrongCount} of ${challenge.items.length} out of place (${Math.round(grade.score * 100)}% correct slots)`
-            }
-          />
-          {grade.perfect ? (
-            <p className="flash-ok">
-              Perfect order{attempts > 1 ? ` in ${attempts} attempt${attempts === 1 ? '' : 's'}` : ''}!
-              {waitingForNextRound ? ' Press Enter for a new shuffle.' : ''}
-            </p>
-          ) : null}
-        </>
-      ) : null}
-
-      <div className="row order-practice-actions">
-        {phase === 'active' ? (
-          <>
-            <button type="button" className="primary" onClick={checkOrder} disabled={!allFilled}>
-              Check order
+        <div className="row order-practice-actions">
+          {phase === 'active' ? (
+            <>
+              <button type="button" className="primary" onClick={checkOrder} disabled={!allFilled}>
+                Check order
+              </button>
+              <button type="button" className="link" onClick={() => reshuffle()}>
+                Reshuffle
+              </button>
+            </>
+          ) : waitingForNextRound ? (
+            <button type="button" className="primary" onClick={() => reshuffle(true)}>
+              Next round (Enter)
             </button>
-            <button type="button" className="link" onClick={() => reshuffle()}>
-              Reshuffle
-            </button>
-          </>
-        ) : waitingForNextRound ? (
-          <button type="button" className="primary" onClick={() => reshuffle(true)}>
-            Next round (Enter)
-          </button>
-        ) : grade?.perfect ? (
-          <button type="button" className="link" onClick={() => reshuffle()}>
-            New shuffle
-          </button>
-        ) : (
-          <>
-            <button
-              type="button"
-              className="primary"
-              onClick={() => {
-                setGrade(null)
-                setPhase('active')
-              }}
-            >
-              Try again
-            </button>
+          ) : grade?.perfect ? (
             <button type="button" className="link" onClick={() => reshuffle()}>
               New shuffle
             </button>
-            <button
-              type="button"
-              className="link"
-              onClick={() => {
-                setEarnedPerfect(false)
-                setPool([])
-                setSlots([...correctIds])
-                setGrade({
-                  perfect: true,
-                  score: 1,
-                  correctPositions: correctIds.map(() => true),
-                  wrongCount: 0,
-                })
-                setPhase('graded')
-              }}
-            >
-              Show solution
-            </button>
-          </>
-        )}
+          ) : (
+            <>
+              <button
+                type="button"
+                className="primary"
+                onClick={() => {
+                  setGrade(null)
+                  setPhase('active')
+                }}
+              >
+                Try again
+              </button>
+              <button type="button" className="link" onClick={() => reshuffle()}>
+                New shuffle
+              </button>
+              <button
+                type="button"
+                className="link"
+                onClick={() => {
+                  setEarnedPerfect(false)
+                  setPool([])
+                  setSlots([...correctIds])
+                  setGrade({
+                    perfect: true,
+                    score: 1,
+                    correctPositions: correctIds.map(() => true),
+                    wrongCount: 0,
+                  })
+                  setPhase('graded')
+                }}
+              >
+                Show solution
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </div>
   )

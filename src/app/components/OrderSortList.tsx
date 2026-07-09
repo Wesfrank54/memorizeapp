@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 import type { OrderDragSource, OrderItem, OrderSlotState } from '../../core/order-challenges.ts'
 import { placeOrderItem, returnOrderItemToPool } from '../../core/order-challenges.ts'
 
@@ -29,7 +29,9 @@ function OrderCard({
       onDragEnd={onDragEnd}
     >
       <div className="order-row-body">
-        <div className="order-row-label">{row.label}</div>
+        <div className="order-row-label" title={row.label}>
+          {row.label}
+        </div>
         {row.detail ? <div className="order-row-detail">{row.detail}</div> : null}
       </div>
       {draggable ? (
@@ -81,13 +83,19 @@ export function OrderSortList({
     clearDrag()
   }
 
+  const splitLayout = slots.length >= 8
+  const slotRows = Math.ceil(slots.length / 2)
+
   return (
     <div className="order-board">
       <section className="order-pool-panel">
         <h3 className="order-panel-title">Options</h3>
-        <p className="order-panel-hint muted small">Drag each item into the matching slot.</p>
         <ul
-          className={['order-pool-list', overPool && drag?.source.kind === 'slot' ? 'order-drop-target' : '']
+          className={[
+            'order-pool-list',
+            splitLayout ? 'order-pool-list--split' : '',
+            overPool && drag?.source.kind === 'slot' ? 'order-drop-target' : '',
+          ]
             .filter(Boolean)
             .join(' ')}
           onDragOver={(e) => {
@@ -126,8 +134,10 @@ export function OrderSortList({
 
       <section className="order-slots-panel">
         <h3 className="order-panel-title">Your order</h3>
-        <p className="order-panel-hint muted small">Slot 1 is first, then 2, 3, and so on.</p>
-        <ol className="order-slots-list">
+        <ol
+          className={['order-slots-list', splitLayout ? 'order-slots-list--split' : ''].filter(Boolean).join(' ')}
+          style={splitLayout ? ({ '--order-slot-rows': slotRows } as CSSProperties) : undefined}
+        >
           {slots.map((id, index) => {
             const row = id ? itemsById.get(id) : null
             const slotOk = slotResults?.[index]

@@ -32,7 +32,7 @@ export function App() {
   const [tab, setTab] = useState<Tab>('learn')
 
   return (
-    <div className="app">
+    <div className={`app${tab === 'order' ? ' app--wide' : ''}`}>
       <header className="topbar">
         <div className="brand">
           memorize <span className="tag">MVP</span>
