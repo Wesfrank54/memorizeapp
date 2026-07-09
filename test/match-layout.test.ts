@@ -20,3 +20,12 @@ test('matchLayoutProfile: shoulder uses two wide columns for long descriptions',
   assert.equal(p.maxPoolCols, 4)
   assert.equal(p.slotRows, Math.ceil(15 / p.slotCols))
 })
+
+test('matchLayoutProfile: sleeve uses moderate columns for enlisted descriptions', () => {
+  const items = matchPoolItems(matchChallengeById('navy-enlisted-sleeve')!)
+  const p = matchLayoutProfile(items, 'sleeve')
+  assert.equal(p.minCols, 3)
+  assert.equal(p.maxCols, 4)
+  assert.equal(p.maxPoolCols, 6)
+  assert.equal(p.slotRows, Math.ceil(10 / p.slotCols))
+})

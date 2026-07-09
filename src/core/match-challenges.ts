@@ -37,13 +37,18 @@ export interface MatchPair {
 }
 
 export type MatchBranch = 'navy' | 'marine'
+export type MatchPersonnel = 'officer' | 'enlisted'
+export type MatchCategory = 'collar' | 'shoulder' | 'sleeve'
 
 export interface MatchChallenge {
   id: string
   title: string
   description: string
   branch: MatchBranch
-  category: 'collar' | 'shoulder'
+  personnel: MatchPersonnel
+  category: MatchCategory
+  /** Overrides default category label on the pick screen. */
+  categoryLabel?: string
   pairs: MatchPair[]
 }
 
@@ -145,12 +150,118 @@ function buildNavyShoulderPairs(): MatchPair[] {
   }))
 }
 
+interface EnlistedRow {
+  code: string
+  label: string
+  slug: string
+  collarHint: string
+  sleeveHint: string
+}
+
+function enlistedPairId(branch: MatchBranch, kind: 'collar' | 'sleeve' | 'insignia', slug: string): string {
+  return `${branch}-enlisted-${kind}-${slug}`
+}
+
+const NAVY_ENLISTED_ROWS: EnlistedRow[] = [
+  { code: 'E-1 SR', label: 'Seaman Recruit (SR)', slug: 'e1-sr', collarHint: 'None', sleeveHint: 'None' },
+  { code: 'E-2 SA', label: 'Seaman Apprentice (SA)', slug: 'e2-sa', collarHint: 'Two diagonal stripes', sleeveHint: 'Two diagonal bars' },
+  { code: 'E-3 SN', label: 'Seaman (SN)', slug: 'e3-sn', collarHint: 'Three diagonal stripes', sleeveHint: 'Three diagonal bars' },
+  { code: 'E-4 PO3', label: 'Petty Officer Third Class (PO3)', slug: 'e4-po3', collarHint: 'One eagle above one chevron', sleeveHint: 'One eagle above one chevron' },
+  { code: 'E-5 PO2', label: 'Petty Officer Second Class (PO2)', slug: 'e5-po2', collarHint: 'One eagle above two chevrons', sleeveHint: 'One eagle above two chevrons' },
+  { code: 'E-6 PO1', label: 'Petty Officer First Class (PO1)', slug: 'e6-po1', collarHint: 'One eagle above three chevrons', sleeveHint: 'One eagle over three chevrons' },
+  {
+    code: 'E-7 CPO',
+    label: 'Chief Petty Officer (CPO)',
+    slug: 'e7-cpo',
+    collarHint: 'One eagle above one rocker above three chevrons',
+    sleeveHint: 'Gold fouled anchor with silver USN centered across the anchor',
+  },
+  {
+    code: 'E-8 SCPO',
+    label: 'Senior Chief Petty Officer (SCPO)',
+    slug: 'e8-scpo',
+    collarHint: 'One silver star above one eagle above one rocker above three chevrons',
+    sleeveHint: 'Gold fouled anchor with silver USN centered across the anchor below one silver star',
+  },
+  {
+    code: 'E-9 MCPO',
+    label: 'Master Chief Petty Officer (MCPO)',
+    slug: 'e9-mcpo',
+    collarHint: 'Two silver stars above one eagle above one rocker above three chevrons',
+    sleeveHint: 'Gold fouled anchor with silver USN centered across the anchor below two silver stars',
+  },
+  {
+    code: 'E-9 MCPON',
+    label: 'Master Chief Petty Officer of the Navy (MCPON)',
+    slug: 'e9-mcpon',
+    collarHint: 'Three gold stars above one eagle above one rocker above three chevrons',
+    sleeveHint:
+      'Gold fouled anchor with silver USN centered across the anchor below three silver stars with a gold star specialty mark',
+  },
+]
+
+interface MarineEnlistedRow {
+  code: string
+  label: string
+  slug: string
+  insigniaHint: string
+}
+
+const MARINE_ENLISTED_ROWS: MarineEnlistedRow[] = [
+  { code: 'E-1 Pvt', label: 'Private (Pvt)', slug: 'e1-pvt', insigniaHint: 'None' },
+  { code: 'E-2 PFC', label: 'Private First Class (PFC)', slug: 'e2-pfc', insigniaHint: 'One stripe' },
+  { code: 'E-3 LCpl', label: 'Lance Corporal (LCpl)', slug: 'e3-lcpl', insigniaHint: 'One stripe over crossed rifles' },
+  { code: 'E-4 Cpl', label: 'Corporal (Cpl)', slug: 'e4-cpl', insigniaHint: 'Two stripes over crossed rifles' },
+  { code: 'E-5 Sgt', label: 'Sergeant (Sgt)', slug: 'e5-sgt', insigniaHint: 'Three stripes over crossed rifles' },
+  { code: 'E-6 SSgt', label: 'Staff Sergeant (SSgt)', slug: 'e6-ssgt', insigniaHint: 'Three stripes over crossed rifles over one rocker' },
+  { code: 'E-7 GySgt', label: 'Gunnery Sergeant (GySgt)', slug: 'e7-gysgt', insigniaHint: 'Three stripes over crossed rifles over two rockers' },
+  { code: 'E-8 MSgt', label: 'Master Sergeant (MSgt)', slug: 'e8-msgt', insigniaHint: 'Three stripes over crossed rifles over three rockers' },
+  { code: 'E-8 1stSgt', label: 'First Sergeant (1stSgt)', slug: 'e8-1stsgt', insigniaHint: 'Three stripes over one diamond over three rockers' },
+  { code: 'E-9 MGySgt', label: 'Master Gunnery Sergeant (MGySgt)', slug: 'e9-mgysgt', insigniaHint: 'Three stripes over a bursting bomb over four rockers' },
+  { code: 'E-9 SgtMaj', label: 'Sergeant Major (SgtMaj)', slug: 'e9-sgtmaj', insigniaHint: 'Three stripes over one star over four rockers' },
+  {
+    code: 'E-9 SMMC',
+    label: 'Sergeant Major of the Marine Corps (SMMC)',
+    slug: 'e9-smmc',
+    insigniaHint:
+      'Three stripes over the Marine Corps emblem centered between two five-pointed stars over four rockers',
+  },
+]
+
+function buildNavyEnlistedCollarPairs(): MatchPair[] {
+  return NAVY_ENLISTED_ROWS.map((row) => ({
+    id: enlistedPairId('navy', 'collar', row.slug),
+    rankLabel: row.label,
+    rankCode: row.code,
+    insigniaHint: row.collarHint,
+  }))
+}
+
+function buildNavyEnlistedSleevePairs(): MatchPair[] {
+  return NAVY_ENLISTED_ROWS.map((row) => ({
+    id: enlistedPairId('navy', 'sleeve', row.slug),
+    rankLabel: row.label,
+    rankCode: row.code,
+    insigniaHint: row.sleeveHint,
+  }))
+}
+
+function buildMarineEnlistedInsigniaPairs(): MatchPair[] {
+  return MARINE_ENLISTED_ROWS.map((row) => ({
+    id: enlistedPairId('marine', 'insignia', row.slug),
+    rankLabel: row.label,
+    rankCode: row.code,
+    insigniaHint: row.insigniaHint,
+  }))
+}
+
 export const MATCH_CHALLENGES: MatchChallenge[] = [
   {
     id: 'navy-officer-collar',
     title: 'Navy Officer Collar Devices',
     description: 'Match each collar device image to the correct officer rank (W-2 through O-11).',
     branch: 'navy',
+    personnel: 'officer',
     category: 'collar',
     pairs: buildOfficerPairs('navy', 'collar', NAVY_OFFICER_ROWS),
   },
@@ -159,14 +270,34 @@ export const MATCH_CHALLENGES: MatchChallenge[] = [
     title: 'Navy Officer Shoulder Boards',
     description: 'Match each shoulder board description to the correct officer rank (W-2 through O-11).',
     branch: 'navy',
+    personnel: 'officer',
     category: 'shoulder',
     pairs: buildNavyShoulderPairs(),
+  },
+  {
+    id: 'navy-enlisted-collar',
+    title: 'Navy Enlisted Collar Devices',
+    description: 'Match each collar device description to the correct enlisted rank (E-1 through E-9).',
+    branch: 'navy',
+    personnel: 'enlisted',
+    category: 'collar',
+    pairs: buildNavyEnlistedCollarPairs(),
+  },
+  {
+    id: 'navy-enlisted-sleeve',
+    title: 'Navy Enlisted Sleeve Insignia',
+    description: 'Match each sleeve insignia description to the correct enlisted rank (E-1 through E-9).',
+    branch: 'navy',
+    personnel: 'enlisted',
+    category: 'sleeve',
+    pairs: buildNavyEnlistedSleevePairs(),
   },
   {
     id: 'marine-officer-collar',
     title: 'Marine Officer Collar Devices',
     description: 'Match each collar device description to the correct officer rank (W-1 through O-10).',
     branch: 'marine',
+    personnel: 'officer',
     category: 'collar',
     pairs: buildOfficerPairs('marine', 'collar', MARINE_OFFICER_ROWS),
   },
@@ -175,8 +306,20 @@ export const MATCH_CHALLENGES: MatchChallenge[] = [
     title: 'Marine Officer Shoulder Boards',
     description: 'Match each shoulder board description to the correct officer rank (W-1 through O-10).',
     branch: 'marine',
+    personnel: 'officer',
     category: 'shoulder',
     pairs: buildOfficerPairs('marine', 'shoulder', MARINE_OFFICER_ROWS),
+  },
+  {
+    id: 'marine-enlisted-insignia',
+    title: 'Marine Enlisted Insignia',
+    description:
+      'Match each sleeve/collar insignia description to the correct enlisted rank (E-1 through E-9, including E-8 and E-9 alternates).',
+    branch: 'marine',
+    personnel: 'enlisted',
+    category: 'sleeve',
+    categoryLabel: 'Sleeve & Collar Insignia',
+    pairs: buildMarineEnlistedInsigniaPairs(),
   },
 ]
 

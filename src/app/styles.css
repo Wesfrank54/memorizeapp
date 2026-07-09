@@ -1614,6 +1614,36 @@ body {
 .match-board[data-match='shoulder'] .order-pool-list .order-row-label {
   -webkit-line-clamp: 2;
 }
+.match-board[data-match='sleeve'] {
+  --match-insignia-w: 140px;
+  --match-hint-size: 12px;
+  --match-hint-clamp: 6;
+  grid-template-columns: minmax(0, 0.38fr) minmax(0, 0.62fr);
+}
+.match-board[data-match='sleeve'] .match-insignia-card {
+  align-items: flex-start;
+  justify-content: flex-start;
+  text-align: left;
+  min-height: auto;
+  padding: 9px 11px;
+}
+.match-board[data-match='sleeve'] .match-insignia-hint {
+  text-align: left;
+  line-height: 1.45;
+  font-size: var(--match-hint-size, 12px);
+  -webkit-line-clamp: var(--match-hint-clamp, 6);
+}
+.match-personnel-group + .match-personnel-group {
+  margin-top: 0.75rem;
+}
+.match-personnel-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted, #6b7280);
+  margin: 0.35rem 0 0.5rem;
+}
 .match-practice--session .match-board .order-pool-list .order-row-label,
 .match-practice--session .match-board .match-rank-card .order-row-label {
   font-size: var(--match-label-size, 15px);

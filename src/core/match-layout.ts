@@ -1,3 +1,4 @@
+import type { MatchCategory } from './match-challenges.ts'
 import type { OrderItem } from './order-challenges.ts'
 import {
   applyOrderBoardLayout,
@@ -74,6 +75,46 @@ const COLLAR_SCALE_TIERS: MatchScaleTier[] = [
   },
 ]
 
+/** Sleeve descriptions — medium-length prose; between collar images and shoulder boards. */
+const SLEEVE_SCALE_TIERS: MatchScaleTier[] = [
+  {
+    lineClamp: 2,
+    insigniaH: 0,
+    insigniaW: 140,
+    hintClamp: 6,
+    hintSize: 12,
+    gapPx: 9,
+    labelSize: 15,
+    cardPadY: 10,
+    cardPadX: 12,
+    slotMinH: 54,
+  },
+  {
+    lineClamp: 2,
+    insigniaH: 0,
+    insigniaW: 128,
+    hintClamp: 5,
+    hintSize: 11,
+    gapPx: 8,
+    labelSize: 14,
+    cardPadY: 9,
+    cardPadX: 11,
+    slotMinH: 48,
+  },
+  {
+    lineClamp: 2,
+    insigniaH: 0,
+    insigniaW: 116,
+    hintClamp: 4,
+    hintSize: 10,
+    gapPx: 7,
+    labelSize: 13,
+    cardPadY: 8,
+    cardPadX: 10,
+    slotMinH: 42,
+  },
+]
+
 /** Shoulder descriptions are long prose — prioritize readable text over density. */
 const SHOULDER_SCALE_TIERS: MatchScaleTier[] = [
   {
@@ -114,15 +155,14 @@ const SHOULDER_SCALE_TIERS: MatchScaleTier[] = [
   },
 ]
 
-function scaleTiers(category: 'collar' | 'shoulder'): MatchScaleTier[] {
-  return category === 'shoulder' ? SHOULDER_SCALE_TIERS : COLLAR_SCALE_TIERS
+function scaleTiers(category: MatchCategory): MatchScaleTier[] {
+  if (category === 'shoulder') return SHOULDER_SCALE_TIERS
+  if (category === 'sleeve') return SLEEVE_SCALE_TIERS
+  return COLLAR_SCALE_TIERS
 }
 
 /** Match rows include insignia — fewer slot columns keeps cells wider and taller. */
-export function matchLayoutProfile(
-  items: OrderItem[],
-  category: 'collar' | 'shoulder',
-): OrderLayoutProfile {
+export function matchLayoutProfile(items: OrderItem[], category: MatchCategory): OrderLayoutProfile {
   const n = items.length
 
   if (category === 'shoulder') {
@@ -137,14 +177,17 @@ export function matchLayoutProfile(
     }
   }
 
+  const maxCols = category === 'sleeve' ? 4 : 5
+  const slotCols = category === 'sleeve' ? 3 : 4
+
   return {
     density: 'normal',
     lineClamp: 2,
     minCols: 3,
-    maxCols: 5,
-    maxPoolCols: 7,
-    slotCols: 4,
-    slotRows: Math.ceil(n / 4),
+    maxCols,
+    maxPoolCols: maxCols + 2,
+    slotCols,
+    slotRows: Math.ceil(n / slotCols),
   }
 }
 
@@ -170,7 +213,7 @@ export function fitMatchBoard(
   board: HTMLElement,
   slotCount: number,
   profile: OrderLayoutProfile,
-  category: 'collar' | 'shoulder' = 'collar',
+  category: MatchCategory = 'collar',
 ): MatchBoardFit {
   const tiers = scaleTiers(category)
   const maxPool = profile.maxPoolCols ?? profile.maxCols

@@ -9,7 +9,9 @@ import {
   matchPoolItems,
   slotsToOrder,
   type MatchBranch,
+  type MatchCategory,
   type MatchChallenge,
+  type MatchPersonnel,
   type OrderGradeResult,
   type OrderSlotState,
 } from '../../core/match-challenges.ts'
@@ -21,10 +23,18 @@ const BRANCH_LABELS: Record<MatchBranch, string> = {
   marine: 'Marine Corps',
 }
 
-const CATEGORY_LABELS: Record<MatchChallenge['category'], string> = {
+const PERSONNEL_LABELS: Record<MatchPersonnel, string> = {
+  officer: 'Officers',
+  enlisted: 'Enlisted',
+}
+
+const CATEGORY_LABELS: Record<MatchCategory, string> = {
   collar: 'Collar Devices',
   shoulder: 'Shoulder Boards',
+  sleeve: 'Sleeve Insignia',
 }
+
+const PERSONNEL_ORDER: MatchPersonnel[] = ['officer', 'enlisted']
 
 export function MatchPractice() {
   const [challengeId, setChallengeId] = useState(MATCH_CHALLENGES[0]!.id)
@@ -41,11 +51,13 @@ export function MatchPractice() {
   const allFilled = allOrderSlotsFilled(slots)
 
   const grouped = useMemo(() => {
-    const map = new Map<MatchBranch, MatchChallenge[]>()
+    const map = new Map<MatchBranch, Map<MatchPersonnel, MatchChallenge[]>>()
     for (const c of MATCH_CHALLENGES) {
-      const list = map.get(c.branch) ?? []
+      const branchMap = map.get(c.branch) ?? new Map()
+      const list = branchMap.get(c.personnel) ?? []
       list.push(c)
-      map.set(c.branch, list)
+      branchMap.set(c.personnel, list)
+      map.set(c.branch, branchMap)
     }
     return map
   }, [])
@@ -110,22 +122,31 @@ export function MatchPractice() {
           Beta: drag rank names onto the correct collar device or shoulder board. Insignia stay fixed on the right —
           match each rank from the pool on the left.
         </p>
-        {[...grouped.entries()].map(([branch, list]) => (
+        {[...grouped.entries()].map(([branch, personnelMap]) => (
           <div key={branch} className="order-challenge-group">
             <div className="stat-label">{BRANCH_LABELS[branch]}</div>
-            <ul className="order-challenge-pick-list">
-              {list.map((c) => (
-                <li key={c.id}>
-                  <button type="button" className="order-challenge-card" onClick={() => start(c.id)}>
-                    <span className="order-challenge-title">{c.title}</span>
-                    <span className="muted small">{c.description}</span>
-                    <span className="order-challenge-meta">
-                      {CATEGORY_LABELS[c.category]} · {c.pairs.length} ranks
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
+            {PERSONNEL_ORDER.map((personnel) => {
+              const list = personnelMap.get(personnel)
+              if (!list?.length) return null
+              return (
+                <div key={personnel} className="match-personnel-group">
+                  <div className="match-personnel-label">{PERSONNEL_LABELS[personnel]}</div>
+                  <ul className="order-challenge-pick-list">
+                    {list.map((c) => (
+                      <li key={c.id}>
+                        <button type="button" className="order-challenge-card" onClick={() => start(c.id)}>
+                          <span className="order-challenge-title">{c.title}</span>
+                          <span className="muted small">{c.description}</span>
+                          <span className="order-challenge-meta">
+                            {c.categoryLabel ?? CATEGORY_LABELS[c.category]} · {c.pairs.length} ranks
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )
+            })}
           </div>
         ))}
       </div>

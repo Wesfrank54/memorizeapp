@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'react'
+import type { MatchCategory } from '../../core/match-challenges.ts'
 import {
   fitMatchBoard,
   type MatchBoardFit,
@@ -9,40 +10,57 @@ export function useMatchBoardFit(
   profile: OrderLayoutProfile,
   slotCount: number,
   resetKey: string,
-  category: 'collar' | 'shoulder',
+  category: MatchCategory,
 ) {
   const boardRef = useRef<HTMLDivElement>(null)
-  const [fit, setFit] = useState<MatchBoardFit>(() =>
-    category === 'shoulder'
-      ? {
-          slotCols: profile.slotCols,
-          poolCols: profile.maxPoolCols ?? profile.slotCols,
-          lineClamp: profile.lineClamp,
-          insigniaH: 0,
-          insigniaW: 200,
-          hintClamp: 10,
-          hintSize: 13,
-          gapPx: 10,
-          labelSize: 15,
-          cardPadY: 11,
-          cardPadX: 13,
-          slotMinH: 58,
-        }
-      : {
-          slotCols: profile.slotCols,
-          poolCols: profile.maxPoolCols ?? profile.slotCols,
-          lineClamp: profile.lineClamp,
-          insigniaH: 80,
-          insigniaW: 96,
-          hintClamp: 4,
-          hintSize: 11,
-          gapPx: 10,
-          labelSize: 15,
-          cardPadY: 11,
-          cardPadX: 13,
-          slotMinH: 56,
-        },
-  )
+  const [fit, setFit] = useState<MatchBoardFit>(() => {
+    if (category === 'shoulder') {
+      return {
+        slotCols: profile.slotCols,
+        poolCols: profile.maxPoolCols ?? profile.slotCols,
+        lineClamp: profile.lineClamp,
+        insigniaH: 0,
+        insigniaW: 200,
+        hintClamp: 10,
+        hintSize: 13,
+        gapPx: 10,
+        labelSize: 15,
+        cardPadY: 11,
+        cardPadX: 13,
+        slotMinH: 58,
+      }
+    }
+    if (category === 'sleeve') {
+      return {
+        slotCols: profile.slotCols,
+        poolCols: profile.maxPoolCols ?? profile.slotCols,
+        lineClamp: profile.lineClamp,
+        insigniaH: 0,
+        insigniaW: 140,
+        hintClamp: 6,
+        hintSize: 12,
+        gapPx: 9,
+        labelSize: 15,
+        cardPadY: 10,
+        cardPadX: 12,
+        slotMinH: 54,
+      }
+    }
+    return {
+      slotCols: profile.slotCols,
+      poolCols: profile.maxPoolCols ?? profile.slotCols,
+      lineClamp: profile.lineClamp,
+      insigniaH: 80,
+      insigniaW: 96,
+      hintClamp: 4,
+      hintSize: 11,
+      gapPx: 10,
+      labelSize: 15,
+      cardPadY: 11,
+      cardPadX: 13,
+      slotMinH: 56,
+    }
+  })
 
   useLayoutEffect(() => {
     const board = boardRef.current

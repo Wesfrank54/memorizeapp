@@ -1,5 +1,5 @@
 import { useMemo, useState, type CSSProperties } from 'react'
-import type { MatchPair } from '../../core/match-challenges.ts'
+import type { MatchCategory, MatchPair } from '../../core/match-challenges.ts'
 import {
   placeOrderItem,
   returnOrderItemToPool,
@@ -91,7 +91,7 @@ export function MatchSortList({
   slotResults,
 }: {
   pairs: MatchPair[]
-  category: 'collar' | 'shoulder'
+  category: MatchCategory
   itemsById: Map<string, OrderItem>
   pool: string[]
   slots: OrderSlotState
