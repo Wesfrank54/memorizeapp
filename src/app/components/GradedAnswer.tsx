@@ -87,46 +87,71 @@ export function GradedAnswer({
   const [picked, setPicked] = useState<string | null>(null)
   const [result, setResult] = useState<GradeResult | null>(null)
   const advancedRef = useRef(false)
+  const inputRef = useRef(input)
+  const onGradedRef = useRef(onGraded)
+  inputRef.current = input
+  onGradedRef.current = onGraded
 
   useEffect(() => {
     setInput('')
     setPicked(null)
     setResult(null)
+    advancedRef.current = false
   }, [card.id, activeMode])
+
+  const gradedCtx = useMemo<GradedAnswerContext>(
+    () => ({
+      mode: activeMode,
+      requested: resolved.requested,
+      fallbackReason: resolved.fallbackReason,
+    }),
+    [activeMode, resolved.requested, resolved.fallbackReason],
+  )
 
   function advance() {
     if (!result || advancedRef.current) return
     advancedRef.current = true
-    onGraded(result, {
-      mode: activeMode,
-      requested: resolved.requested,
-      fallbackReason: resolved.fallbackReason,
-    })
+    onGradedRef.current(result, gradedCtx)
   }
+
+  function submitText() {
+    if (result) return
+    setResult(gradeText(expected, inputRef.current))
+  }
+
+  function enterTargetAllowsSubmit(el: HTMLElement) {
+    return el.tagName !== 'BUTTON' && el.tagName !== 'A' && el.tagName !== 'SELECT'
+  }
+
+  useEffect(() => {
+    if (result || activeMode === 'mcq') return
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== 'Enter' || e.repeat) return
+      const el = e.target as HTMLElement
+      if (!enterTargetAllowsSubmit(el)) return
+      e.preventDefault()
+      submitText()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [result, activeMode, expected])
 
   useEffect(() => {
     if (!result) return
     const graded = result
-    const ctx: GradedAnswerContext = {
-      mode: activeMode,
-      requested: resolved.requested,
-      fallbackReason: resolved.fallbackReason,
-    }
     advancedRef.current = false
     function onKey(e: KeyboardEvent) {
-      if (e.key !== 'Enter') return
+      if (e.key !== 'Enter' || e.repeat) return
+      const el = e.target as HTMLElement
+      if (!enterTargetAllowsSubmit(el)) return
       e.preventDefault()
       if (advancedRef.current) return
       advancedRef.current = true
-      onGraded(graded, ctx)
+      onGradedRef.current(graded, gradedCtx)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [result, onGraded, activeMode, resolved.requested, resolved.fallbackReason])
-
-  function submitText() {
-    if (!result) setResult(gradeText(expected, input))
-  }
+  }, [result, gradedCtx])
   function pick(opt: string) {
     if (result) return
     setPicked(opt)
@@ -178,7 +203,8 @@ export function GradedAnswer({
             </div>
           )}
           <p className="muted small typing-live-hint">
-            Words turn <span className="w-ok">green</span> when right and <span className="w-no">red</span> when off.
+            <span className="enter-hint">Enter to check</span>, then Enter again to continue. Words turn{' '}
+            <span className="w-ok">green</span> when right and <span className="w-no">red</span> when off.
           </p>
           <LiveTypingMarks expected={expected} given={input} />
           <input
@@ -187,7 +213,11 @@ export function GradedAnswer({
             value={input}
             placeholder={activeMode === 'blank' ? 'fill in the blank…' : 'type the answer from memory…'}
             onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && submitText()}
+            onKeyDown={(e) => {
+              if (e.key !== 'Enter') return
+              e.preventDefault()
+              submitText()
+            }}
           />
           <button className="primary reveal" onClick={submitText}>
             Submit
