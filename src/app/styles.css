@@ -42,8 +42,15 @@ body {
   padding: 24px 16px 64px;
 }
 .app--wide {
-  max-width: min(1180px, 96vw);
-  padding-bottom: 20px;
+  max-width: none;
+  width: 100%;
+  padding: 10px 14px 10px;
+}
+.app--wide .topbar {
+  margin-bottom: 8px;
+}
+.app--wide .syncbar {
+  margin-bottom: 8px;
 }
 
 /* top bar */
@@ -1093,9 +1100,9 @@ body {
 .order-practice--session {
   display: flex;
   flex-direction: column;
-  height: calc(100dvh - 108px);
-  max-height: calc(100dvh - 108px);
-  padding: 14px 16px;
+  height: calc(100dvh - 94px);
+  max-height: calc(100dvh - 94px);
+  padding: 10px 12px;
   overflow: hidden;
 }
 .order-session-body {
@@ -1105,8 +1112,8 @@ body {
 }
 .order-session-footer {
   flex-shrink: 0;
-  margin-top: 10px;
-  padding-top: 10px;
+  margin-top: 8px;
+  padding-top: 8px;
   border-top: 1px solid var(--border);
 }
 .order-session-verdict {
@@ -1125,7 +1132,7 @@ body {
 }
 .order-practice-head--compact {
   flex-shrink: 0;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 .order-practice-head--compact .opt-title {
   font-size: 17px;
@@ -1179,11 +1186,23 @@ body {
 }
 .order-board {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 12px;
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+  gap: 14px;
   align-items: stretch;
   height: 100%;
   min-height: 0;
+}
+@media (min-width: 900px) {
+  .order-board {
+    gap: 18px;
+    grid-template-columns: minmax(280px, 0.9fr) minmax(320px, 1.1fr);
+  }
+}
+@media (min-width: 1400px) {
+  .order-board {
+    gap: 22px;
+    grid-template-columns: minmax(360px, 0.88fr) minmax(420px, 1.12fr);
+  }
 }
 @media (max-width: 720px) {
   .order-practice--session {
@@ -1247,8 +1266,25 @@ body {
   grid-template-columns: 1fr 1fr;
   grid-template-rows: repeat(var(--order-slot-rows, 6), auto);
   grid-auto-flow: column;
-  gap: 4px 10px;
+  gap: 4px 12px;
   align-content: start;
+}
+@media (min-width: 1100px) {
+  .order-pool-list--split {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+  }
+  .order-slots-list--split {
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(var(--order-slot-rows-3, 5), auto);
+    gap: 5px 14px;
+  }
+}
+@media (min-width: 1000px) {
+  .order-practice--session .order-row-label {
+    font-size: 13px;
+    -webkit-line-clamp: 3;
+  }
 }
 .order-practice--session .order-slot-row {
   min-height: 0;

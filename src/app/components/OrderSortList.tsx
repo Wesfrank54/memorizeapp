@@ -83,8 +83,9 @@ export function OrderSortList({
     clearDrag()
   }
 
-  const splitLayout = slots.length >= 8
+  const splitLayout = slots.length >= 6
   const slotRows = Math.ceil(slots.length / 2)
+  const slotRows3 = Math.ceil(slots.length / 3)
 
   return (
     <div className="order-board">
@@ -136,7 +137,11 @@ export function OrderSortList({
         <h3 className="order-panel-title">Your order</h3>
         <ol
           className={['order-slots-list', splitLayout ? 'order-slots-list--split' : ''].filter(Boolean).join(' ')}
-          style={splitLayout ? ({ '--order-slot-rows': slotRows } as CSSProperties) : undefined}
+          style={
+            splitLayout
+              ? ({ '--order-slot-rows': slotRows, '--order-slot-rows-3': slotRows3 } as CSSProperties)
+              : undefined
+          }
         >
           {slots.map((id, index) => {
             const row = id ? itemsById.get(id) : null
