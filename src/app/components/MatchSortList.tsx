@@ -1,11 +1,17 @@
 import { useMemo, useState, type CSSProperties } from 'react'
-import type { OrderDragSource, OrderItem, OrderSlotState } from '../../core/order-challenges.ts'
-import { placeOrderItem, returnOrderItemToPool } from '../../core/order-challenges.ts'
+import type { MatchPair } from '../../core/match-challenges.ts'
+import {
+  placeOrderItem,
+  returnOrderItemToPool,
+  type OrderDragSource,
+  type OrderItem,
+  type OrderSlotState,
+} from '../../core/match-challenges.ts'
 import { orderLayoutProfile } from '../../core/order-layout.ts'
 
 type DragState = { id: string; source: OrderDragSource } | null
 
-function OrderCard({
+function RankCard({
   row,
   draggable,
   dragging,
@@ -20,7 +26,9 @@ function OrderCard({
 }) {
   return (
     <div
-      className={['order-sort-row', 'order-card', dragging ? 'order-dragging' : ''].filter(Boolean).join(' ')}
+      className={['order-sort-row', 'order-card', 'match-rank-card', dragging ? 'order-dragging' : '']
+        .filter(Boolean)
+        .join(' ')}
       draggable={draggable}
       onDragStart={(e) => {
         if (!draggable) return
@@ -44,7 +52,33 @@ function OrderCard({
   )
 }
 
-export function OrderSortList({
+function InsigniaCard({ pair, index }: { pair: MatchPair; index: number }) {
+  const [imgFailed, setImgFailed] = useState(false)
+  const showImage = pair.imageUrl && !imgFailed
+
+  return (
+    <div className="match-insignia-card">
+      <div className="match-insignia-index" aria-hidden>
+        {index + 1}
+      </div>
+      {showImage ? (
+        <figure className="match-insignia-media">
+          <img
+            src={pair.imageUrl}
+            alt={`Insignia for ${pair.rankCode}`}
+            className="match-insignia-img"
+            onError={() => setImgFailed(true)}
+          />
+        </figure>
+      ) : (
+        <p className="match-insignia-hint">{pair.insigniaHint}</p>
+      )}
+    </div>
+  )
+}
+
+export function MatchSortList({
+  pairs,
   itemsById,
   pool,
   slots,
@@ -52,17 +86,18 @@ export function OrderSortList({
   locked = false,
   slotResults,
 }: {
+  pairs: MatchPair[]
   itemsById: Map<string, OrderItem>
   pool: string[]
   slots: OrderSlotState
   onChange: (pool: string[], slots: OrderSlotState) => void
   locked?: boolean
-  /** Per-slot correctness after grading (same length as slots). */
   slotResults?: boolean[] | null
 }) {
   const [drag, setDrag] = useState<DragState>(null)
   const [overSlot, setOverSlot] = useState<number | null>(null)
   const [overPool, setOverPool] = useState(false)
+
   const items = useMemo(() => [...itemsById.values()], [itemsById])
   const profile = useMemo(() => orderLayoutProfile(items), [items])
   const cols = profile.slotCols
@@ -96,13 +131,13 @@ export function OrderSortList({
 
   return (
     <div
-      className="order-board"
+      className="order-board match-board"
       data-density={profile.density}
       data-cols={cols}
       style={boardStyle}
     >
-      <section className="order-pool-panel">
-        <h3 className="order-panel-title">Options</h3>
+      <section className="order-pool-panel match-pool-panel">
+        <h3 className="order-panel-title">Ranks</h3>
         <ul
           className={[
             'order-pool-list',
@@ -124,14 +159,14 @@ export function OrderSortList({
           }}
         >
           {pool.length === 0 ? (
-            <li className="order-pool-empty muted small">All placed</li>
+            <li className="order-pool-empty muted small">All matched</li>
           ) : (
             pool.map((id) => {
               const row = itemsById.get(id)
               if (!row) return null
               return (
                 <li key={id} className="order-pool-item">
-                  <OrderCard
+                  <RankCard
                     row={row}
                     draggable={!locked}
                     dragging={drag?.id === id}
@@ -145,14 +180,16 @@ export function OrderSortList({
         </ul>
       </section>
 
-      <section className="order-slots-panel">
-        <h3 className="order-panel-title">Your order</h3>
-        <ol className="order-slots-list order-slots-list--fit">
+      <section className="order-slots-panel match-slots-panel">
+        <h3 className="order-panel-title">Match to insignia</h3>
+        <ol className="order-slots-list order-slots-list--fit match-slots-list">
           {slots.map((id, index) => {
+            const pair = pairs[index]
             const row = id ? itemsById.get(id) : null
             const slotOk = slotResults?.[index]
             const slotClass = [
               'order-slot',
+              'match-rank-slot',
               id ? 'order-slot-filled' : 'order-slot-empty',
               locked && slotResults && id ? (slotOk ? 'order-slot-ok' : 'order-slot-bad') : '',
               overSlot === index && drag ? 'order-drop-target' : '',
@@ -160,11 +197,11 @@ export function OrderSortList({
               .filter(Boolean)
               .join(' ')
 
+            if (!pair) return null
+
             return (
-              <li key={index} className="order-slot-row">
-                <span className="order-slot-num" title={`Position ${index + 1}`}>
-                  {index + 1}
-                </span>
+              <li key={pair.id} className="order-slot-row match-slot-row">
+                <InsigniaCard pair={pair} index={index} />
                 <div
                   className={slotClass}
                   onDragOver={(e) => {
@@ -180,7 +217,7 @@ export function OrderSortList({
                   }}
                 >
                   {row ? (
-                    <OrderCard
+                    <RankCard
                       row={row}
                       draggable={!locked}
                       dragging={drag?.id === id}
@@ -188,7 +225,7 @@ export function OrderSortList({
                       onDragEnd={clearDrag}
                     />
                   ) : (
-                    <span className="order-slot-placeholder">Drop</span>
+                    <span className="order-slot-placeholder">Drop rank</span>
                   )}
                 </div>
               </li>

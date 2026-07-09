@@ -1,7 +1,14 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import { dirname, join } from 'node:path'
 import { buildStudyNow, startLearnFromUnits } from '../src/core/learn.ts'
+import { ensureImageDemoDeckFromCsv } from '../src/core/image-demo.ts'
+import { getState, resetAll } from '../src/core/store.ts'
 import type { AppState, Card, GradedAttempt, Note, ReviewEvent } from '../src/core/types.ts'
+
+const CSV_PATH = join(dirname(fileURLToPath(import.meta.url)), '../public/decks/ODS_Ranks_Demo_deck.csv')
 
 // Study now: one-click plan — fading memories first, then weak cards, then a
 // few new ones, capped to the session size with slots reserved for new material.
@@ -157,6 +164,16 @@ test('buildStudyNow: brand-new collection honors the session size, bounded by ne
   assert.equal(buildStudyNow(state, { maxCards: 15, at: NOW }).fresh, 15)
   // …and newPerDay bounds it above.
   assert.equal(buildStudyNow(state, { maxCards: 25, at: NOW }).fresh, 20)
+})
+
+test('buildStudyNow: prioritizes unseen collar-device image cards', () => {
+  resetAll()
+  ensureImageDemoDeckFromCsv(readFileSync(CSV_PATH, 'utf8'))
+  const plan = buildStudyNow(getState(), { maxCards: 10, at: NOW })
+  assert.equal(plan.images, 3)
+  const imageUnit = plan.units.find((u) => u.key === 'study-images')
+  assert.ok(imageUnit)
+  assert.equal(imageUnit!.cardIds.length, 3)
 })
 
 test('study-now sessions skip unit synthesis (priority buckets are not topics)', () => {

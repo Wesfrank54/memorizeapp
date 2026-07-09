@@ -5,11 +5,13 @@ import { renderContent } from '../../core/schedule.ts'
 import { clearLearnResume, loadLearnResume, saveLearnResume } from '../../core/learn-persist.ts'
 import {
   addLearnHighlight,
+  getState,
   graduateLearnMastery,
   review,
   recordLearnAttempt,
   updateSettings,
 } from '../../core/store.ts'
+import { ensureImageDemoDeck, imageDemoItems } from '../../core/image-demo.ts'
 import { computeConcepts } from '../../core/concepts.ts'
 import { clozeFullText } from '../../core/cloze.ts'
 import { PASSAGE_PASS_SCORE, passageWantsFullRecall } from '../../core/passage.ts'
@@ -41,6 +43,7 @@ import { UnitSynthesis } from './UnitSynthesis.tsx'
 
 const ADAPTIVE_BASE_COVERAGE = 0.55
 import { GradedAnswer, type GradedMode } from './GradedAnswer.tsx'
+import { CardFace } from './CardFace.tsx'
 import { PassageRecall } from './PassageRecall.tsx'
 import { VerdictBanner } from './VerdictBanner.tsx'
 
@@ -74,6 +77,7 @@ export function Learn({ state, onGoToReview }: { state: AppState; onGoToReview?:
   const [savedResume, setSavedResume] = useState<ResumeSource | null>(firstResumableSaved)
   const [setupStep, setSetupStep] = useState<'units' | 'familiarity'>('units')
   const [familiarity, setFamiliarity] = useState<FamiliarityLevel | null>(null)
+  const [studyNowLoading, setStudyNowLoading] = useState(false)
 
   const notesById = useMemo(() => new Map(state.notes.map((n) => [n.id, n])), [state.notes])
   const cardsById = useMemo(() => new Map(state.cards.map((c) => [c.id, c])), [state.cards])
@@ -95,6 +99,11 @@ export function Learn({ state, onGoToReview }: { state: AppState; onGoToReview?:
     () => (session ? null : buildStudyNow(state, { maxCards: studySize })),
     [state, studySize, session],
   )
+  const imageCardCount = useMemo(() => imageDemoItems(state).length, [state])
+
+  useEffect(() => {
+    void ensureImageDemoDeck().catch(() => {})
+  }, [])
 
   useEffect(() => {
     setSelectedKeys(new Set())
@@ -196,17 +205,24 @@ export function Learn({ state, onGoToReview }: { state: AppState; onGoToReview?:
   // weak cards, then a few new ones. No deck/unit picking, no familiarity step
   // ('new' gives unseen cards the try-before-teach pretest; seen cards start
   // from their own data regardless).
-  function startStudyNow() {
-    if (!studyPlan || studyPlan.total === 0) return
-    dropOfferedResume()
-    setSetupStep('units')
-    setSession(
-      startLearnFromUnits(state, studyPlan.units, {
-        tabMode: 'adaptive',
-        familiarity: 'new',
-        focus: 'study',
-      }),
-    )
+  async function startStudyNow() {
+    setStudyNowLoading(true)
+    try {
+      await ensureImageDemoDeck()
+      const plan = buildStudyNow(getState(), { maxCards: studySize })
+      if (plan.total === 0) return
+      dropOfferedResume()
+      setSetupStep('units')
+      setSession(
+        startLearnFromUnits(getState(), plan.units, {
+          tabMode: 'adaptive',
+          familiarity: 'new',
+          focus: 'study',
+        }),
+      )
+    } finally {
+      setStudyNowLoading(false)
+    }
   }
 
   // Drill weak areas: units from your weakest concepts, no familiarity step
@@ -319,9 +335,8 @@ export function Learn({ state, onGoToReview }: { state: AppState; onGoToReview?:
         <h2 className="opt-title">How familiar is this material?</h2>
         <p className="muted small">
           This applies to the <strong>{unseenChosenCount}</strong> card{unseenChosenCount === 1 ? '' : 's'} you
-          haven&apos;t studied here yet — it sets where they start on the{' '}
-          <strong>choices → fill-blank → type</strong> ladder. Cards you&apos;ve already answered start from their own
-          track record and memory state.
+          haven&apos;t studied here yet — it sets where they start on the difficulty ladder. Cards you&apos;ve already
+          answered start from their own track record and memory state.
         </p>
         <p className="muted small">
           {chosenUnits.length} units · {previewCards} cards · {unseenChosenCount} brand new
@@ -362,10 +377,8 @@ export function Learn({ state, onGoToReview }: { state: AppState; onGoToReview?:
       <div className="panel form">
         <h2 className="opt-title">Learn</h2>
         <p className="muted small">
-          Each card starts at a difficulty set by your own track record — recent answers and memory state.
-          Brand-new cards get multiple-choice placement questions to find your starting level; blank coverage adapts as
-          you perform. Mastery
-          graduates cards into your FSRS schedule.
+          Each card starts at a difficulty set by your own track record — recent answers and memory state. Blank
+          coverage adapts as you perform. Mastery graduates cards into your FSRS schedule.
         </p>
         {studyPlan ? (
           <div className="panel inset study-now">
@@ -382,12 +395,31 @@ export function Learn({ state, onGoToReview }: { state: AppState; onGoToReview?:
               </select>
             </div>
             <p className="muted small">
-              {studyPlan.total > 0
-                ? <>One click, whole collection: <strong>{studyPlan.due}</strong> to refresh · <strong>{studyPlan.weak}</strong> weak · <strong>{studyPlan.fresh}</strong> new</>
-                : 'All caught up — nothing fading, no weak spots, no new cards waiting.'}
+              {studyPlan.total > 0 ? (
+                <>
+                  One click, whole collection: <strong>{studyPlan.due}</strong> to refresh · <strong>{studyPlan.weak}</strong>{' '}
+                  weak
+                  {studyPlan.images > 0 ? (
+                    <>
+                      {' '}
+                      · <strong>{studyPlan.images}</strong> collar device{studyPlan.images === 1 ? '' : 's'}
+                    </>
+                  ) : null}{' '}
+                  · <strong>{studyPlan.fresh}</strong> new
+                </>
+              ) : imageCardCount > 0 ? (
+                <>Collar-device deck loaded ({imageCardCount} image cards) — study other material first, then new cards will include images.</>
+              ) : (
+                'All caught up — nothing fading, no weak spots, no new cards waiting.'
+              )}
             </p>
-            <button type="button" className="primary" disabled={studyPlan.total === 0} onClick={startStudyNow}>
-              Study now{studyPlan.total > 0 ? ` · ${studyPlan.total} cards` : ''}
+            <button
+              type="button"
+              className="primary"
+              disabled={studyPlan.total === 0 || studyNowLoading}
+              onClick={() => void startStudyNow()}
+            >
+              {studyNowLoading ? 'Loading…' : `Study now${studyPlan.total > 0 ? ` · ${studyPlan.total} cards` : ''}`}
             </button>
           </div>
         ) : null}
@@ -621,7 +653,7 @@ export function Learn({ state, onGoToReview }: { state: AppState; onGoToReview?:
     )
   }
 
-  const { question, answer: answerText } = renderContent(note, card)
+  const { question, answer: answerText, questionImage, answerImage } = renderContent(note, card)
   const isReview = s.phases[s.phaseIndex]?.kind === 'review'
   const coverage =
     cur.mode === 'passage' || cur.mode === 'blank'
@@ -630,10 +662,8 @@ export function Learn({ state, onGoToReview }: { state: AppState; onGoToReview?:
   const passageVariant = state.attempts.filter((a) => a.cardId === cur.cardId).length
   const passageText = note.type === 'cloze' ? clozeFullText(note.fields.text ?? '') : answerText
   const promptText =
-    cur.pretest
-      ? cur.mode === 'mcq'
-        ? `${question} — pick the answer (calibrating your level)`
-        : `${question} — try from memory first`
+    cur.pretest && cur.mode !== 'mcq'
+      ? `${question} — try from memory first`
       : cur.mode === 'passage' && note.type === 'cloze'
         ? 'Fill in the blanks'
         : question
@@ -663,22 +693,18 @@ export function Learn({ state, onGoToReview }: { state: AppState; onGoToReview?:
           {waiting > 0 ? <span className="deferred-badge"> · {waiting} spaced</span> : null}
         </span>
         <div className="ladder">
-          {cur.pretest ? (
-            <span className="rung active">{cur.mode === 'mcq' ? 'Placement (choices)' : 'Pre-test'}</span>
-          ) : (
-            cur.ladder.map((m, i) => (
-              <span key={`${m}-${i}`} className={`rung ${i === cur.rung ? 'active' : i < cur.rung ? 'done' : ''}`}>
-                {LADDER_LABELS[m]}
-                {i === cur.rung && m === 'mcq' && cur.mcqCalibrationStreak > 1 ? (
-                  <span className="rung-streak">
-                    {' '}
-                    · {cur.mcqPasses + 1}/{cur.mcqCalibrationStreak}
-                  </span>
-                ) : null}
-              </span>
-            ))
-          )}
-          {!cur.pretest && cur.masteryStreak > 1 ? (
+          {cur.ladder.map((m, i) => (
+            <span key={`${m}-${i}`} className={`rung ${i === cur.rung ? 'active' : i < cur.rung ? 'done' : ''}`}>
+              {LADDER_LABELS[m]}
+              {i === cur.rung && m === 'mcq' && cur.mcqCalibrationStreak > 1 ? (
+                <span className="rung-streak">
+                  {' '}
+                  · {cur.mcqPasses + 1}/{cur.mcqCalibrationStreak}
+                </span>
+              ) : null}
+            </span>
+          ))}
+          {cur.masteryStreak > 1 ? (
             <span className="rung streak" title="Drill-in: pass the hardest mode twice in a row to master">
               ×{cur.masteryStreak}
               {cur.rung === cur.ladder.length - 1 ? ` · ${cur.topPasses + 1}/${cur.masteryStreak}` : ''}
@@ -690,9 +716,14 @@ export function Learn({ state, onGoToReview }: { state: AppState; onGoToReview?:
         <div className="review-meta">
           <span className="chip">{state.decks.find((d) => d.id === card.deckId)?.name ?? '—'}</span>
           {isReview && <span className="chip chip-due">review</span>}
-          {cur.pretest && <span className="chip">{cur.mode === 'mcq' ? 'placement' : 'pre-test'}</span>}
+          {cur.pretest && cur.mode !== 'mcq' ? <span className="chip">pre-test</span> : null}
         </div>
-        <div className="card-face question">{promptText}</div>
+        <CardFace
+          text={promptText}
+          imageUrl={questionImage}
+          imageAlt={questionImage ? 'Study card image' : undefined}
+          variant="question"
+        />
 
         {cur.mode === 'passage' ? (
           <PassageRecall
@@ -710,7 +741,7 @@ export function Learn({ state, onGoToReview }: { state: AppState; onGoToReview?:
           revealed ? (
             <>
               <hr className="divider" />
-              <div className="card-face answer">{answerText}</div>
+              <CardFace text={answerText} imageUrl={answerImage} variant="answer" />
               {selfVerdict !== null ? (
                 <VerdictBanner correct={selfVerdict} expected={!selfVerdict ? answerText : undefined} />
               ) : (

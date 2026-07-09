@@ -6,6 +6,7 @@ import type { ConceptStat } from './concepts.ts'
 import { renderContent } from './schedule.ts'
 import { cardState } from './schedule.ts'
 import { clozeFullText } from './cloze.ts'
+import { unseenImageDemoCardIds } from './image-demo.ts'
 import { REQUEST_RETENTION, retrievability } from './fsrs.ts'
 import type { SynthesisPartResult } from './unit-synthesis.ts'
 
@@ -58,9 +59,9 @@ const MASTERY_COVERAGE_RAMP = 0.1
 export type LearnTabMode = 'manual' | 'adaptive'
 
 export const FAMILIARITY_OPTIONS: { id: FamiliarityLevel; label: string; hint: string }[] = [
-  { id: 'new', label: 'Brand new', hint: 'Multiple choice first — the easiest on-ramp' },
-  { id: 'some', label: 'Seen before', hint: 'Starts at choices; skips easy rungs if you already know them from Quiz/Review' },
-  { id: 'comfortable', label: 'Somewhat familiar', hint: 'Skip recognition — start with fill-in-the-blank' },
+  { id: 'new', label: 'Brand new', hint: 'Start from the beginning of the ladder' },
+  { id: 'some', label: 'Seen before', hint: 'Starts easy; skips rungs you already know from Quiz/Review' },
+  { id: 'comfortable', label: 'Somewhat familiar', hint: 'Skip early rungs — start with fill-in-the-blank' },
   { id: 'know', label: 'Know it well', hint: 'Jump straight to typing from memory' },
 ]
 
@@ -487,16 +488,20 @@ export function weakUnitCandidates(
 }
 
 export interface StudyNowPlan {
-  /** Ordered units: Refresh (fading memories) → Weak areas → New material. */
+  /** Ordered units: Refresh → Weak areas → Collar devices (images) → New material. */
   units: Unit[]
   due: number
   weak: number
   fresh: number
+  /** Unseen collar-device image MCQ cards included in this session. */
+  images: number
   total: number
 }
 
 /** New-material slots always kept open so a review backlog can't stall learning. */
 const STUDY_NOW_NEW_RESERVE = 3
+/** Collar-device image cards mixed into Study now when the demo deck is loaded. */
+const STUDY_NOW_IMAGE_SLOTS = 3
 const STUDY_NOW_DEFAULT_CARDS = 15
 const STUDY_NOW_WEAK_ACCURACY = 0.85
 
@@ -539,17 +544,33 @@ export function buildStudyNow(
     (w) => seenIds.has(w.cardId) && !dueSet.has(w.cardId) && w.accuracy < STUDY_NOW_WEAK_ACCURACY,
   )
 
+  const imageUnseen = unseenImageDemoCardIds(state)
+  const imageSet = new Set(imageUnseen)
+
   const reserveNew = Math.min(STUDY_NOW_NEW_RESERVE, maxNew, freshIds.length)
   const dueTake = Math.min(due.length, Math.max(0, cap - reserveNew))
   const weakTake = Math.min(weakRanked.length, Math.max(0, cap - dueTake - reserveNew))
   const newTake = Math.min(freshIds.length, maxNew, Math.max(0, cap - dueTake - weakTake))
+  const imageTake = Math.min(imageUnseen.length, STUDY_NOW_IMAGE_SLOTS, newTake)
+  const imageIds = imageUnseen.slice(0, imageTake)
+  const otherFresh = freshIds.filter((id) => !imageSet.has(id))
+  const otherNewTake = newTake - imageTake
 
   const units: Unit[] = []
   if (dueTake > 0) units.push({ key: 'study-due', label: 'Refresh', cardIds: due.slice(0, dueTake).map((d) => d.id) })
   if (weakTake > 0)
     units.push({ key: 'study-weak', label: 'Weak areas', cardIds: weakRanked.slice(0, weakTake).map((w) => w.cardId) })
-  if (newTake > 0) units.push({ key: 'study-new', label: 'New material', cardIds: freshIds.slice(0, newTake) })
-  return { units, due: dueTake, weak: weakTake, fresh: newTake, total: dueTake + weakTake + newTake }
+  if (imageTake > 0) units.push({ key: 'study-images', label: 'Collar devices', cardIds: imageIds })
+  if (otherNewTake > 0)
+    units.push({ key: 'study-new', label: 'New material', cardIds: otherFresh.slice(0, otherNewTake) })
+  return {
+    units,
+    due: dueTake,
+    weak: weakTake,
+    fresh: newTake,
+    images: imageTake,
+    total: dueTake + weakTake + newTake,
+  }
 }
 
 export type Phase =

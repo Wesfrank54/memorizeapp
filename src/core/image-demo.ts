@@ -56,6 +56,17 @@ export function imageDemoItems(state: AppState): { card: AppState['cards'][0]; n
     })
 }
 
+function cardSeenInState(state: AppState, cardId: string): boolean {
+  return state.attempts.some((a) => a.cardId === cardId) || state.events.some((e) => e.cardId === cardId)
+}
+
+/** Unseen collar-device image cards eligible for Study now. */
+export function unseenImageDemoCardIds(state: AppState): string[] {
+  return imageDemoItems(state)
+    .filter(({ card }) => !cardSeenInState(state, card.id))
+    .map(({ card }) => card.id)
+}
+
 function removeDemoDecks(): number {
   let removed = 0
   for (const deckId of demoDeckIdsToReplace()) {

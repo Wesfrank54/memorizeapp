@@ -8,11 +8,11 @@ import { ImportCsv } from './components/ImportCsv.tsx'
 import { Stats } from './components/Stats.tsx'
 import { Optimize } from './components/Optimize.tsx'
 import { SyncBar } from './components/SyncBar.tsx'
-import { Commitments } from './components/Commitments.tsx'
 import { Quiz } from './components/Quiz.tsx'
 import { Learn } from './components/Learn.tsx'
 import { ImageTestingBeta } from './components/ImageTestingBeta.tsx'
 import { OrderPractice } from './components/OrderPractice.tsx'
+import { MatchPractice } from './components/MatchPractice.tsx'
 
 export type Tab =
   | 'learn'
@@ -23,8 +23,8 @@ export type Tab =
   | 'stats'
   | 'quiz'
   | 'order'
+  | 'match'
   | 'tune'
-  | 'commitments'
   | 'image-beta'
 
 export function App() {
@@ -32,7 +32,7 @@ export function App() {
   const [tab, setTab] = useState<Tab>('learn')
 
   return (
-    <div className={`app${tab === 'order' ? ' app--wide' : ''}`}>
+    <div className={`app${tab === 'order' || tab === 'match' ? ' app--wide' : ''}`}>
       <header className="topbar">
         <div className="brand">
           memorize <span className="tag">MVP</span>
@@ -49,8 +49,8 @@ export function App() {
         {tab === 'stats' && <Stats state={state} />}
         {tab === 'quiz' && <Quiz state={state} />}
         {tab === 'order' && <OrderPractice />}
+        {tab === 'match' && <MatchPractice />}
         {tab === 'tune' && <Optimize state={state} />}
-        {tab === 'commitments' && <Commitments state={state} />}
         {tab === 'image-beta' && <ImageTestingBeta state={state} />}
       </main>
     </div>
