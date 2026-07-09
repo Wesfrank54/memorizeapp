@@ -114,12 +114,12 @@ export function GradedAnswer({
     onGradedRef.current(result, gradedCtx)
   }
 
-  function submitText() {
+  function checkAnswer() {
     if (result) return
     setResult(gradeText(expected, inputRef.current))
   }
 
-  function enterTargetAllowsSubmit(el: HTMLElement) {
+  function enterTargetAllowsAction(el: HTMLElement) {
     return el.tagName !== 'BUTTON' && el.tagName !== 'A' && el.tagName !== 'SELECT'
   }
 
@@ -128,9 +128,9 @@ export function GradedAnswer({
     function onKey(e: KeyboardEvent) {
       if (e.key !== 'Enter' || e.repeat) return
       const el = e.target as HTMLElement
-      if (!enterTargetAllowsSubmit(el)) return
+      if (!enterTargetAllowsAction(el)) return
       e.preventDefault()
-      submitText()
+      checkAnswer()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -143,7 +143,7 @@ export function GradedAnswer({
     function onKey(e: KeyboardEvent) {
       if (e.key !== 'Enter' || e.repeat) return
       const el = e.target as HTMLElement
-      if (!enterTargetAllowsSubmit(el)) return
+      if (!enterTargetAllowsAction(el)) return
       e.preventDefault()
       if (advancedRef.current) return
       advancedRef.current = true
@@ -203,8 +203,9 @@ export function GradedAnswer({
             </div>
           )}
           <p className="muted small typing-live-hint">
-            <span className="enter-hint">Enter to check</span>, then Enter again to continue. Words turn{' '}
-            <span className="w-ok">green</span> when right and <span className="w-no">red</span> when off.
+            Press <strong>Check</strong> or Enter to see if you got it right, then Enter again to continue. While
+            typing, words turn <span className="w-ok">green</span> when right and <span className="w-no">red</span>{' '}
+            when off.
           </p>
           <LiveTypingMarks expected={expected} given={input} />
           <input
@@ -216,11 +217,11 @@ export function GradedAnswer({
             onKeyDown={(e) => {
               if (e.key !== 'Enter') return
               e.preventDefault()
-              submitText()
+              checkAnswer()
             }}
           />
-          <button className="primary reveal" onClick={submitText}>
-            Submit
+          <button type="button" className="primary reveal" onClick={checkAnswer}>
+            Check <span className="hint">enter</span>
           </button>
         </>
       ) : (
