@@ -12,11 +12,11 @@ test('matchLayoutProfile: collar uses moderate columns for larger cells', () => 
   assert.equal(p.lineClamp, 2)
 })
 
-test('matchLayoutProfile: shoulder uses wider cells for text hints', () => {
+test('matchLayoutProfile: shoulder uses two wide columns for long descriptions', () => {
   const items = matchPoolItems(matchChallengeById('navy-officer-shoulder')!)
   const p = matchLayoutProfile(items, 'shoulder')
   assert.equal(p.minCols, 2)
-  assert.equal(p.maxCols, 3)
-  assert.equal(p.maxPoolCols, 5)
+  assert.equal(p.maxCols, 2)
+  assert.equal(p.maxPoolCols, 4)
   assert.equal(p.slotRows, Math.ceil(15 / p.slotCols))
 })

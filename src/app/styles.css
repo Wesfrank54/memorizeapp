@@ -1581,7 +1581,38 @@ body {
   grid-template-columns: minmax(0, 0.4fr) minmax(0, 0.6fr);
 }
 .match-board[data-match='shoulder'] {
-  --match-insignia-w: 108px;
+  --match-insignia-w: 200px;
+  --match-hint-size: 13px;
+  --match-hint-clamp: 10;
+  grid-template-columns: minmax(0, 0.32fr) minmax(0, 0.68fr);
+}
+.match-board[data-match='shoulder'] .match-slot-row {
+  grid-template-columns: minmax(160px, 1.75fr) minmax(0, 1fr);
+  gap: 10px;
+}
+.match-board[data-match='shoulder'] .match-insignia-card {
+  align-items: flex-start;
+  justify-content: flex-start;
+  text-align: left;
+  min-height: auto;
+  padding: 10px 12px;
+}
+.match-board[data-match='shoulder'] .match-insignia-hint {
+  text-align: left;
+  line-height: 1.5;
+  font-size: var(--match-hint-size, 13px);
+  -webkit-line-clamp: var(--match-hint-clamp, 10);
+}
+.match-board[data-match='shoulder'] .match-rank-slot {
+  min-height: var(--match-slot-min-h, 58px);
+}
+.match-board[data-match='shoulder'] .order-row-label {
+  -webkit-line-clamp: var(--order-line-clamp, 3);
+  font-size: var(--match-label-size, 16px);
+  line-height: 1.4;
+}
+.match-board[data-match='shoulder'] .order-pool-list .order-row-label {
+  -webkit-line-clamp: 2;
 }
 .match-practice--session .match-board .order-pool-list .order-row-label,
 .match-practice--session .match-board .match-rank-card .order-row-label {

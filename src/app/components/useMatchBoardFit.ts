@@ -5,29 +5,51 @@ import {
 } from '../../core/match-layout.ts'
 import type { OrderLayoutProfile } from '../../core/order-layout.ts'
 
-export function useMatchBoardFit(profile: OrderLayoutProfile, slotCount: number, resetKey: string) {
+export function useMatchBoardFit(
+  profile: OrderLayoutProfile,
+  slotCount: number,
+  resetKey: string,
+  category: 'collar' | 'shoulder',
+) {
   const boardRef = useRef<HTMLDivElement>(null)
-  const [fit, setFit] = useState<MatchBoardFit>(() => ({
-    slotCols: profile.slotCols,
-    poolCols: profile.maxPoolCols ?? profile.slotCols,
-    lineClamp: profile.lineClamp,
-    insigniaH: 80,
-    insigniaW: 96,
-    hintClamp: 4,
-    hintSize: 11,
-    gapPx: 10,
-    labelSize: 15,
-    cardPadY: 11,
-    cardPadX: 13,
-    slotMinH: 56,
-  }))
+  const [fit, setFit] = useState<MatchBoardFit>(() =>
+    category === 'shoulder'
+      ? {
+          slotCols: profile.slotCols,
+          poolCols: profile.maxPoolCols ?? profile.slotCols,
+          lineClamp: profile.lineClamp,
+          insigniaH: 0,
+          insigniaW: 200,
+          hintClamp: 10,
+          hintSize: 13,
+          gapPx: 10,
+          labelSize: 15,
+          cardPadY: 11,
+          cardPadX: 13,
+          slotMinH: 58,
+        }
+      : {
+          slotCols: profile.slotCols,
+          poolCols: profile.maxPoolCols ?? profile.slotCols,
+          lineClamp: profile.lineClamp,
+          insigniaH: 80,
+          insigniaW: 96,
+          hintClamp: 4,
+          hintSize: 11,
+          gapPx: 10,
+          labelSize: 15,
+          cardPadY: 11,
+          cardPadX: 13,
+          slotMinH: 56,
+        },
+  )
 
   useLayoutEffect(() => {
     const board = boardRef.current
     if (!board) return
 
     const run = () => {
-      const next = fitMatchBoard(board, slotCount, profile)
+      const next = fitMatchBoard(board, slotCount, profile, category)
       setFit((prev) =>
         prev.slotCols === next.slotCols &&
         prev.poolCols === next.poolCols &&
@@ -45,7 +67,7 @@ export function useMatchBoardFit(profile: OrderLayoutProfile, slotCount: number,
     ro.observe(board)
     if (board.parentElement) ro.observe(board.parentElement)
     return () => ro.disconnect()
-  }, [profile, slotCount, resetKey])
+  }, [profile, slotCount, resetKey, category])
 
   return { boardRef, fit }
 }

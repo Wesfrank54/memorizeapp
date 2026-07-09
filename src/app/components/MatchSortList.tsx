@@ -72,7 +72,9 @@ function InsigniaCard({ pair, index }: { pair: MatchPair; index: number }) {
           />
         </figure>
       ) : (
-        <p className="match-insignia-hint">{pair.insigniaHint}</p>
+        <p className="match-insignia-hint" title={pair.insigniaHint}>
+          {pair.insigniaHint}
+        </p>
       )}
     </div>
   )
@@ -104,7 +106,7 @@ export function MatchSortList({
   const items = useMemo(() => [...itemsById.values()], [itemsById])
   const profile = useMemo(() => matchLayoutProfile(items, category), [items, category])
   const resetKey = `${category}:${slots.length}:${[...pool].join(',')}:${locked}`
-  const { boardRef, fit } = useMatchBoardFit(profile, slots.length, resetKey)
+  const { boardRef, fit } = useMatchBoardFit(profile, slots.length, resetKey, category)
   const cols = fit.slotCols
 
   function clearDrag() {
