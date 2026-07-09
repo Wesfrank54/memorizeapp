@@ -49,6 +49,39 @@ body {
 .app--wide {
   max-width: 1120px;
 }
+.app--wide:has(.order-practice--session),
+.app--wide:has(.match-practice--session) {
+  max-width: none;
+  width: 100%;
+  padding: 4px 14px 4px;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+.app--wide:has(.order-practice--session) .topbar,
+.app--wide:has(.match-practice--session) .topbar {
+  margin-bottom: 4px;
+  flex-shrink: 0;
+}
+.app--wide:has(.order-practice--session) .syncbar,
+.app--wide:has(.match-practice--session) .syncbar {
+  margin-bottom: 4px;
+  flex-shrink: 0;
+}
+.app--wide:has(.order-practice--session) .content,
+.app--wide:has(.match-practice--session) .content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.app--wide:has(.order-practice--session) .order-practice--session,
+.app--wide:has(.match-practice--session) .match-practice--session {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+  max-height: none;
+}
 
 /* top bar */
 .topbar {
@@ -1109,20 +1142,28 @@ body {
   color: var(--again);
 }
 
-/* order practice (drag-to-sort) */
-.order-practice--session {
+/* order + match practice sessions (viewport-fit, no page scroll) */
+.order-practice--session,
+.match-practice--session {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding-bottom: 56px;
+  gap: 8px;
+  height: calc(100dvh - 88px);
+  max-height: calc(100dvh - 88px);
+  padding: 8px 12px;
+  overflow: hidden;
 }
 .order-session-body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
   width: 100%;
 }
 .order-session-footer {
-  margin-top: 6px;
-  padding-top: 16px;
-  padding-bottom: 16px;
+  flex-shrink: 0;
+  margin-top: 4px;
+  padding-top: 6px;
+  padding-bottom: 8px;
   border-top: 1px solid var(--border);
 }
 .order-session-verdict {
@@ -1145,17 +1186,22 @@ body {
   margin-bottom: 4px;
 }
 .order-practice-head--compact {
+  flex-shrink: 0;
   margin-bottom: 0;
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
 }
 .order-practice-head--compact .opt-title {
-  font-size: 18px;
-  margin: 0 0 4px;
-  line-height: 1.25;
+  font-size: 16px;
+  margin: 0;
+  line-height: 1.2;
 }
 .order-practice-head--compact .muted.small {
-  margin: 0;
+  margin: 2px 0 0;
+}
+.app--wide:has(.order-practice--session) .order-practice-head--compact .muted.small,
+.app--wide:has(.match-practice--session) .order-practice-head--compact .muted.small {
+  display: none;
 }
 .order-challenge-group {
   margin-top: 20px;
@@ -1213,8 +1259,11 @@ body {
   align-items: stretch;
   width: 100%;
 }
-.order-practice--session .order-board {
+.order-practice--session .order-board,
+.match-practice--session .order-board {
   align-items: stretch;
+  height: 100%;
+  min-height: 0;
 }
 .order-board[data-density='compact'] {
   --order-gap: 6px;
@@ -1239,8 +1288,19 @@ body {
   }
 }
 @media (max-width: 720px) {
+  .order-practice--session,
+  .match-practice--session {
+    max-height: none;
+    overflow: visible;
+    height: auto;
+    padding-bottom: 56px;
+  }
+  .order-session-body {
+    overflow: visible;
+  }
   .order-board {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
     gap: 10px;
   }
 }
@@ -1251,9 +1311,12 @@ body {
   display: flex;
   flex-direction: column;
   height: 100%;
+  overflow: hidden;
 }
 .order-practice--session .order-pool-panel,
-.order-practice--session .order-slots-panel {
+.order-practice--session .order-slots-panel,
+.match-practice--session .order-pool-panel,
+.match-practice--session .order-slots-panel {
   align-self: stretch;
 }
 .order-panel-title {
@@ -1262,9 +1325,10 @@ body {
   font-weight: 600;
   flex-shrink: 0;
 }
-.order-practice--session .order-panel-title {
-  margin: 0 0 8px;
-  font-size: 13px;
+.order-practice--session .order-panel-title,
+.match-practice--session .order-panel-title {
+  margin: 0 0 3px;
+  font-size: 12px;
   font-weight: 600;
 }
 .order-panel-hint {
@@ -1284,9 +1348,12 @@ body {
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 .order-practice--session .order-pool-list,
-.order-practice--session .order-slots-list {
+.order-practice--session .order-slots-list,
+.match-practice--session .order-pool-list,
+.match-practice--session .order-slots-list {
   flex: 1;
   min-height: 0;
+  overflow: hidden;
 }
 .order-pool-list--fit {
   display: grid;
@@ -1338,8 +1405,10 @@ body {
   background: var(--surface);
   transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
 }
-.order-practice--session .order-slot {
-  border-radius: 8px;
+.order-practice--session .order-slot,
+.match-practice--session .order-slot {
+  border-radius: 6px;
+  min-height: 30px;
 }
 .order-slot-empty {
   align-items: center;
@@ -1358,8 +1427,10 @@ body {
   user-select: none;
   padding: 6px 8px;
 }
-.order-practice--session .order-slot-placeholder {
-  font-size: 12px;
+.order-practice--session .order-slot-placeholder,
+.match-practice--session .order-slot-placeholder {
+  font-size: 10px;
+  padding: 4px 6px;
 }
 .order-slot.order-drop-target {
   border-color: var(--accent);
@@ -1389,9 +1460,11 @@ body {
   transition: border-color 0.15s, box-shadow 0.15s;
   box-sizing: border-box;
 }
-.order-practice--session .order-card {
-  border-radius: 8px;
-  gap: 5px;
+.order-practice--session .order-card,
+.match-practice--session .order-card {
+  border-radius: 6px;
+  gap: 4px;
+  padding: 5px 7px;
 }
 .order-sort-row:active,
 .order-card:active {
@@ -1427,11 +1500,14 @@ body {
   font-size: var(--order-label-size, 14px);
   line-height: 1.4;
 }
-.order-practice--session .order-row-label {
+.order-practice--session .order-row-label,
+.match-practice--session .order-row-label {
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: var(--order-line-clamp, 3);
+  -webkit-line-clamp: var(--order-line-clamp, 2);
   overflow: hidden;
+  font-size: 12px;
+  line-height: 1.3;
 }
 .order-row-detail {
   font-size: var(--order-detail-size, 12px);
@@ -1484,42 +1560,48 @@ body {
 
 /* match practice — rank ↔ insignia */
 .match-board {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+  --match-insignia-w: 64px;
+  --match-insignia-h: 48px;
+  --match-hint-clamp: 4;
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+}
+.match-board[data-match='shoulder'] {
+  --match-insignia-w: 88px;
+  --match-hint-clamp: 3;
 }
 .match-slots-list {
-  display: flex;
-  flex-direction: column;
   gap: var(--order-gap);
 }
 .match-slot-row {
   display: grid;
-  grid-template-columns: minmax(88px, 110px) minmax(0, 1fr);
+  grid-template-columns: minmax(56px, var(--match-insignia-w)) minmax(0, 1fr);
   align-items: stretch;
-  gap: 8px;
+  gap: 5px;
+  min-height: 0;
 }
 .match-insignia-card {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  min-height: var(--order-slot-empty-h, 38px);
-  padding: 6px 8px;
+  gap: 2px;
+  min-height: 0;
+  padding: 4px 5px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 6px;
   background: color-mix(in srgb, var(--bg) 65%, var(--surface));
   text-align: center;
 }
 .match-insignia-index {
   flex: 0 0 auto;
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
   background: var(--bg);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   color: var(--muted);
 }
@@ -1532,37 +1614,31 @@ body {
 }
 .match-insignia-img {
   display: block;
-  max-width: 72px;
-  max-height: 56px;
+  max-width: var(--match-insignia-w);
+  max-height: var(--match-insignia-h);
   width: auto;
   height: auto;
   object-fit: contain;
 }
 .match-insignia-hint {
   margin: 0;
-  font-size: 10px;
-  line-height: 1.35;
+  font-size: 9px;
+  line-height: 1.3;
   color: var(--muted);
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 5;
+  -webkit-line-clamp: var(--match-hint-clamp);
   overflow: hidden;
 }
 .match-rank-slot {
-  min-height: var(--order-slot-empty-h, 38px);
+  min-height: 28px;
 }
 .match-practice--session .match-rank-card .order-row-detail {
   display: none;
 }
-@media (max-width: 720px) {
-  .match-board {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .match-slot-row {
-    grid-template-columns: minmax(72px, 96px) minmax(0, 1fr);
-  }
-  .match-insignia-img {
-    max-width: 60px;
-    max-height: 48px;
+@media (min-width: 1100px) {
+  .match-board[data-match='collar'] {
+    --match-insignia-w: 56px;
+    --match-insignia-h: 42px;
   }
 }

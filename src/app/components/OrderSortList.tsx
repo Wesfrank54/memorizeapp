@@ -2,6 +2,7 @@ import { useMemo, useState, type CSSProperties } from 'react'
 import type { OrderDragSource, OrderItem, OrderSlotState } from '../../core/order-challenges.ts'
 import { placeOrderItem, returnOrderItemToPool } from '../../core/order-challenges.ts'
 import { orderLayoutProfile } from '../../core/order-layout.ts'
+import { useOrderBoardFit } from './useOrderBoardFit.ts'
 
 type DragState = { id: string; source: OrderDragSource } | null
 
@@ -65,7 +66,9 @@ export function OrderSortList({
   const [overPool, setOverPool] = useState(false)
   const items = useMemo(() => [...itemsById.values()], [itemsById])
   const profile = useMemo(() => orderLayoutProfile(items), [items])
-  const cols = profile.slotCols
+  const resetKey = `${slots.length}:${[...pool].join(',')}:${locked}`
+  const { boardRef, fit } = useOrderBoardFit(profile, slots.length, resetKey)
+  const cols = fit.slotCols
 
   function clearDrag() {
     setDrag(null)
@@ -89,13 +92,14 @@ export function OrderSortList({
 
   const boardStyle = {
     '--order-slot-cols': cols,
-    '--order-pool-cols': cols,
+    '--order-pool-cols': fit.poolCols,
     '--order-slot-rows': Math.ceil(slots.length / cols),
-    '--order-line-clamp': profile.lineClamp,
+    '--order-line-clamp': fit.lineClamp,
   } as CSSProperties
 
   return (
     <div
+      ref={boardRef}
       className="order-board"
       data-density={profile.density}
       data-cols={cols}

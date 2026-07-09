@@ -7,7 +7,8 @@ import {
   type OrderItem,
   type OrderSlotState,
 } from '../../core/match-challenges.ts'
-import { orderLayoutProfile } from '../../core/order-layout.ts'
+import { matchLayoutProfile } from '../../core/match-layout.ts'
+import { useOrderBoardFit } from './useOrderBoardFit.ts'
 
 type DragState = { id: string; source: OrderDragSource } | null
 
@@ -79,6 +80,7 @@ function InsigniaCard({ pair, index }: { pair: MatchPair; index: number }) {
 
 export function MatchSortList({
   pairs,
+  category,
   itemsById,
   pool,
   slots,
@@ -87,6 +89,7 @@ export function MatchSortList({
   slotResults,
 }: {
   pairs: MatchPair[]
+  category: 'collar' | 'shoulder'
   itemsById: Map<string, OrderItem>
   pool: string[]
   slots: OrderSlotState
@@ -99,8 +102,10 @@ export function MatchSortList({
   const [overPool, setOverPool] = useState(false)
 
   const items = useMemo(() => [...itemsById.values()], [itemsById])
-  const profile = useMemo(() => orderLayoutProfile(items), [items])
-  const cols = profile.slotCols
+  const profile = useMemo(() => matchLayoutProfile(items, category), [items, category])
+  const resetKey = `${category}:${slots.length}:${[...pool].join(',')}:${locked}`
+  const { boardRef, fit } = useOrderBoardFit(profile, slots.length, resetKey)
+  const cols = fit.slotCols
 
   function clearDrag() {
     setDrag(null)
@@ -124,15 +129,17 @@ export function MatchSortList({
 
   const boardStyle = {
     '--order-slot-cols': cols,
-    '--order-pool-cols': cols,
+    '--order-pool-cols': fit.poolCols,
     '--order-slot-rows': Math.ceil(slots.length / cols),
-    '--order-line-clamp': profile.lineClamp,
+    '--order-line-clamp': fit.lineClamp,
   } as CSSProperties
 
   return (
     <div
+      ref={boardRef}
       className="order-board match-board"
       data-density={profile.density}
+      data-match={category}
       data-cols={cols}
       style={boardStyle}
     >

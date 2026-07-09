@@ -139,6 +139,7 @@ export function MatchPractice() {
       <div className="order-session-body">
         <MatchSortList
           pairs={challenge.pairs}
+          category={challenge.category}
           itemsById={itemsById}
           pool={pool}
           slots={slots}
