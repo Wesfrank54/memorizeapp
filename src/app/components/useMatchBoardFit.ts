@@ -11,10 +11,15 @@ export function useMatchBoardFit(profile: OrderLayoutProfile, slotCount: number,
     slotCols: profile.slotCols,
     poolCols: profile.maxPoolCols ?? profile.slotCols,
     lineClamp: profile.lineClamp,
-    insigniaH: 44,
-    insigniaW: 58,
-    hintClamp: 3,
-    gapPx: 5,
+    insigniaH: 80,
+    insigniaW: 96,
+    hintClamp: 4,
+    hintSize: 11,
+    gapPx: 10,
+    labelSize: 15,
+    cardPadY: 11,
+    cardPadX: 13,
+    slotMinH: 56,
   }))
 
   useLayoutEffect(() => {
@@ -28,6 +33,7 @@ export function useMatchBoardFit(profile: OrderLayoutProfile, slotCount: number,
         prev.poolCols === next.poolCols &&
         prev.lineClamp === next.lineClamp &&
         prev.insigniaH === next.insigniaH &&
+        prev.labelSize === next.labelSize &&
         prev.gapPx === next.gapPx
           ? prev
           : next,
