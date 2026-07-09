@@ -1,0 +1,148 @@
+type,deck,front,back,text,tags
+basic,ODS Knowledge,Recite the Mission of the Navy.,"To recruit, train, equip, and organize to deliver combat ready Naval forces to win conflicts and wars while maintaining security and deterrence through sustained forward presence.",,mission
+basic,ODS Knowledge,Define Discipline (spell it out).,"Discipline, D-I-S-C-I-P-L-I-N-E, Discipline is the instant, willing obedience to orders, respect for authority and self-reliance.",,discipline
+basic,ODS Knowledge,Navy Core Value — define Honor.,I am accountable for my professional and personal behavior. I will be mindful of the privilege I have to serve my fellow Americans.,,core-values
+basic,ODS Knowledge,Navy Core Value — define Courage.,"Courage is the value that gives me the moral and mental strength to do what is right, with confidence and resolution, even in the face of temptation or adversity.",,core-values
+basic,ODS Knowledge,Navy Core Value — define Commitment.,"The day-to-day duty of every man and woman in the Department of the Navy is to join together as a team to improve the quality of our work, our people and ourselves.",,core-values
+basic,ODS Knowledge,CNO Core Attribute — define Integrity.,"Our behaviors as individuals and as an organization align with our values as a profession. We actively strengthen each other's resolve to act consistently with our values. As individuals, as teams, and as a Navy, our conduct must always be upright and honorable both in public and when nobody's looking.",,cno-attributes
+basic,ODS Knowledge,CNO Core Attribute — define Accountability.,"We are a mission-focused force. We achieve and maintain high standards. Our actions support our strategy. We clearly define the problem we're trying to solve and proposed outcomes. In execution, we honestly assess our progress and adjust as required—we are our own toughest critic.",,cno-attributes
+basic,ODS Knowledge,CNO Core Attribute — define Initiative.,"On their own, everybody strives to be the best they can be – we give 100% when on the job. Our leaders take ownership and act to the limit of their authorities. We foster a questioning attitude and look at new ideas with an open mind. Our most junior teammate may have the best idea; we must be open to capturing that idea.",,cno-attributes
+basic,ODS Knowledge,CNO Core Attribute — define Toughness.,"We can take a hit and keep going, tapping all sources of strength and resilience: rigorous training for operations and combat, the fighting spirit of our people, and the steadfast support of our families. We don't give up the ship!",,cno-attributes
+basic,ODS Knowledge,"How many Articles are in the Code of Conduct, and what is the reference?",6 Articles; Reference: Executive Order 10631,,code-of-conduct
+basic,ODS Knowledge,Recite Code of Conduct — Article 1.,"I am an American, fighting in the forces which guard my country and our way of life. I am prepared to give my life in their defense.",,code-of-conduct
+basic,ODS Knowledge,Recite Code of Conduct — Article 2.,"I will never surrender of my own free will. If in command, I will never surrender the members of my command while they still have the means to resist.",,code-of-conduct
+basic,ODS Knowledge,Recite Code of Conduct — Article 3.,If I am captured I will continue to resist by all means available. I will make every effort to escape and aid others to escape. I will accept neither parole nor special favors from the enemy.,,code-of-conduct
+basic,ODS Knowledge,Recite Code of Conduct — Article 4.,"If I become a prisoner of war, I will keep faith with my fellow prisoners. I will give no information or take part in any action which might be harmful to my comrades. If I am senior, I will take command. If not, I will obey the lawful orders of those appointed over me and will back them up in every way.",,code-of-conduct
+basic,ODS Knowledge,Recite Code of Conduct — Article 5.,"When questioned, should I become a prisoner of war, I am required to give name, rank, service number and date of birth. I will evade answering further questions to the utmost of my ability. I will make no oral or written statements disloyal to my country and its allies or harmful to their cause.",,code-of-conduct
+basic,ODS Knowledge,Recite Code of Conduct — Article 6.,"I will never forget that I am an American, fighting for freedom, responsible for my actions, and dedicated to the principles which made my country free. I will trust in my God and in the United States of America.",,code-of-conduct
+basic,ODS Knowledge,When is the birthday of the U.S. Navy?,13 October 1775,,navy-facts
+basic,ODS Knowledge,Leadership Trait — define Judgement.,The ability to weigh facts and possible solutions on which to base sound decisions.,,leadership-traits
+basic,ODS Knowledge,Leadership Trait — define Justice.,Giving reward and punishment according to merits of the case in question; the ability to administer a system of rewards and punishments impartially and consistently.,,leadership-traits
+basic,ODS Knowledge,Leadership Trait — define Decisiveness.,"Ability to make decisions promptly and to announce them in clear, forceful manner.",,leadership-traits
+basic,ODS Knowledge,Leadership Trait — define Initiative.,Taking action in the absence of orders.,,leadership-traits
+basic,ODS Knowledge,Leadership Trait — define Dependability.,The certainty of proper performance of duty.,,leadership-traits
+basic,ODS Knowledge,Leadership Trait — define Tact.,The ability to deal with others without creating offense.,,leadership-traits
+basic,ODS Knowledge,Leadership Trait — define Integrity.,Uprightness of character and soundness of moral principles; includes the qualities of truthfulness and honesty.,,leadership-traits
+basic,ODS Knowledge,Leadership Trait — define Endurance.,"The mental and physical stamina measured by the ability to withstand pain, fatigue, stress and hardship.",,leadership-traits
+basic,ODS Knowledge,Leadership Trait — define Bearing.,"Creating a favorable impression in carriage, appearance and personal conduct at all times.",,leadership-traits
+basic,ODS Knowledge,Leadership Trait — define Unselfishness.,Avoidance of providing for one's own comfort and personal advancement at the expense of others.,,leadership-traits
+basic,ODS Knowledge,Leadership Trait — define Courage.,"The mental quality that recognizes fear of danger or criticism, but enables a person to proceed in the face of it with calmness and firmness.",,leadership-traits
+basic,ODS Knowledge,Leadership Trait — define Knowledge.,"Understanding of a science or an art. The range of one's information, including professional knowledge and an understanding of your Sailors.",,leadership-traits
+basic,ODS Knowledge,Leadership Trait — define Loyalty.,"The quality of faithfulness to country, the Navy, the unit, to one's seniors, subordinates and peers.",,leadership-traits
+basic,ODS Knowledge,Leadership Trait — define Enthusiasm.,The display of sincere interest and exuberance in the performance of duty.,,leadership-traits
+basic,ODS Knowledge,Chain of Command — position #1 (title)?,Class Recruit Division Commander(s) (RDC),,chain-of-command
+basic,ODS Knowledge,Chain of Command — position #2 (title)?,Class Officer(s),,chain-of-command
+basic,ODS Knowledge,Chain of Command — position #3 (title)?,"Leading Chief Petty Officer, ODS",,chain-of-command
+basic,ODS Knowledge,Chain of Command — position #4 (title)?,"Deputy Director, ODS",,chain-of-command
+basic,ODS Knowledge,Chain of Command — position #5 (title)?,"Director, ODS",,chain-of-command
+basic,ODS Knowledge,Chain of Command — position #6 (title)?,"Command Master Chief, Officer Training Command, Newport",,chain-of-command
+basic,ODS Knowledge,Chain of Command — position #7 (title)?,"Executive Officer, Officer Training Command Newport",,chain-of-command
+basic,ODS Knowledge,Chain of Command — position #8 (title)?,"Commanding Officer, Officer Training Command Newport",,chain-of-command
+basic,ODS Knowledge,Chain of Command — position #9 (title)?,"Commander, Naval Service Training Command",,chain-of-command
+basic,ODS Knowledge,Chain of Command — position #10 (title)?,"Commander, Naval Education and Training Command",,chain-of-command
+basic,ODS Knowledge,Chain of Command — position #11 (title)?,Chief of Naval Personnel,,chain-of-command
+basic,ODS Knowledge,Chain of Command — position #12 (title)?,Chief of Naval Operations,,chain-of-command
+basic,ODS Knowledge,Chain of Command — position #13 (title)?,Secretary of the Navy,,chain-of-command
+basic,ODS Knowledge,Chain of Command — position #14 (title)?,Secretary of Defense,,chain-of-command
+basic,ODS Knowledge,Chain of Command — position #15 (title)?,President of the United States,,chain-of-command
+basic,ODS Knowledge,Recite the Oath of Office.,"I, (name), do solemnly swear (or affirm) that I will support and defend the Constitution of the United States against all enemies, foreign and domestic; that I will bear true faith and allegiance to the same; that I take this obligation freely, without any mental reservation or purpose of evasion; and that I will well and faithfully discharge the duties of the office on which I am about to enter. So help me God.",,oath
+basic,ODS Knowledge,Recite the Sailor's Creed.,"I am a United States Sailor. I will support and defend the Constitution of the United States of America and I will obey the orders of those appointed over me. I represent the fighting spirit of the Navy and those who have gone before me to defend freedom and democracy around the world. I proudly serve my country's Navy combat team with honor, courage and commitment. I am committed to excellence and the fair treatment of all.",,sailors-creed
+basic,ODS Knowledge,Phonetic alphabet — A?,Alpha,,phonetic-alphabet
+basic,ODS Knowledge,Phonetic alphabet — B?,Bravo,,phonetic-alphabet
+basic,ODS Knowledge,Phonetic alphabet — C?,Charlie,,phonetic-alphabet
+basic,ODS Knowledge,Phonetic alphabet — D?,Delta,,phonetic-alphabet
+basic,ODS Knowledge,Phonetic alphabet — E?,Echo,,phonetic-alphabet
+basic,ODS Knowledge,Phonetic alphabet — F?,Foxtrot,,phonetic-alphabet
+basic,ODS Knowledge,Phonetic alphabet — G?,Golf,,phonetic-alphabet
+basic,ODS Knowledge,Phonetic alphabet — H?,Hotel,,phonetic-alphabet
+basic,ODS Knowledge,Phonetic alphabet — I?,India,,phonetic-alphabet
+basic,ODS Knowledge,Phonetic alphabet — J?,Juliet,,phonetic-alphabet
+basic,ODS Knowledge,Phonetic alphabet — K?,Kilo,,phonetic-alphabet
+basic,ODS Knowledge,Phonetic alphabet — L?,Lima,,phonetic-alphabet
+basic,ODS Knowledge,Phonetic alphabet — M?,Mike,,phonetic-alphabet
+basic,ODS Knowledge,Phonetic alphabet — N?,November,,phonetic-alphabet
+basic,ODS Knowledge,Phonetic alphabet — O?,Oscar,,phonetic-alphabet
+basic,ODS Knowledge,Phonetic alphabet — P?,Papa,,phonetic-alphabet
+basic,ODS Knowledge,Phonetic alphabet — Q?,Quebec,,phonetic-alphabet
+basic,ODS Knowledge,Phonetic alphabet — R?,Romeo,,phonetic-alphabet
+basic,ODS Knowledge,Phonetic alphabet — S?,Sierra,,phonetic-alphabet
+basic,ODS Knowledge,Phonetic alphabet — T?,Tango,,phonetic-alphabet
+basic,ODS Knowledge,Phonetic alphabet — U?,Uniform,,phonetic-alphabet
+basic,ODS Knowledge,Phonetic alphabet — V?,Victor,,phonetic-alphabet
+basic,ODS Knowledge,Phonetic alphabet — W?,Whiskey,,phonetic-alphabet
+basic,ODS Knowledge,Phonetic alphabet — X?,X-Ray,,phonetic-alphabet
+basic,ODS Knowledge,Phonetic alphabet — Y?,Yankee,,phonetic-alphabet
+basic,ODS Knowledge,Phonetic alphabet — Z?,Zulu,,phonetic-alphabet
+basic,ODS Knowledge,How many General Orders of a Sentry are there?,11,,general-orders
+basic,ODS Knowledge,General Order #1?,Take charge of this post and all government property in view.,,general-orders
+basic,ODS Knowledge,General Order #2?,"Walk my post in a military manner, keeping always on the alert and observing everything that takes place within sight or hearing.",,general-orders
+basic,ODS Knowledge,General Order #3?,Report all violations of orders I am instructed to enforce.,,general-orders
+basic,ODS Knowledge,General Order #4?,Repeat all calls from any post more distant from the guard house than my own.,,general-orders
+basic,ODS Knowledge,General Order #5?,Quit my post only when properly relieved.,,general-orders
+basic,ODS Knowledge,General Order #6?,"Receive, obey, and pass on to the sentry who relieves me all orders from the commanding officer, command duty officer, officer of the deck, and officers and petty officers of the watch only.",,general-orders
+basic,ODS Knowledge,General Order #7?,Talk to no one except in the line of duty.,,general-orders
+basic,ODS Knowledge,General Order #8?,Give the alarm in case of fire or disorder.,,general-orders
+basic,ODS Knowledge,General Order #9?,Call the OOD in any case not covered by instructions.,,general-orders
+basic,ODS Knowledge,General Order #10?,Salute all Officers and all colors and standards not cased.,,general-orders
+basic,ODS Knowledge,General Order #11?,"Be especially watchful at night, and during the time for challenging, challenge all persons on or near my post, and allow no one to pass without proper authority.",,general-orders
+basic,ODS Knowledge,Navy officer rank — W-2?,Chief Warrant Officer Two (CWO2),,ranks-navy-officer
+basic,ODS Knowledge,Navy officer rank — W-3?,Chief Warrant Officer Three (CWO3),,ranks-navy-officer
+basic,ODS Knowledge,Navy officer rank — W-4?,Chief Warrant Officer Four (CWO4),,ranks-navy-officer
+basic,ODS Knowledge,Navy officer rank — W-5?,Chief Warrant Officer Five (CWO5),,ranks-navy-officer
+basic,ODS Knowledge,Navy officer rank — O-1?,Ensign (ENS),,ranks-navy-officer
+basic,ODS Knowledge,Navy officer rank — O-2?,Lieutenant Junior Grade (LTJG),,ranks-navy-officer
+basic,ODS Knowledge,Navy officer rank — O-3?,Lieutenant (LT),,ranks-navy-officer
+basic,ODS Knowledge,Navy officer rank — O-4?,Lieutenant Commander (LCDR),,ranks-navy-officer
+basic,ODS Knowledge,Navy officer rank — O-5?,Commander (CDR),,ranks-navy-officer
+basic,ODS Knowledge,Navy officer rank — O-6?,Captain (CAPT),,ranks-navy-officer
+basic,ODS Knowledge,Navy officer rank — O-7?,Rear Admiral Lower Half (RDML),,ranks-navy-officer
+basic,ODS Knowledge,Navy officer rank — O-8?,Rear Admiral (RADM),,ranks-navy-officer
+basic,ODS Knowledge,Navy officer rank — O-9?,Vice Admiral (VADM),,ranks-navy-officer
+basic,ODS Knowledge,Navy officer rank — O-10?,Admiral (ADM),,ranks-navy-officer
+basic,ODS Knowledge,Navy officer rank — O-11?,Fleet Admiral (FADM),,ranks-navy-officer
+basic,ODS Knowledge,Navy enlisted rank — E-1?,Seaman Recruit (SR),,ranks-navy-enlisted
+basic,ODS Knowledge,Navy enlisted rank — E-2?,Seaman Apprentice (SA),,ranks-navy-enlisted
+basic,ODS Knowledge,Navy enlisted rank — E-3?,Seaman (SN),,ranks-navy-enlisted
+basic,ODS Knowledge,Navy enlisted rank — E-4?,Petty Officer Third Class (PO3),,ranks-navy-enlisted
+basic,ODS Knowledge,Navy enlisted rank — E-5?,Petty Officer Second Class (PO2),,ranks-navy-enlisted
+basic,ODS Knowledge,Navy enlisted rank — E-6?,Petty Officer First Class (PO1),,ranks-navy-enlisted
+basic,ODS Knowledge,Navy enlisted rank — E-7?,Chief Petty Officer (CPO),,ranks-navy-enlisted
+basic,ODS Knowledge,Navy enlisted rank — E-8?,Senior Chief Petty Officer (SCPO),,ranks-navy-enlisted
+basic,ODS Knowledge,Navy enlisted rank — E-9?,Master Chief Petty Officer (MCPO),,ranks-navy-enlisted
+basic,ODS Knowledge,Navy enlisted rank — E-9 (top)?,Master Chief Petty Officer of the Navy (MCPON),,ranks-navy-enlisted
+basic,ODS Knowledge,Line and Restricted Line officer device?,A gold embroidered five-pointed star,,corps-devices
+basic,ODS Knowledge,Supply Corps officer device?,A gold embroidered sprig of three oak leaves and three acorns,,corps-devices
+basic,ODS Knowledge,Civil Engineer Corps officer device?,Two gold embroidered sprigs of two oak leaves and a silver acorn in each sprig,,corps-devices
+basic,ODS Knowledge,Recite verse 1 of Anchors Aweigh.,"Stand, Navy, out to sea, Fight our battle cry; We'll never change our course, So vicious foe steer shy. Roll out the TNT, Anchors Aweigh. Sail on to victory And sink their bones to Davy Jones, hooray!",,anchors-aweigh
+basic,ODS Knowledge,Recite verse 2 of Anchors Aweigh.,"Anchors Aweigh, my boys, Anchors Aweigh. Farewell to foreign shores, we sail at break of day. Through our last night ashore, drink to the foam, Until we meet once more. Here's wishing you a happy voyage home.",,anchors-aweigh
+basic,ODS Knowledge,Recite verse 3 of Anchors Aweigh.,"Blue of the Mighty Deep; Gold of God's great sun. Let these our colors be till all of time be done. On Seven Seas we learn Navy's stern call: Faith, courage, service true with honor over, honor over all.",,anchors-aweigh
+basic,Marine Knowledge,Marine officer rank — W-1?,Warrant Officer (WO),,ranks-marine-officer
+basic,Marine Knowledge,Marine officer rank — W-2?,Chief Warrant Officer Two (CWO2),,ranks-marine-officer
+basic,Marine Knowledge,Marine officer rank — W-3?,Chief Warrant Officer Three (CWO3),,ranks-marine-officer
+basic,Marine Knowledge,Marine officer rank — W-4?,Chief Warrant Officer Four (CWO4),,ranks-marine-officer
+basic,Marine Knowledge,Marine officer rank — W-5?,Chief Warrant Officer Five (CWO5),,ranks-marine-officer
+basic,Marine Knowledge,Marine officer rank — O-1?,Second Lieutenant (2ndLt),,ranks-marine-officer
+basic,Marine Knowledge,Marine officer rank — O-2?,First Lieutenant (1stLt),,ranks-marine-officer
+basic,Marine Knowledge,Marine officer rank — O-3?,Captain (Capt),,ranks-marine-officer
+basic,Marine Knowledge,Marine officer rank — O-4?,Major (Maj),,ranks-marine-officer
+basic,Marine Knowledge,Marine officer rank — O-5?,Lieutenant Colonel (LtCol),,ranks-marine-officer
+basic,Marine Knowledge,Marine officer rank — O-6?,Colonel (Col),,ranks-marine-officer
+basic,Marine Knowledge,Marine officer rank — O-7?,Brigadier General (BGen),,ranks-marine-officer
+basic,Marine Knowledge,Marine officer rank — O-8?,Major General (MajGen),,ranks-marine-officer
+basic,Marine Knowledge,Marine officer rank — O-9?,Lieutenant General (LtGen),,ranks-marine-officer
+basic,Marine Knowledge,Marine officer rank — O-10?,General (Gen),,ranks-marine-officer
+basic,Marine Knowledge,Marine enlisted rank — E-1?,Private (Pvt),,ranks-marine-enlisted
+basic,Marine Knowledge,Marine enlisted rank — E-2?,Private First Class (PFC),,ranks-marine-enlisted
+basic,Marine Knowledge,Marine enlisted rank — E-3?,Lance Corporal (LCpl),,ranks-marine-enlisted
+basic,Marine Knowledge,Marine enlisted rank — E-4?,Corporal (Cpl),,ranks-marine-enlisted
+basic,Marine Knowledge,Marine enlisted rank — E-5?,Sergeant (Sgt),,ranks-marine-enlisted
+basic,Marine Knowledge,Marine enlisted rank — E-6?,Staff Sergeant (SSgt),,ranks-marine-enlisted
+basic,Marine Knowledge,Marine enlisted rank — E-7?,Gunnery Sergeant (GySgt),,ranks-marine-enlisted
+basic,Marine Knowledge,Marine enlisted rank — E-8?,Master Sergeant (MSgt),,ranks-marine-enlisted
+basic,Marine Knowledge,Marine enlisted rank — E-8 (alt)?,First Sergeant (1stSgt),,ranks-marine-enlisted
+basic,Marine Knowledge,Marine enlisted rank — E-9?,Master Gunnery Sergeant (MGySgt),,ranks-marine-enlisted
+basic,Marine Knowledge,Marine enlisted rank — E-9 (alt)?,Sergeant Major (SgtMaj),,ranks-marine-enlisted
+basic,Marine Knowledge,Marine enlisted rank — E-9 (top)?,Sergeant Major of the Marine Corps (SMMC),,ranks-marine-enlisted
+basic,Marine Knowledge,Recite verse 1 of the Marine Corps Hymn.,"From the Halls of Montezuma To the shores of Tripoli; We fight our country's battles In the air, on land, and sea; First to fight for right and freedom And to keep our honor clean; We are proud to claim the title Of United States Marine.",,marine-hymn
+basic,Marine Knowledge,Recite verse 2 of the Marine Corps Hymn.,Our flag's unfurled to every breeze From dawn to setting sun; We have fought in ev'ry clime and place Where we could take a gun; In the snow of far-off Northern lands And in sunny tropic scenes; You will find us always on the job The United States Marines.,,marine-hymn
+basic,Marine Knowledge,Recite verse 3 of the Marine Corps Hymn.,Here's health to you and to our Corps Which we are proud to serve; In many a strife we've fought for life And never lost our nerve; If the Army and the Navy Ever look on Heaven's scenes; They will find the streets are guarded By United States Marines.,,marine-hymn
