@@ -90,6 +90,8 @@ export function GradedAnswer({
   const [picked, setPicked] = useState<string | null>(null)
   const [result, setResult] = useState<GradeResult | null>(null)
   const advancedRef = useRef(false)
+  /** After checking with Enter, release the key before Enter can advance (same as PassageRecall). */
+  const advanceReadyRef = useRef(false)
   const phaseRef = useRef(phase)
   const resultRef = useRef(result)
   const inputRef = useRef(input)
@@ -116,7 +118,21 @@ export function GradedAnswer({
     setPicked(null)
     setResult(null)
     advancedRef.current = false
+    advanceReadyRef.current = false
   }, [card.id, activeMode])
+
+  useEffect(() => {
+    function onKeyUp(e: KeyboardEvent) {
+      if (e.key === 'Enter') advanceReadyRef.current = true
+    }
+    window.addEventListener('keyup', onKeyUp)
+    return () => window.removeEventListener('keyup', onKeyUp)
+  }, [])
+
+  function keyOwner() {
+    const active = document.activeElement
+    return !!active && !!rootRef.current?.contains(active)
+  }
 
   /** After the input unmounts, focus often lands on <body> — still allow Enter → Next. */
   function focusAllowsVerdictEnter() {
@@ -126,14 +142,16 @@ export function GradedAnswer({
     return active === document.body || active === document.documentElement
   }
 
-  function revealVerdict(graded: GradeResult) {
+  function revealVerdict(fromEnter: boolean, graded: GradeResult) {
     if (phaseRef.current !== 'typing') return
+    advanceReadyRef.current = !fromEnter
+    phaseRef.current = 'verdict'
     setResult(graded)
     setPhase('verdict')
   }
 
-  function checkTypedAnswer() {
-    revealVerdict(gradeText(expected, inputRef.current))
+  function checkTypedAnswer(fromEnter = false) {
+    revealVerdict(fromEnter, gradeText(expected, inputRef.current))
   }
 
   function advance() {
@@ -143,52 +161,46 @@ export function GradedAnswer({
     onGradedRef.current(graded, gradedCtx)
   }
 
-  function onEnterCheck(e: React.KeyboardEvent) {
-    if (e.key !== 'Enter') return
-    e.preventDefault()
-    e.stopPropagation()
-    checkTypedAnswer()
-  }
-
-  function onEnterNext(e: React.KeyboardEvent) {
-    if (e.key !== 'Enter') return
-    e.preventDefault()
-    e.stopPropagation()
-    advance()
-  }
-
   useLayoutEffect(() => {
     if (phase !== 'verdict') return
     nextRef.current?.focus()
   }, [phase, card.id, result])
 
   useEffect(() => {
+    if (activeMode === 'mcq' || phase !== 'typing') return
     function onKeyDown(e: KeyboardEvent) {
-      if (phaseRef.current !== 'verdict' || e.key !== 'Enter' || e.repeat || !focusAllowsVerdictEnter()) return
+      if (e.key !== 'Enter' || e.repeat || !keyOwner()) return
       e.preventDefault()
+      e.stopImmediatePropagation()
+      checkTypedAnswer(true)
+    }
+    window.addEventListener('keydown', onKeyDown, true)
+    return () => window.removeEventListener('keydown', onKeyDown, true)
+  }, [activeMode, phase, expected, card.id])
+
+  useEffect(() => {
+    if (phase !== 'verdict') return
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key !== 'Enter' || e.repeat || !focusAllowsVerdictEnter()) return
+      e.preventDefault()
+      if (!advanceReadyRef.current || advancedRef.current) return
       advance()
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [gradedCtx, card.id])
+  }, [phase, gradedCtx, card.id])
 
   function pick(opt: string) {
     if (phase !== 'typing') return
     setPicked(opt)
-    revealVerdict(gradeChoice(expected, opt))
+    revealVerdict(false, gradeChoice(expected, opt))
   }
 
   const verdict =
     phase === 'verdict' && result ? (
       <div className="graded-verdict-screen">
         <VerdictBanner correct={result.correct} near={result.near} expected={expected} />
-        <button
-          ref={nextRef}
-          type="button"
-          className="primary reveal"
-          onClick={advance}
-          onKeyDown={onEnterNext}
-        >
+        <button ref={nextRef} type="button" className="primary reveal" onClick={advance}>
           Next <span className="hint">enter</span>
         </button>
       </div>
@@ -247,9 +259,8 @@ export function GradedAnswer({
             value={input}
             placeholder={activeMode === 'blank' ? 'fill in the blank…' : 'type the answer from memory…'}
             onChange={(e) => setInput(e.target.value)}
-            onKeyDown={onEnterCheck}
           />
-          <button type="button" className="primary reveal" onClick={checkTypedAnswer} onKeyDown={onEnterCheck}>
+          <button type="button" className="primary reveal" onClick={() => checkTypedAnswer(false)}>
             Check <span className="hint">enter</span>
           </button>
         </>
