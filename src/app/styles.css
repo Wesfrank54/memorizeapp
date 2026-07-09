@@ -29,6 +29,11 @@
 * {
   box-sizing: border-box;
 }
+html,
+body,
+#root {
+  height: 100%;
+}
 body {
   margin: 0;
   background: var(--bg);
@@ -54,9 +59,13 @@ body {
 }
 .app--wide:has(.order-practice--session) {
   padding: 4px 14px 4px;
-  min-height: 100dvh;
+  height: 100dvh;
+  max-height: 100dvh;
+  min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 .app--wide:has(.order-practice--session) .topbar {
   margin-bottom: 4px;
@@ -71,12 +80,22 @@ body {
   min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 .app--wide:has(.order-practice--session) .order-practice--session {
   flex: 1;
   min-height: 0;
   height: auto;
   max-height: none;
+}
+.app--wide:has(.order-practice--session) .order-session-body {
+  display: flex;
+  flex-direction: column;
+}
+.app--wide:has(.order-practice--session) .order-board {
+  flex: 1;
+  min-height: 0;
+  height: auto;
 }
 
 /* top bar */
@@ -1135,6 +1154,8 @@ body {
   flex: 1;
   min-height: 0;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 .order-session-footer {
   flex-shrink: 0;
@@ -1257,6 +1278,7 @@ body {
 .order-slots-panel {
   min-width: 0;
   min-height: 0;
+  height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1284,8 +1306,14 @@ body {
   gap: 4px;
   flex: 1;
   min-height: 0;
+  height: 100%;
   overflow-y: auto;
   overscroll-behavior: contain;
+}
+.order-practice--session .order-pool-list,
+.order-practice--session .order-slots-list {
+  justify-content: space-evenly;
+  align-content: space-evenly;
 }
 .order-pool-list {
   min-height: 0;
@@ -1299,7 +1327,6 @@ body {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 4px;
-  align-content: start;
 }
 .order-slots-list--split {
   display: grid;
@@ -1307,7 +1334,6 @@ body {
   grid-template-rows: repeat(var(--order-slot-rows, 6), auto);
   grid-auto-flow: column;
   gap: 4px 12px;
-  align-content: start;
 }
 @media (min-width: 1100px) {
   .order-pool-list--split {
