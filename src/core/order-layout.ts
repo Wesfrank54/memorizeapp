@@ -7,6 +7,8 @@ export interface OrderLayoutProfile {
   lineClamp: number
   minCols: number
   maxCols: number
+  /** Pool can use more columns than slots when cards are narrower than slot rows. */
+  maxPoolCols?: number
   slotCols: number
   slotRows: number
 }
@@ -65,36 +67,42 @@ export function applyOrderBoardLayout(
 
 /** True when both pool and slot lists fit inside their panels (no scroll). */
 export function orderListsFit(board: HTMLElement): boolean {
+  if (board.clientHeight < 80) return false
   const pool = board.querySelector<HTMLElement>('.order-pool-list')
   const slots = board.querySelector<HTMLElement>('.order-slots-list')
   const tol = 2
-  const poolOk = !pool || pool.scrollHeight <= pool.clientHeight + tol
-  const slotsOk = !slots || slots.scrollHeight <= slots.clientHeight + tol
+  const poolOk = !pool || (pool.clientHeight >= 40 && pool.scrollHeight <= pool.clientHeight + tol)
+  const slotsOk = !slots || (slots.clientHeight >= 40 && slots.scrollHeight <= slots.clientHeight + tol)
   return poolOk && slotsOk
 }
 
-/** Auto-fit column count per deck + viewport; typography stays readable. */
+/** Auto-fit column count per deck + viewport; prefer the most columns that still fit. */
 export function fitOrderBoard(
   board: HTMLElement,
   slotCount: number,
   profile: OrderLayoutProfile,
 ): OrderBoardFit {
   const lineClamp = profile.lineClamp
-  let best: OrderBoardFit = {
+  const maxPool = profile.maxPoolCols ?? profile.maxCols
+  let fallback: OrderBoardFit = {
     slotCols: profile.maxCols,
-    poolCols: profile.maxCols,
+    poolCols: maxPool,
     lineClamp,
   }
+  let bestFit: OrderBoardFit | null = null
 
   for (let cols = profile.minCols; cols <= profile.maxCols; cols++) {
-    const fit = { slotCols: cols, poolCols: cols, lineClamp }
-    applyOrderBoardLayout(board, fit, slotCount)
-    if (orderListsFit(board)) return fit
-    best = fit
+    for (let poolCols = cols; poolCols <= maxPool; poolCols++) {
+      const fit = { slotCols: cols, poolCols, lineClamp }
+      applyOrderBoardLayout(board, fit, slotCount)
+      if (orderListsFit(board)) bestFit = fit
+      fallback = fit
+    }
   }
 
-  applyOrderBoardLayout(board, best, slotCount)
-  return best
+  const chosen = bestFit ?? fallback
+  applyOrderBoardLayout(board, chosen, slotCount)
+  return chosen
 }
 
 /** @deprecated Use fitOrderBoard — kept for tests that only need column count. */

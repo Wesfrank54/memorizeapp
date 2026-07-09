@@ -75,12 +75,22 @@ body {
   display: flex;
   flex-direction: column;
 }
+.app--wide:has(.order-practice--session) .content > .panel,
+.app--wide:has(.match-practice--session) .content > .panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 12px;
+  overflow: hidden;
+}
 .app--wide:has(.order-practice--session) .order-practice--session,
 .app--wide:has(.match-practice--session) .match-practice--session {
   flex: 1;
   min-height: 0;
   height: auto;
   max-height: none;
+  overflow: hidden;
 }
 
 /* top bar */
@@ -1147,10 +1157,9 @@ body {
 .match-practice--session {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  height: calc(100dvh - 88px);
-  max-height: calc(100dvh - 88px);
-  padding: 8px 12px;
+  gap: 6px;
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
 }
 .order-session-body {
@@ -1358,10 +1367,11 @@ body {
 .order-pool-list--fit {
   display: grid;
   grid-template-columns: repeat(var(--order-pool-cols, 2), minmax(0, 1fr));
-  grid-auto-rows: auto;
+  grid-auto-rows: minmax(0, auto);
   gap: var(--order-gap);
   align-content: start;
   height: 100%;
+  overflow: hidden;
 }
 .order-pool-item {
   display: flex;
@@ -1370,11 +1380,12 @@ body {
 .order-slots-list--fit {
   display: grid;
   grid-template-columns: repeat(var(--order-slot-cols, 2), minmax(0, 1fr));
-  grid-template-rows: repeat(var(--order-slot-rows, 6), auto);
+  grid-template-rows: repeat(var(--order-slot-rows, 6), minmax(0, auto));
   grid-auto-flow: column;
   gap: var(--order-gap);
   align-content: start;
   height: 100%;
+  overflow: hidden;
 }
 .order-practice--session .order-slot-row {
   align-self: start;
@@ -1560,24 +1571,28 @@ body {
 
 /* match practice — rank ↔ insignia */
 .match-board {
-  --match-insignia-w: 64px;
-  --match-insignia-h: 48px;
-  --match-hint-clamp: 4;
-  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+  --match-insignia-w: 58px;
+  --match-insignia-h: 44px;
+  --match-hint-clamp: 3;
+  grid-template-columns: minmax(0, 0.46fr) minmax(0, 0.54fr);
 }
 .match-board[data-match='shoulder'] {
-  --match-insignia-w: 88px;
-  --match-hint-clamp: 3;
+  --match-insignia-w: 72px;
 }
-.match-slots-list {
-  gap: var(--order-gap);
+.match-practice--session .order-pool-list .order-row-label {
+  -webkit-line-clamp: 1;
+  font-size: 11px;
 }
 .match-slot-row {
   display: grid;
-  grid-template-columns: minmax(56px, var(--match-insignia-w)) minmax(0, 1fr);
+  grid-template-columns: minmax(44px, var(--match-insignia-w)) minmax(0, 1fr);
   align-items: stretch;
-  gap: 5px;
+  gap: 4px;
   min-height: 0;
+  height: 100%;
+}
+.match-practice--session .match-slot-row {
+  align-self: stretch;
 }
 .match-insignia-card {
   display: flex;
@@ -1614,10 +1629,10 @@ body {
 }
 .match-insignia-img {
   display: block;
-  max-width: var(--match-insignia-w);
-  max-height: var(--match-insignia-h);
-  width: auto;
-  height: auto;
+  width: var(--match-insignia-w);
+  height: var(--match-insignia-h);
+  max-width: 100%;
+  max-height: 100%;
   object-fit: contain;
 }
 .match-insignia-hint {
@@ -1631,14 +1646,12 @@ body {
   overflow: hidden;
 }
 .match-rank-slot {
-  min-height: 28px;
+  min-height: 24px;
 }
 .match-practice--session .match-rank-card .order-row-detail {
   display: none;
 }
-@media (min-width: 1100px) {
-  .match-board[data-match='collar'] {
-    --match-insignia-w: 56px;
-    --match-insignia-h: 42px;
-  }
+.match-practice--session .match-rank-card .order-row-label {
+  -webkit-line-clamp: 1;
+  font-size: 10px;
 }

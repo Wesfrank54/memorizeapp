@@ -23,8 +23,9 @@ export function useOrderBoardFit(profile: OrderLayoutProfile, slotCount: number,
     }
 
     run()
-    const ro = new ResizeObserver(run)
+    const ro = new ResizeObserver(() => requestAnimationFrame(run))
     ro.observe(board)
+    if (board.parentElement) ro.observe(board.parentElement)
     return () => ro.disconnect()
   }, [profile, slotCount, resetKey])
 

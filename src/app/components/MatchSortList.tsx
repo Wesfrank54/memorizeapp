@@ -8,7 +8,7 @@ import {
   type OrderSlotState,
 } from '../../core/match-challenges.ts'
 import { matchLayoutProfile } from '../../core/match-layout.ts'
-import { useOrderBoardFit } from './useOrderBoardFit.ts'
+import { useMatchBoardFit } from './useMatchBoardFit.ts'
 
 type DragState = { id: string; source: OrderDragSource } | null
 
@@ -104,7 +104,7 @@ export function MatchSortList({
   const items = useMemo(() => [...itemsById.values()], [itemsById])
   const profile = useMemo(() => matchLayoutProfile(items, category), [items, category])
   const resetKey = `${category}:${slots.length}:${[...pool].join(',')}:${locked}`
-  const { boardRef, fit } = useOrderBoardFit(profile, slots.length, resetKey)
+  const { boardRef, fit } = useMatchBoardFit(profile, slots.length, resetKey)
   const cols = fit.slotCols
 
   function clearDrag() {
