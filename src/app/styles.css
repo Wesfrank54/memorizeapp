@@ -534,8 +534,13 @@ body {
   border-color: var(--again);
   color: var(--again);
 }
-.graded-feedback {
+.graded-feedback,
+.graded-verdict-screen {
   margin-top: 14px;
+}
+.graded-verdict-screen .instant-verdict {
+  font-size: 20px;
+  margin-bottom: 14px;
 }
 .cp-verdict {
   font-size: 16px;
