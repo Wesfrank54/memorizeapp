@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   allOrderSlotsFilled,
   correctOrderIds,
@@ -20,6 +20,8 @@ const CATEGORY_LABELS: Record<OrderChallenge['category'], string> = {
   ranks: 'Rank Structures',
 }
 
+const PERFECT_AUTO_RESHUFFLE_MS = 1500
+
 export function OrderPractice() {
   const [challengeId, setChallengeId] = useState(ORDER_CHALLENGES[0]!.id)
   const [phase, setPhase] = useState<'pick' | 'active' | 'graded'>('pick')
@@ -27,6 +29,8 @@ export function OrderPractice() {
   const [slots, setSlots] = useState<OrderSlotState>([])
   const [grade, setGrade] = useState<OrderGradeResult | null>(null)
   const [attempts, setAttempts] = useState(0)
+  const [autoReshufflePending, setAutoReshufflePending] = useState(false)
+  const earnedPerfectRef = useRef(false)
 
   const challenge = orderChallengeById(challengeId) ?? ORDER_CHALLENGES[0]!
   const itemsById = useMemo(() => new Map(challenge.items.map((i) => [i.id, i])), [challenge])
@@ -57,24 +61,44 @@ export function OrderPractice() {
     setSlots(placement.slots)
     setGrade(null)
     setAttempts(0)
+    earnedPerfectRef.current = false
+    setAutoReshufflePending(false)
     setPhase('active')
   }
 
-  function checkOrder() {
-    if (!allOrderSlotsFilled(slots)) return
-    const result = gradeOrder(slotsToOrder(slots), correctIds)
-    setGrade(result)
-    setAttempts((a) => a + 1)
-    setPhase('graded')
-  }
-
-  function reshuffle() {
+  function reshuffle(resetAttempts = false) {
     const placement = initOrderPlacement(correctIds)
     setPool(placement.pool)
     setSlots(placement.slots)
     setGrade(null)
     setPhase('active')
+    earnedPerfectRef.current = false
+    setAutoReshufflePending(false)
+    if (resetAttempts) setAttempts(0)
   }
+
+  function checkOrder() {
+    if (!allOrderSlotsFilled(slots)) return
+    const result = gradeOrder(slotsToOrder(slots), correctIds)
+    earnedPerfectRef.current = result.perfect
+    setGrade(result)
+    setAttempts((a) => a + 1)
+    setPhase('graded')
+  }
+
+  useEffect(() => {
+    if (phase !== 'graded' || !grade?.perfect || !earnedPerfectRef.current) {
+      setAutoReshufflePending(false)
+      return
+    }
+
+    setAutoReshufflePending(true)
+    const timer = window.setTimeout(() => reshuffle(true), PERFECT_AUTO_RESHUFFLE_MS)
+    return () => {
+      window.clearTimeout(timer)
+      setAutoReshufflePending(false)
+    }
+  }, [phase, grade?.perfect, correctIds])
 
   if (phase === 'pick') {
     return (
@@ -149,6 +173,7 @@ export function OrderPractice() {
           {grade.perfect ? (
             <p className="flash-ok">
               Perfect order{attempts > 1 ? ` in ${attempts} attempt${attempts === 1 ? '' : 's'}` : ''}!
+              {autoReshufflePending ? ' Starting a new shuffle…' : ''}
             </p>
           ) : null}
         </>
@@ -160,10 +185,14 @@ export function OrderPractice() {
             <button type="button" className="primary" onClick={checkOrder} disabled={!allFilled}>
               Check order
             </button>
-            <button type="button" className="link" onClick={reshuffle}>
+            <button type="button" className="link" onClick={() => reshuffle()}>
               Reshuffle
             </button>
           </>
+        ) : grade?.perfect ? (
+          <button type="button" className="link" onClick={() => reshuffle(true)}>
+            New shuffle now
+          </button>
         ) : (
           <>
             <button
@@ -174,30 +203,29 @@ export function OrderPractice() {
                 setPhase('active')
               }}
             >
-              {grade?.perfect ? 'Practice again' : 'Try again'}
+              Try again
             </button>
-            <button type="button" className="link" onClick={reshuffle}>
+            <button type="button" className="link" onClick={() => reshuffle()}>
               New shuffle
             </button>
-            {!grade?.perfect ? (
-              <button
-                type="button"
-                className="link"
-                onClick={() => {
-                  setPool([])
-                  setSlots([...correctIds])
-                  setGrade({
-                    perfect: true,
-                    score: 1,
-                    correctPositions: correctIds.map(() => true),
-                    wrongCount: 0,
-                  })
-                  setPhase('graded')
-                }}
-              >
-                Show solution
-              </button>
-            ) : null}
+            <button
+              type="button"
+              className="link"
+              onClick={() => {
+                earnedPerfectRef.current = false
+                setPool([])
+                setSlots([...correctIds])
+                setGrade({
+                  perfect: true,
+                  score: 1,
+                  correctPositions: correctIds.map(() => true),
+                  wrongCount: 0,
+                })
+                setPhase('graded')
+              }}
+            >
+              Show solution
+            </button>
           </>
         )}
       </div>
