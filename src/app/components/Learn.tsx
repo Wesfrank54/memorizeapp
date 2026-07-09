@@ -73,7 +73,7 @@ export function Learn({ state, onGoToReview }: { state: AppState; onGoToReview?:
   // ever cleared — a second save on the other key surfaces afterwards.
   const [savedResume, setSavedResume] = useState<ResumeSource | null>(firstResumableSaved)
   const [setupStep, setSetupStep] = useState<'units' | 'familiarity'>('units')
-  const [familiarity, setFamiliarity] = useState<FamiliarityLevel>('some')
+  const [familiarity, setFamiliarity] = useState<FamiliarityLevel | null>(null)
 
   const notesById = useMemo(() => new Map(state.notes.map((n) => [n.id, n])), [state.notes])
   const cardsById = useMemo(() => new Map(state.cards.map((c) => [c.id, c])), [state.cards])
@@ -98,6 +98,8 @@ export function Learn({ state, onGoToReview }: { state: AppState; onGoToReview?:
 
   useEffect(() => {
     setSelectedKeys(new Set())
+    setFamiliarity(null)
+    setSetupStep('units')
   }, [deckId])
 
   const sessionTicked = useMemo(() => (session ? tickLearnQueue(session) : null), [session])
@@ -174,6 +176,7 @@ export function Learn({ state, onGoToReview }: { state: AppState; onGoToReview?:
       start()
       return
     }
+    setFamiliarity(null)
     setSetupStep('familiarity')
   }
 
@@ -184,7 +187,7 @@ export function Learn({ state, onGoToReview }: { state: AppState; onGoToReview?:
     setSession(
       startLearnFromUnits(state, chosenUnits, {
         tabMode: 'adaptive',
-        familiarity,
+        familiarity: familiarity ?? undefined,
       }),
     )
   }
@@ -344,7 +347,7 @@ export function Learn({ state, onGoToReview }: { state: AppState; onGoToReview?:
           <button type="button" className="link" onClick={() => setSetupStep('units')}>
             Back
           </button>
-          <button className="primary" onClick={start}>
+          <button className="primary" onClick={start} disabled={!familiarity}>
             Start learning
           </button>
         </div>

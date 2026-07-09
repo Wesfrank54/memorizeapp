@@ -92,10 +92,9 @@ export function Quiz({ state }: { state: AppState }) {
   )
   const available = chosenCardIds.length
 
-  // Default to every topic selected (quiz the whole deck) and reset on deck change.
+  // Start with no topics selected; reset when the deck filter changes.
   useEffect(() => {
-    setSelectedKeys(new Set(allUnits.map((u) => u.key)))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setSelectedKeys(new Set())
   }, [deckId])
 
   function toggleUnit(key: string) {
