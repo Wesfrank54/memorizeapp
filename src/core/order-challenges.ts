@@ -203,3 +203,82 @@ export function moveOrderId(ids: string[], fromIndex: number, toIndex: number): 
   next.splice(toIndex, 0, removed!)
   return next
 }
+
+export type OrderSlotState = (string | null)[]
+
+export function emptyOrderSlots(count: number): OrderSlotState {
+  return Array.from({ length: count }, () => null)
+}
+
+/** Shuffled pool on the left; empty numbered slots on the right. */
+export function initOrderPlacement(correctIds: string[], seed?: number): { pool: string[]; slots: OrderSlotState } {
+  return {
+    pool: shuffleOrderIds(correctIds, seed),
+    slots: emptyOrderSlots(correctIds.length),
+  }
+}
+
+export function allOrderSlotsFilled(slots: OrderSlotState): boolean {
+  return slots.length > 0 && slots.every((id) => id != null)
+}
+
+export function slotsToOrder(slots: OrderSlotState): string[] {
+  if (!allOrderSlotsFilled(slots)) {
+    throw new Error('Order slots: not all slots are filled')
+  }
+  return slots as string[]
+}
+
+export type OrderDragSource = { kind: 'pool' } | { kind: 'slot'; index: number }
+
+/** Move or swap an item from the pool or a slot into a target slot. */
+export function placeOrderItem(
+  pool: string[],
+  slots: OrderSlotState,
+  source: OrderDragSource,
+  id: string,
+  targetIndex: number,
+): { pool: string[]; slots: OrderSlotState } {
+  if (targetIndex < 0 || targetIndex >= slots.length) {
+    return { pool, slots }
+  }
+
+  const nextPool = [...pool]
+  const nextSlots = [...slots]
+
+  if (source.kind === 'pool') {
+    const poolIndex = nextPool.indexOf(id)
+    if (poolIndex < 0) return { pool, slots }
+    nextPool.splice(poolIndex, 1)
+  } else {
+    if (source.index === targetIndex) return { pool, slots }
+    if (nextSlots[source.index] !== id) return { pool, slots }
+    nextSlots[source.index] = null
+  }
+
+  const displaced = nextSlots[targetIndex]
+  nextSlots[targetIndex] = id
+
+  if (displaced) {
+    if (source.kind === 'pool') {
+      nextPool.push(displaced)
+    } else {
+      nextSlots[source.index] = displaced
+    }
+  }
+
+  return { pool: nextPool, slots: nextSlots }
+}
+
+/** Return a placed item from a slot back to the pool. */
+export function returnOrderItemToPool(
+  pool: string[],
+  slots: OrderSlotState,
+  slotIndex: number,
+): { pool: string[]; slots: OrderSlotState } {
+  const id = slots[slotIndex]
+  if (!id) return { pool, slots }
+  const nextSlots = [...slots]
+  nextSlots[slotIndex] = null
+  return { pool: [...pool, id], slots: nextSlots }
+}

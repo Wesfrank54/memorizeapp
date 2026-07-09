@@ -1,12 +1,17 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
+  allOrderSlotsFilled,
   correctOrderIds,
   gradeOrder,
+  initOrderPlacement,
   moveOrderId,
   orderChallengeById,
   ORDER_CHALLENGES,
+  placeOrderItem,
+  returnOrderItemToPool,
   shuffleOrderIds,
+  slotsToOrder,
 } from '../src/core/order-challenges.ts'
 
 test('ORDER_CHALLENGES includes General Orders, chain of command, and ranks', () => {
@@ -37,6 +42,46 @@ test('gradeOrder scores per-slot correctness', () => {
 test('moveOrderId reorders list', () => {
   assert.deepEqual(moveOrderId(['a', 'b', 'c'], 0, 2), ['b', 'c', 'a'])
   assert.deepEqual(moveOrderId(['a', 'b', 'c'], 2, 0), ['c', 'a', 'b'])
+})
+
+test('initOrderPlacement shuffles pool and clears slots', () => {
+  const correct = ['a', 'b', 'c']
+  const { pool, slots } = initOrderPlacement(correct, 42)
+  assert.deepEqual([...pool].sort(), correct)
+  assert.notDeepEqual(pool, correct)
+  assert.deepEqual(slots, [null, null, null])
+  assert.equal(allOrderSlotsFilled(slots), false)
+})
+
+test('placeOrderItem moves from pool into slot and swaps between slots', () => {
+  let pool = ['a', 'b', 'c']
+  let slots: (string | null)[] = [null, null, null]
+
+  ;({ pool, slots } = placeOrderItem(pool, slots, { kind: 'pool' }, 'b', 1))
+  assert.deepEqual(pool, ['a', 'c'])
+  assert.deepEqual(slots, [null, 'b', null])
+
+  ;({ pool, slots } = placeOrderItem(pool, slots, { kind: 'pool' }, 'a', 0))
+  assert.deepEqual(pool, ['c'])
+  assert.deepEqual(slots, ['a', 'b', null])
+
+  ;({ pool, slots } = placeOrderItem(pool, slots, { kind: 'slot', index: 0 }, 'a', 1))
+  assert.deepEqual(pool, ['c'])
+  assert.deepEqual(slots, ['b', 'a', null])
+
+  ;({ pool, slots } = placeOrderItem(pool, slots, { kind: 'pool' }, 'c', 2))
+  assert.deepEqual(pool, [])
+  assert.deepEqual(slots, ['b', 'a', 'c'])
+  assert.equal(allOrderSlotsFilled(slots), true)
+  assert.deepEqual(slotsToOrder(slots), ['b', 'a', 'c'])
+})
+
+test('returnOrderItemToPool moves a placed item back to the pool', () => {
+  const pool: string[] = ['c']
+  const slots: (string | null)[] = ['a', 'b', null]
+  const next = returnOrderItemToPool(pool, slots, 1)
+  assert.deepEqual(next.pool, ['c', 'b'])
+  assert.deepEqual(next.slots, ['a', null, null])
 })
 
 test('general orders challenge matches ODS deck count', () => {

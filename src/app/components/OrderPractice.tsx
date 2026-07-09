@@ -1,12 +1,15 @@
 import { useMemo, useState } from 'react'
 import {
+  allOrderSlotsFilled,
   correctOrderIds,
   gradeOrder,
+  initOrderPlacement,
   ORDER_CHALLENGES,
   orderChallengeById,
-  shuffleOrderIds,
+  slotsToOrder,
   type OrderChallenge,
   type OrderGradeResult,
+  type OrderSlotState,
 } from '../../core/order-challenges.ts'
 import { OrderSortList } from './OrderSortList.tsx'
 import { VerdictBanner } from './VerdictBanner.tsx'
@@ -20,13 +23,15 @@ const CATEGORY_LABELS: Record<OrderChallenge['category'], string> = {
 export function OrderPractice() {
   const [challengeId, setChallengeId] = useState(ORDER_CHALLENGES[0]!.id)
   const [phase, setPhase] = useState<'pick' | 'active' | 'graded'>('pick')
-  const [order, setOrder] = useState<string[]>([])
+  const [pool, setPool] = useState<string[]>([])
+  const [slots, setSlots] = useState<OrderSlotState>([])
   const [grade, setGrade] = useState<OrderGradeResult | null>(null)
   const [attempts, setAttempts] = useState(0)
 
   const challenge = orderChallengeById(challengeId) ?? ORDER_CHALLENGES[0]!
   const itemsById = useMemo(() => new Map(challenge.items.map((i) => [i.id, i])), [challenge])
   const correctIds = useMemo(() => correctOrderIds(challenge), [challenge])
+  const allFilled = allOrderSlotsFilled(slots)
 
   const grouped = useMemo(() => {
     const map = new Map<OrderChallenge['category'], OrderChallenge[]>()
@@ -38,25 +43,35 @@ export function OrderPractice() {
     return map
   }, [])
 
+  function setPlacement(nextPool: string[], nextSlots: OrderSlotState) {
+    setPool(nextPool)
+    setSlots(nextSlots)
+  }
+
   function start(id = challengeId) {
     const c = orderChallengeById(id)
     if (!c) return
+    const placement = initOrderPlacement(correctOrderIds(c))
     setChallengeId(id)
-    setOrder(shuffleOrderIds(correctOrderIds(c)))
+    setPool(placement.pool)
+    setSlots(placement.slots)
     setGrade(null)
     setAttempts(0)
     setPhase('active')
   }
 
   function checkOrder() {
-    const result = gradeOrder(order, correctIds)
+    if (!allOrderSlotsFilled(slots)) return
+    const result = gradeOrder(slotsToOrder(slots), correctIds)
     setGrade(result)
     setAttempts((a) => a + 1)
     setPhase('graded')
   }
 
   function reshuffle() {
-    setOrder(shuffleOrderIds(correctIds))
+    const placement = initOrderPlacement(correctIds)
+    setPool(placement.pool)
+    setSlots(placement.slots)
     setGrade(null)
     setPhase('active')
   }
@@ -66,7 +81,8 @@ export function OrderPractice() {
       <div className="panel form order-practice">
         <h2 className="opt-title">Order Practice</h2>
         <p className="muted small">
-          Drag items into the correct sequence — General Orders (1–11), chain of command, rank structures, and more.
+          Drag items from the options list into the correct numbered slots — General Orders (1–11), chain of command,
+          rank structures, and more.
         </p>
         {[...grouped.entries()].map(([cat, list]) => (
           <div key={cat} className="order-challenge-group">
@@ -101,17 +117,24 @@ export function OrderPractice() {
       </div>
 
       <p className="order-instructions muted small">
-        Drag rows into the correct sequence. The number on the left is the slot you are filling (1st, 2nd, …) — not
-        printed on each card. Use ▲▼ if drag is awkward on your device.
+        All options start on the left. Drag each one into the correct numbered box on the right (1st, 2nd, …). Drag
+        back to the options list to change your answer.
       </p>
 
       <OrderSortList
         itemsById={itemsById}
-        order={order}
-        onChange={setOrder}
+        pool={pool}
+        slots={slots}
+        onChange={setPlacement}
         locked={phase === 'graded'}
         slotResults={grade?.correctPositions ?? null}
       />
+
+      {phase === 'active' && !allFilled ? (
+        <p className="muted small order-fill-hint">
+          Fill all {challenge.items.length} slots before checking your order.
+        </p>
+      ) : null}
 
       {phase === 'graded' && grade ? (
         <>
@@ -134,7 +157,7 @@ export function OrderPractice() {
       <div className="row order-practice-actions">
         {phase === 'active' ? (
           <>
-            <button type="button" className="primary" onClick={checkOrder}>
+            <button type="button" className="primary" onClick={checkOrder} disabled={!allFilled}>
               Check order
             </button>
             <button type="button" className="link" onClick={reshuffle}>
@@ -161,7 +184,8 @@ export function OrderPractice() {
                 type="button"
                 className="link"
                 onClick={() => {
-                  setOrder([...correctIds])
+                  setPool([])
+                  setSlots([...correctIds])
                   setGrade({
                     perfect: true,
                     score: 1,

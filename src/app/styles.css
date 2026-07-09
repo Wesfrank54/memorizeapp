@@ -1134,7 +1134,34 @@ body {
 .order-instructions {
   margin: 0 0 12px;
 }
-.order-sort-list {
+.order-fill-hint {
+  margin: 10px 0 0;
+}
+.order-board {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+@media (max-width: 720px) {
+  .order-board {
+    grid-template-columns: 1fr;
+  }
+}
+.order-pool-panel,
+.order-slots-panel {
+  min-width: 0;
+}
+.order-panel-title {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.order-panel-hint {
+  margin: 0 0 10px;
+}
+.order-pool-list,
+.order-slots-list {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -1142,10 +1169,71 @@ body {
   flex-direction: column;
   gap: 8px;
 }
-.order-sort-row {
+.order-pool-list {
+  min-height: 120px;
+  padding: 10px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--bg) 70%, var(--surface));
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.order-pool-list.order-drop-target {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+.order-pool-empty {
+  padding: 8px 4px;
+  text-align: center;
+}
+.order-slot-row {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+}
+.order-slot {
+  flex: 1;
+  min-width: 0;
+  min-height: 52px;
+  display: flex;
+  align-items: stretch;
+  padding: 6px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+.order-slot-empty {
+  align-items: center;
+  justify-content: center;
+}
+.order-slot-filled {
+  padding: 0;
+  border-style: solid;
+}
+.order-slot-placeholder {
+  font-size: 13px;
+  color: var(--muted);
+  user-select: none;
+}
+.order-slot.order-drop-target {
+  border-color: var(--accent);
+  border-style: solid;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+.order-slot.order-slot-ok .order-card {
+  border-color: var(--good);
+  background: color-mix(in srgb, var(--good) 8%, var(--surface));
+}
+.order-slot.order-slot-bad .order-card {
+  border-color: var(--again);
+  background: color-mix(in srgb, var(--again) 8%, var(--surface));
+}
+.order-sort-row,
+.order-card {
   display: flex;
   align-items: flex-start;
   gap: 10px;
+  width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -1153,29 +1241,23 @@ body {
   cursor: grab;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
-.order-sort-row:active {
+.order-card {
+  box-sizing: border-box;
+}
+.order-sort-row:active,
+.order-card:active {
   cursor: grabbing;
 }
-.order-sort-row.order-dragging {
+.order-sort-row.order-dragging,
+.order-card.order-dragging {
   opacity: 0.55;
   border-style: dashed;
-}
-.order-sort-row.order-drop-target {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent);
-}
-.order-sort-row.order-slot-ok {
-  border-color: var(--good);
-  background: color-mix(in srgb, var(--good) 8%, var(--surface));
-}
-.order-sort-row.order-slot-bad {
-  border-color: var(--again);
-  background: color-mix(in srgb, var(--again) 8%, var(--surface));
 }
 .order-slot-num {
   flex: 0 0 28px;
   width: 28px;
   height: 28px;
+  margin-top: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1198,23 +1280,12 @@ body {
   color: var(--muted);
   margin-top: 2px;
 }
-.order-row-actions {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  flex-shrink: 0;
-}
-.order-nudge {
-  padding: 2px 6px;
-  font-size: 11px;
-  line-height: 1;
-}
 .order-drag-hint {
   font-size: 14px;
   color: var(--muted);
   margin-top: 2px;
   user-select: none;
+  flex-shrink: 0;
 }
 .order-practice-actions {
   margin-top: 16px;
