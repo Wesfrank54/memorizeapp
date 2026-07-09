@@ -97,6 +97,7 @@ export function GradedAnswer({
   const inputRef = useRef(input)
   const onGradedRef = useRef(onGraded)
   const rootRef = useRef<HTMLDivElement>(null)
+  const nextRef = useRef<HTMLButtonElement>(null)
   phaseRef.current = phase
   resultRef.current = result
   inputRef.current = input
@@ -133,6 +134,14 @@ export function GradedAnswer({
     return !!active && !!rootRef.current?.contains(active)
   }
 
+  /** After the input unmounts, focus often lands on <body> — still allow Enter → Next. */
+  function focusAllowsVerdictEnter() {
+    const active = document.activeElement
+    if (!active) return false
+    if (rootRef.current?.contains(active)) return true
+    return active === document.body || active === document.documentElement
+  }
+
   function revealVerdict(fromEnter: boolean, graded: GradeResult) {
     if (phaseRef.current !== 'typing') return
     advanceReadyRef.current = !fromEnter
@@ -144,6 +153,12 @@ export function GradedAnswer({
     revealVerdict(fromEnter, gradeText(expected, inputRef.current))
   }
 
+  function advanceFromEnter() {
+    if (!advanceReadyRef.current || advancedRef.current || !resultRef.current) return
+    advancedRef.current = true
+    onGradedRef.current(resultRef.current, gradedCtx)
+  }
+
   function advance() {
     const graded = resultRef.current
     if (phaseRef.current !== 'verdict' || !graded || advancedRef.current) return
@@ -152,29 +167,33 @@ export function GradedAnswer({
   }
 
   useEffect(() => {
+    if (phase !== 'verdict') return
+    const id = requestAnimationFrame(() => nextRef.current?.focus())
+    return () => cancelAnimationFrame(id)
+  }, [phase, card.id, result])
+
+  useEffect(() => {
+    if (activeMode === 'mcq') return
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key !== 'Enter' || e.repeat || !keyOwner()) return
-
-      if (phaseRef.current === 'typing' && activeMode !== 'mcq') {
-        e.preventDefault()
-        e.stopImmediatePropagation()
-        advanceReadyRef.current = false
-        setResult(gradeText(expected, inputRef.current))
-        setPhase('verdict')
-        return
-      }
-
-      if (phaseRef.current === 'verdict') {
-        e.preventDefault()
-        if (!advanceReadyRef.current || advancedRef.current || !resultRef.current) return
-        advancedRef.current = true
-        onGradedRef.current(resultRef.current, gradedCtx)
-      }
+      if (phaseRef.current !== 'typing' || e.key !== 'Enter' || e.repeat || !keyOwner()) return
+      e.preventDefault()
+      advanceReadyRef.current = false
+      setResult(gradeText(expected, inputRef.current))
+      setPhase('verdict')
     }
-
     window.addEventListener('keydown', onKeyDown, true)
     return () => window.removeEventListener('keydown', onKeyDown, true)
-  }, [activeMode, expected, gradedCtx, card.id])
+  }, [activeMode, expected, card.id])
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (phaseRef.current !== 'verdict' || e.key !== 'Enter' || e.repeat || !focusAllowsVerdictEnter()) return
+      e.preventDefault()
+      advanceFromEnter()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [gradedCtx, card.id])
 
   function pick(opt: string) {
     if (phase !== 'typing') return
@@ -186,7 +205,17 @@ export function GradedAnswer({
     phase === 'verdict' && result ? (
       <div className="graded-verdict-screen">
         <VerdictBanner correct={result.correct} near={result.near} expected={expected} />
-        <button type="button" className="primary reveal" onClick={advance}>
+        <button
+          ref={nextRef}
+          type="button"
+          className="primary reveal"
+          onClick={advance}
+          onKeyDown={(e) => {
+            if (e.key !== 'Enter') return
+            e.preventDefault()
+            advanceFromEnter()
+          }}
+        >
           Next <span className="hint">enter</span>
         </button>
       </div>
